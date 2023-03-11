@@ -1,24 +1,38 @@
-import logo from './logo.svg';
+import {
+  createBrowserRouter,
+  RouterProvider,
+} from "react-router-dom";
+
+import { ProvideSongs } from "./firebase/useSongs"; 
+
 import './App.css';
+
+import Home from "./pages/Home";
+import Song from "./pages/Song";
+import Caption from "./pages/Caption";
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <Home />,
+  },
+  {
+    path: "/caption",
+    element: <Caption />,
+  },
+  {
+    path: "/song/:songId",
+    element: <Song />,
+  },
+]);
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <ProvideSongs>
+      <div className="bg-gray-100 h-screen">
+        <RouterProvider router={router} />
+      </div>
+    </ProvideSongs>
   );
 }
 

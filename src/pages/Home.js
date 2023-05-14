@@ -1,31 +1,19 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import Header from "../components/Header";
 
 import { useSongs } from "../firebase/useSongs";
 
 function Home() {
-  const { songs } = useSongs();
-  const [ localSongs, setLocalSongs ] = useState(songs);
+  const { songs, filterByValue } = useSongs();
 
   const searchSongs = e => {
     const value = e.currentTarget.value;
-    setLocalSongs(songs.filter(song =>
-      song.title.toLowerCase().includes(value.toLowerCase())
-    ));
+    filterByValue(value);
   }
 
-  useEffect(() => {
-    if (!localSongs.length) setLocalSongs(songs)
-  }, [songs])
   return (
     <>
-      <header className="bg-white shadow">
-        <div className="mx-auto max-w-7xl py-6 px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-            Canciones
-          </h1>
-        </div>
-      </header>
+      <Header isBackVisible={false} />
       <div className="mx-auto max-w-4xl px-6 lg:px-8">
         <div className="py-4">
           <input
@@ -35,10 +23,10 @@ function Home() {
             onChange={searchSongs}
           />
         </div>
-        <main className="mx-auto max-w-none">
+        <main className="mx-auto max-w-none pb-8">
           <div className="overflow-hidden bg-white shadow sm:rounded-lg">
             <ul className="divide-y divide-gray-200">
-              {localSongs.map(song => <li key={song.id}>
+              {songs.map(song => <li key={song.id}>
                 <Link to={`song/${song.id}`} className="block hover:bg-gray-50">
                   <div className="px-4 py-4 sm:px-6">
                     {song.title}

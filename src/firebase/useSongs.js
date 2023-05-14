@@ -1,9 +1,15 @@
-import React, { useContext, createContext, useState, useEffect } from "react";
-import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
+import React, { useContext, createContext, useRef, useEffect, useState } from "react";
+import { collection, query, orderBy, onSnapshot, addDoc } from "firebase/firestore";
 
 import db from "./firebase";
 
+const COLLECTION_NAME = 'songs';
+
 const songsContext = createContext();
+
+const removeAccents = (strWithAccents) => {
+  return strWithAccents.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
 
 export function ProvideSongs({ children }) {
   const songsHook = useProvideSongs();
@@ -18,18 +24,33 @@ export const useSongs = () => {
 
 // Provider hook that creates auth object and handles state
 function useProvideSongs() {
+  const allSongs = useRef();
   const [songs, setSongs] = useState([]);
 
-  const get = id =>
-    songs.filter(s => s.id === id).shift() || {}
+  const getById = id =>
+    songs.filter(s => s.id === id).shift() || {};
+
+  const filterByValue = (value) => {
+    setSongs(allSongs.current.filter(song =>
+      removeAccents(song.title).toLowerCase().includes(value.toLowerCase())
+    ));
+  };
+
+  const addSong = async (title, body) => {
+    return await addDoc(collection(db, COLLECTION_NAME), {
+      title,
+      body
+    });
+  };
 
   useEffect(() => {
-    const collectionRef = collection(db, 'songs');
+    const collectionRef = collection(db, COLLECTION_NAME);
     const q = query(collectionRef, orderBy("title"));
 
     const unsubscribe = onSnapshot(q, querySnapshot => {
       const dbSongs = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }))
-      setSongs(dbSongs)
+      allSongs.current = dbSongs;
+      setSongs(allSongs.current);
     });
     return () => unsubscribe();
   }, [ ]);
@@ -37,6 +58,8 @@ function useProvideSongs() {
   // Return the user object and auth methods
   return {
     songs,
-    get,
+    getById,
+    filterByValue,
+    addSong,
   };
 }

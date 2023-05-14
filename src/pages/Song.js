@@ -11,8 +11,8 @@ const CAPTION = 'caption';
 function Song() {
   const [ activeLine, setActiveLine ] = useState(null);
   const { songId } = useParams();
-  const { get } = useSongs();
-  const currentSong = get(songId);
+  const { getById } = useSongs();
+  const currentSong = getById(songId);
 
   const handleClick = async (e) => {
     const caption = e.currentTarget.value;
@@ -28,7 +28,8 @@ function Song() {
       setActiveLine(null);
       console.log("No se pudo actualizar los subtítulos", e);
     }
-  }
+  };
+
   return (
     <div className="App">
       <div className="px-4 py-2 bg-gray-400 text-left">

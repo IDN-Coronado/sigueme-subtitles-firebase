@@ -10,6 +10,7 @@ import './App.css';
 import Home from "./pages/Home";
 import Song from "./pages/Song";
 import Caption from "./pages/Caption";
+import AddSong from "./pages/AddSong";
 
 const router = createBrowserRouter([
   {
@@ -24,12 +25,16 @@ const router = createBrowserRouter([
     path: "/song/:songId",
     element: <Song />,
   },
+  {
+    path: "/add",
+    element: <AddSong />,
+  },
 ]);
 
 function App() {
   return (
     <ProvideSongs>
-      <div className="bg-gray-100 h-screen">
+      <div className="bg-gray-100 min-h-screen">
         <RouterProvider router={router} />
       </div>
     </ProvideSongs>

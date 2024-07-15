@@ -45,4 +45,3 @@ jobs:
         run: |
           echo '### Publishing to Deploy Now was not successful :cross:' >> $GITHUB_STEP_SUMMARY
           echo "Unfortunately, the deployment failed." >> $GITHUB_STEP_SUMMARY
-          echo "Find help to debug this [here](https://docs.ionos.space/)." >> $GITHUB_STEP_SUMMARY

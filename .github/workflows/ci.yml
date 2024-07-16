@@ -10,15 +10,10 @@ jobs:
     name: Lighthouse CI
     runs-on: ubuntu-latest
     steps:
-      - name: Install dependencies
-        run: yarn
-
-      - name: lighthouse mobile audit
-        run: yarn lhci:mobile
-        env:
-          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-
-      - name: lighthouse desktop audit
-        run: yarn lhci:desktop
-        env:
-          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+      - uses: actions/checkout@v4
+      - name: Run Lighthouse on NBC.com and upload data to private lhci server
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: 'https://www.nbc.com/'
+          serverBaseUrl: ${{ secrets.LHCI_SERVER_URL }}
+          serverToken: ${{ secrets.LHCI_SERVER_TOKEN }}

@@ -3,8 +3,9 @@ name: CI
 #   schedule:
 #     - cron: '0 10 * * 3,6'
 on:
-  schedule:
-    - cron: '*/5 * * * *'
+  push:
+    branches:
+      - main
 jobs:
   lighthouse:
     name: Lighthouse CI

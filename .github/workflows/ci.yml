@@ -4,7 +4,7 @@ name: CI
 #     - cron: '0 10 * * 3,6'
 on:
   schedule:
-    - cron: '*/5 14 * * *'
+    - cron: '*/5 * * * *'
 jobs:
   lighthouse:
     name: Lighthouse CI

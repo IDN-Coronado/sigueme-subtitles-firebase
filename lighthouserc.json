@@ -5,9 +5,10 @@
       "numberOfRuns": 3
     },
     "upload": {
-      "target": "lhci",
-      "serverBaseUrl": "https://ancient-forest-25588-37dd47b43363.herokuapp.com",
-      "token": "b6126235-f714-4614-b944-c5373ba2782c"
+      "target": "lhci"
+    },
+    "assert": {
+      "preset": "lighthouse:no-pwa"
     }
   }
 }

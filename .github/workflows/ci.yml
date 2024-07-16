@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -28,24 +28,3 @@ jobs:
         run: yarn lhci:desktop
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-        
-      - name: Job successful feedback
-        if: ${{ success() }}
-        run: |
-          echo '### Successfully published to Deploy Now :white_check_mark:'
-          echo "Changes went live under: ${{ steps.project.outputs.site-url }}"
-          echo "Triggered by **${{ github.actor	}}** ∙ deployed from **${{ github.ref_name	}}**"
-          echo ' '
-          echo "**Lighthouse results:**"
-          echo "Performance: ${{ fromJSON(steps.lighthouse.outputs.manifest)[0].summary.performance }}"
-          echo "Accessibility: ${{ fromJSON(steps.lighthouse.outputs.manifest)[0].summary.accessibility }}"
-          echo "Best-practices: ${{ fromJSON(steps.lighthouse.outputs.manifest)[0].summary.best-practices }}"
-          echo "SEO: ${{ fromJSON(steps.lighthouse.outputs.manifest)[0].summary.seo }}"
-          echo "PWA: ${{ fromJSON(steps.lighthouse.outputs.manifest)[0].summary.pwa }}"
-          echo ' '
-
-      - name: Job failed feedback
-        if: ${{ failure() }}
-        run: |
-          echo '### Publishing to Deploy Now was not successful :cross:'
-          echo "Unfortunately, the deployment failed."

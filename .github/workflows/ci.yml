@@ -15,5 +15,6 @@ jobs:
         uses: treosh/lighthouse-ci-action@v12
         with:
           urls: 'https://www.nbc.com/'
+          configPath: './lighthouserc.json'
           serverBaseUrl: ${{ secrets.LHCI_SERVER_URL }}
           serverToken: ${{ secrets.LHCI_SERVER_TOKEN }}

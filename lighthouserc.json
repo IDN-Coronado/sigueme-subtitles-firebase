@@ -1,8 +1,7 @@
 {
   "ci": {
     "collect": {
-      "startServerCommand": "yarn build && yarn start",
-      "url": ["http://localhost:3000/"],
+      "url": ["https://www.nbc.com"],
       "numberOfRuns": 3
     },
     "upload": {

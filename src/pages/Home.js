@@ -1,15 +1,21 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
 
 import { useSongs } from "../firebase/useSongs";
 
 function Home() {
-  const { songs, filterByValue } = useSongs();
+  const { songs, filterByValue, clearFilter } = useSongs();
 
   const searchSongs = e => {
     const value = e.currentTarget.value;
     filterByValue(value);
   }
+
+  useEffect(() => {
+    clearFilter();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>
@@ -26,7 +32,7 @@ function Home() {
         <main className="mx-auto max-w-none pb-8">
           <div className="overflow-hidden bg-white shadow sm:rounded-lg">
             <ul className="divide-y divide-gray-200">
-              {songs.map(song => <li key={song.id}>
+              {songs?.map(song => <li key={song.id}>
                 <Link to={`song/${song.id}`} className="block hover:bg-gray-50">
                   <div className="px-4 py-4 sm:px-6">
                     {song.title}

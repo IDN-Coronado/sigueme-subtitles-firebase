@@ -24,7 +24,7 @@ export const useSongs = () => {
 
 // Provider hook that creates auth object and handles state
 function useProvideSongs() {
-  const allSongs = useRef();
+  const allSongs = useRef([]);
   const [songs, setSongs] = useState([]);
 
   const getById = id =>
@@ -34,6 +34,10 @@ function useProvideSongs() {
     setSongs(allSongs.current.filter(song =>
       removeAccents(song.title).toLowerCase().includes(value.toLowerCase())
     ));
+  };
+
+  const clearFilter = () => {
+    setSongs(allSongs.current);
   };
 
   const addSong = async (title, body) => {
@@ -60,6 +64,7 @@ function useProvideSongs() {
     songs,
     getById,
     filterByValue,
+    clearFilter,
     addSong,
   };
 }

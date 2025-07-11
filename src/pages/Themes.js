@@ -4,6 +4,7 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage
 import db from "../firebase/firebase";
 import storage from "../firebase/storage";
 import dayjs from "dayjs";
+import DOMPurify from "dompurify";
 
 function Themes() {
   const [themes, setThemes] = useState([]);
@@ -14,6 +15,7 @@ function Themes() {
   const [uploading, setUploading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [themeToDelete, setThemeToDelete] = useState(null);
+  const [fileType, setFileType] = useState(""); // Track file type for validation
   const fileInputRef = useRef();
 
   useEffect(() => {
@@ -30,8 +32,23 @@ function Themes() {
       alert("Solo se aceptan imágenes o videos.");
       return;
     }
-    setFile(f);
-    setPreviewUrl(URL.createObjectURL(f));
+    setFileType(f.type);
+    const url = URL.createObjectURL(f);
+
+    // Validate blob URL and MIME type
+    if (
+      (f.type.startsWith("image/") || f.type.startsWith("video/")) &&
+      url.startsWith("blob:")
+    ) {
+      // Sanitize with DOMPurify
+      const safeUrl = DOMPurify.sanitize(url, { SAFE_FOR_TEMPLATES: true });
+      setPreviewUrl(safeUrl);
+      setFile(f);
+    } else {
+      alert("Archivo no válido para previsualización.");
+      setPreviewUrl("");
+      setFile(null);
+    }
   };
 
   const handleModalClose = () => {
@@ -182,9 +199,13 @@ function Themes() {
             {/* Preview */}
             {previewUrl && (
               <div className="w-full flex justify-center items-center">
-                {file && file.type.startsWith("image/") ? (
+                {file &&
+                  fileType.startsWith("image/") &&
+                  previewUrl.startsWith("blob:") ? (
                   <img src={previewUrl} alt="preview" className="max-h-40 rounded" />
-                ) : file && file.type.startsWith("video/") ? (
+                ) : file &&
+                  fileType.startsWith("video/") &&
+                  previewUrl.startsWith("blob:") ? (
                   <video
                     src={previewUrl}
                     className="max-h-40 rounded"

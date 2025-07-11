@@ -1,5 +1,5 @@
 import React, { useContext, createContext, useRef, useEffect, useState } from "react";
-import { collection, query, orderBy, onSnapshot, addDoc } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, addDoc, doc, updateDoc } from "firebase/firestore";
 
 import db from "./firebase";
 
@@ -47,6 +47,12 @@ function useProvideSongs() {
     });
   };
 
+  // Add this function to update a song's lines
+  const updateSongLines = async (id, newLines) => {
+    const songRef = doc(db, COLLECTION_NAME, id);
+    await updateDoc(songRef, { body: newLines });
+  };
+
   useEffect(() => {
     const collectionRef = collection(db, COLLECTION_NAME);
     const q = query(collectionRef, orderBy("title"));
@@ -66,5 +72,6 @@ function useProvideSongs() {
     filterByValue,
     clearFilter,
     addSong,
+    updateSongLines, // expose the new function
   };
 }

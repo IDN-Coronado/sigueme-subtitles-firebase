@@ -1,49 +1,72 @@
-import { useEffect } from "react";
-import { Link } from "react-router-dom";
-import Header from "../components/Header";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { collection, query, orderBy, limit, onSnapshot, addDoc } from "firebase/firestore";
+import db from "../firebase/firebase";
+import dayjs from "dayjs";
+import "dayjs/locale/es"; // import Spanish locale
 
-import { useSongs } from "../firebase/useSongs";
+import ProgramList from "../components/Program/ProgramList";
+import NewProgramModal from "../components/Program/NewProgramModal";
+
+dayjs.locale("es"); // set locale globally
 
 function Home() {
-  const { songs, filterByValue, clearFilter } = useSongs();
-
-  const searchSongs = e => {
-    const value = e.currentTarget.value;
-    filterByValue(value);
-  }
+  const [programs, setPrograms] = useState([]);
+  const [isNewProgramModalVisible, setIsNewProgramModalVisible] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    clearFilter();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    const q = query(
+      collection(db, "programs"),
+      orderBy("date", "desc"),
+      limit(8)
+    );
+    const unsub = onSnapshot(q, (snapshot) => {
+      const programsData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        // Ensure date is a Date object
+        return ({
+          id: doc.id,
+          ...data,
+          date: dayjs(data.date.toDate())
+        })
+      })
+      setPrograms(programsData);
+    });
+    return unsub;
   }, []);
 
+  const handleCreateProgram = async ({ date, title }) => {
+    const jsDate = date.toDate(); // Convert dayjs object to JavaScript Date
+    const docRef = await addDoc(collection(db, "programs"), {
+      date: jsDate,
+      title: title
+    });
+    navigate(`/program/${docRef.id}`);
+  };
+
   return (
-    <>
-      <Header isBackVisible={false} />
-      <div className="mx-auto max-w-4xl px-6 lg:px-8">
-        <div className="py-4">
-          <input
-            placeholder="Buscar canciones"
-            type="text"
-            className="p-3 sm:p-5 mt-1 w-full rounded-md border-0 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:leading-6"
-            onChange={searchSongs}
-          />
+    <div className="max-w-5xl mx-auto py-8 px-4">
+      <h1 className="text-2xl font-bold mb-6">Dashboard de Programas</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        {/* CTA to add new program */}
+        <div
+          className="flex flex-col items-center justify-center border-2 border-dashed border-cyan-400 rounded-lg p-6 cursor-pointer hover:bg-cyan-50 min-h-[120px]"
+          onClick={() => setIsNewProgramModalVisible(true)}
+        >
+          <span className="text-cyan-600 text-4xl mb-2">+</span>
+          <span className="font-semibold text-cyan-700">Nuevo Programa</span>
         </div>
-        <main className="mx-auto max-w-none pb-8">
-          <div className="overflow-hidden bg-white shadow sm:rounded-lg">
-            <ul className="divide-y divide-gray-200">
-              {songs?.map(song => <li key={song.id}>
-                <Link to={`song/${song.id}`} className="block hover:bg-gray-50">
-                  <div className="px-4 py-4 sm:px-6">
-                    {song.title}
-                  </div>
-                </Link>
-              </li>)}
-            </ul>
-          </div>
-        </main>
+        {/* Programs */}
+        <ProgramList programs={programs}  />
       </div>
-    </>
+      {/* New Program Modal */}
+      <NewProgramModal
+        isOpen={isNewProgramModalVisible}
+        onCancel={() => setIsNewProgramModalVisible(false)}
+        onSubmit={handleCreateProgram}
+      />
+    </div>
   );
 }
 

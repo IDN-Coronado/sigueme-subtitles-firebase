@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, query, orderBy, limit, onSnapshot, addDoc } from "firebase/firestore";
-import db from "../firebase/firebase";
 import dayjs from "dayjs";
 import "dayjs/locale/es"; // import Spanish locale
+
+import usePrograms from "../firebase/usePrograms";
 
 import ProgramList from "../components/Program/ProgramList";
 import NewProgramModal from "../components/Program/NewProgramModal";
@@ -11,39 +11,23 @@ import NewProgramModal from "../components/Program/NewProgramModal";
 dayjs.locale("es"); // set locale globally
 
 function Home() {
-  const [programs, setPrograms] = useState([]);
+  const { programs, addProgram } = usePrograms();
+  const [currentPrograms, setCurrentPrograms] = useState(programs);
   const [isNewProgramModalVisible, setIsNewProgramModalVisible] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const q = query(
-      collection(db, "programs"),
-      orderBy("date", "desc"),
-      limit(8)
-    );
-    const unsub = onSnapshot(q, (snapshot) => {
-      const programsData = snapshot.docs.map(doc => {
-        const data = doc.data();
-        // Ensure date is a Date object
-        return ({
-          id: doc.id,
-          ...data,
-          date: dayjs(data.date.toDate())
-        })
-      })
-      setPrograms(programsData);
-    });
-    return unsub;
-  }, []);
-
   const handleCreateProgram = async ({ date, title }) => {
     const jsDate = date.toDate(); // Convert dayjs object to JavaScript Date
-    const docRef = await addDoc(collection(db, "programs"), {
+    const docRef = await addProgram({
       date: jsDate,
       title: title
     });
     navigate(`/program/${docRef.id}`);
   };
+  
+  useEffect(() => {
+    setCurrentPrograms(programs);
+  }, [programs]);
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4">
@@ -58,7 +42,7 @@ function Home() {
           <span className="font-semibold text-cyan-700">Nuevo Programa</span>
         </div>
         {/* Programs */}
-        <ProgramList programs={programs}  />
+        <ProgramList programs={currentPrograms}  />
       </div>
       {/* New Program Modal */}
       <NewProgramModal

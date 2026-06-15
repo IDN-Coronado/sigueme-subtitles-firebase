@@ -1,20 +1,21 @@
-import { useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
-import { useSongs } from "../firebase/useSongs";
+import useSongs from "../firebase/useSongs";
 
 function Songs() {
-  const { songs, filterByValue, clearFilter } = useSongs();
+  const { songs, filterByValue } = useSongs();
+  const [currentSongs, setCurrentSongs] = useState(songs);
 
-  const searchSongs = e => {
+  const searchSongs = useCallback(e => {
     const value = e.currentTarget.value;
-    filterByValue(value);
-  }
+    const filtered = filterByValue(value);
+    setCurrentSongs(filtered);
+  }, [filterByValue]);
 
   useEffect(() => {
-    clearFilter();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    setCurrentSongs(songs);
+  }, [songs]);
 
   return (
     <>
@@ -31,7 +32,7 @@ function Songs() {
         <main className="mx-auto max-w-none pb-8">
           <div className="overflow-hidden bg-white shadow sm:rounded-lg">
             <ul className="divide-y divide-gray-200">
-              {songs?.map(song => <li key={song.id}>
+              {currentSongs?.map(song => <li key={song.id}>
                 <Link to={`/song/${song.id}`} className="block hover:bg-gray-50">
                   <div className="px-4 py-4 sm:px-6">
                     {song.title}

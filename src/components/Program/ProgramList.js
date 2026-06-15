@@ -32,6 +32,7 @@ function ProgramList({ programs }) {
   return <>
     {programs.map((program) => (
       <ProgramItem
+        key={program.id}
         program={program}
         onClick={e => {
           // Prevent navigation if X is clicked

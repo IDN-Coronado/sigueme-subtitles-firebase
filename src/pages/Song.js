@@ -4,7 +4,7 @@ import { doc, updateDoc } from "firebase/firestore";
 
 import db from "../firebase/firebase";
 
-import { useSongs } from "../firebase/useSongs";
+import useSongs from "../firebase/useSongs";
 
 const CAPTION = 'caption';
 

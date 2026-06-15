@@ -1,8 +1,11 @@
+import dayjs from "dayjs";
+
 function ProgramItem({
   program,
   onClick,
   onDelete,
 }) {
+  const formattedDate = dayjs(program.date.toDate()).format("D MMMM, YYYY");
   return (
     <div
       key={program.id}
@@ -19,7 +22,7 @@ function ProgramItem({
       </button>
       <span className="font-bold text-lg mb-2">{program.title || "Programa"}</span>
       <span className="text-gray-600">
-          {program.date.format("D MMMM, YYYY")}
+          {formattedDate}
       </span>
     </div>
   )

@@ -3,8 +3,6 @@ import {
   RouterProvider,
 } from "react-router-dom";
 
-import { ProvideSongs } from "./firebase/useSongs"; 
-
 import './App.css';
 
 import Home from "./pages/Home";
@@ -45,11 +43,9 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <ProvideSongs>
-      <div className="bg-gray-100 min-h-screen">
-        <RouterProvider router={router} />
-      </div>
-    </ProvideSongs>
+    <div className="bg-gray-100 min-h-screen">
+      <RouterProvider router={router} />
+    </div>
   );
 }
 

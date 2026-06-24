@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-import { useSongs } from "../firebase/useSongs";
+import useSongs from "../firebase/useSongs";
 
 import Header from "../components/Header";
 

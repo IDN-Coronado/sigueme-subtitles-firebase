@@ -6,9 +6,15 @@ on:
   push:
     branches:
       - main
+permissions:
+  contents: read
+
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -18,8 +24,8 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-
-      - name: Create .env file
+          
+      - name: Set environment variables from secrets
         run: |
           touch .env
           echo VITE_API_KEY=${{ secrets.API_KEY }} >> .env
@@ -31,7 +37,7 @@ jobs:
           echo VITE_MEASUREMENT_ID=${{ secrets.MEASUREMENT_ID }} >> .env
 
       - name: Install and Run
-        run: npm install && npm run build
+        run: rm -f package-lock.json && npm install && npm run build
       
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0

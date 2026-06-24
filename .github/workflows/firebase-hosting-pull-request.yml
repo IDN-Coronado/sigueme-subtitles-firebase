@@ -40,7 +40,7 @@ jobs:
           echo VITE_MEASUREMENT_ID=${{ secrets.MEASUREMENT_ID }} >> .env
 
       - name: Install and Run
-        run: npm install && npm run build
+        run: rm -f package-lock.json && npm install && npm run build
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0

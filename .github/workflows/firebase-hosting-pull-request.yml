@@ -6,6 +6,11 @@ on:
     # paths:
     # - "website/**"
 
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
 jobs:
   build_and_preview:
     name: Build and Deploy to Firebase Hosting Preview Channel

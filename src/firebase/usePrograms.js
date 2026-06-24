@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { collection, query, orderBy, onSnapshot, addDoc, doc, updateDoc, deleteDoc, limit } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, addDoc, doc, updateDoc, deleteDoc, limit, writeBatch } from "firebase/firestore";
 import db from "./firebase";
 import { create } from "zustand";
 
@@ -33,6 +33,16 @@ function usePrograms(id) {
     setPrograms(programs.map(p => p.id === id ? { ...p, ...data } : p));
   };
 
+  const activateProgram = async (id) => {
+    const batch = writeBatch(db);
+    programs.forEach(p => {
+      const ref = doc(db, COLLECTION_NAME, p.id);
+      batch.update(ref, { active: p.id === id });
+    });
+    await batch.commit();
+    setPrograms(programs.map(p => ({ ...p, active: p.id === id })));
+  };
+
   const removeProgram = async (id) => {
     const programRef = doc(db, COLLECTION_NAME, id);
     await deleteDoc(programRef);
@@ -61,6 +71,7 @@ function usePrograms(id) {
     getById,
     addProgram,
     updateProgram,
+    activateProgram,
     removeProgram,
   };
 }

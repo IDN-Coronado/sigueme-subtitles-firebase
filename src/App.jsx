@@ -32,13 +32,13 @@ const router = createBrowserRouter([
     children: [
       { path: "", element: <Home /> },
       { path: "songs", element: <Songs /> },
-      { path: "caption", element: <Caption /> },
       { path: "song/:songId", element: <Song /> },
       { path: "add", element: <AddSong /> },
       { path: "program/:programId", element: <Program /> },
-      { path: "themes", element: <Themes /> }, // add this line
+      { path: "themes", element: <Themes /> },
     ],
   },
+  { path: "/caption", element: <Caption /> },
 ]);
 
 function App() {

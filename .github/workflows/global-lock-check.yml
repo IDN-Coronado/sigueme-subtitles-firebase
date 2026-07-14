@@ -1,0 +1,37 @@
+name: "Global PR Lock Check"
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, labeled, unlabeled, ready_for_review]
+
+jobs:
+  enforce-lock:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for Global Merge Lock
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          CURRENT_PR: ${{ github.event.pull_request.number }}
+        run: |
+          LOCK_LABEL="lock-for-merge"
+          
+          echo "Checking if PR #$CURRENT_PR is affected by a global lock..."
+          
+          # Query GitHub CLI for any open PRs with the lock label
+          LOCKED_PRS=$(gh pr list --state open --label "$LOCK_LABEL" --json number --jq '.[].number')
+          
+          if [ -z "$LOCKED_PRS" ]; then
+            echo "No PRs are currently locked. Safe to proceed."
+            exit 0
+          fi
+          
+          # If the current PR is the one holding the lock, allow it
+          if echo "$LOCKED_PRS" | grep -Fxq "$CURRENT_PR"; then
+            echo "This PR (#$CURRENT_PR) holds the lock tag. It is allowed to merge."
+            exit 0
+          else
+            PR_LIST=$(echo "$LOCKED_PRS" | tr '\n' ',' | sed 's/,$//')
+            echo "::error::Merge Blocked! PR(s) #$PR_LIST are currently locked with the '$LOCK_LABEL' tag."
+            exit 1
+          fi

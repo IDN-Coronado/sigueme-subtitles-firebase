@@ -1,0 +1,41 @@
+name: "Global PR Lock Auto Unblock"
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  trigger-unblock:
+    # Only run if the PR being closed actually had the lock label applied
+    if: contains(github.event.pull_request.labels.*.name, 'lock-for-merge')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Re-run on Other Open PRs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          CLOSED_PR: ${{ github.event.pull_request.number }}
+        run: |
+          echo "PR #$CLOSED_PR (which held the lock) has been closed or merged."
+          echo "Fetching other open PRs to trigger a re-evalution..."
+
+          # Get a list of all other open PR numbers
+          OPEN_PRS=$(gh pr list --state open --json number --jq '.[].number')
+
+          if [ -z "$OPEN_PRS" ]; then
+            echo "No other open PRs found."
+            exit 0
+          fi
+
+          # Loop through each open PR and trigger the check workflow to run again
+          for PR in $OPEN_PRS; do
+            if [ "$PR" != "$CLOSED_PR" ]; then
+              echo "Requesting re-run for check on PR #$PR..."
+              
+              # Triggers a new check run event by pinging GitHub's API for that PR's head branch
+              gh api -X POST /repos/${{ github.repository }}/actions/workflows/global-lock-check.yml/dispatches \
+                -f ref=$(gh pr view $PR --json headRefName --jq '.headRefName')
+            fi
+          done
+          
+          echo "All remaining open PRs have been queued for unblocking."

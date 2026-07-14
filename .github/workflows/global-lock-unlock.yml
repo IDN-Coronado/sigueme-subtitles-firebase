@@ -9,6 +9,10 @@ jobs:
     # Only run if the PR being closed actually had the lock label applied
     if: contains(github.event.pull_request.labels.*.name, 'lock-for-merge')
     runs-on: ubuntu-latest
+    permissions:
+        contents: read
+        pull-requests: read
+        actions: write
     steps:
       - name: Trigger Re-run on Other Open PRs
         env:

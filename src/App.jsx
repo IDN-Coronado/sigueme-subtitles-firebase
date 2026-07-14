@@ -1,6 +1,9 @@
+import { useState, useEffect } from "react";
 import {
   createBrowserRouter,
   RouterProvider,
+  Outlet,
+  useLocation,
 } from "react-router-dom";
 
 import './App.css';
@@ -10,32 +13,48 @@ import Song from "./pages/Song";
 import Caption from "./pages/Caption";
 import AddSong from "./pages/AddSong";
 import Songs from "./pages/Songs";
-import NavBar from "./components/NavBar";
-import { Outlet } from "react-router-dom"; // add this import
 import Program from "./pages/Program";
-import Themes from "./pages/Themes"; // import the new Themes page
+import Themes from "./pages/Themes";
+import Sidebar from "./components/Sidebar";
 
-// Add a layout component to wrap NavBar and children
 function Layout() {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const location = useLocation();
+
+  useEffect(() => {
+    setSidebarCollapsed(true);
+  }, [location.pathname]);
+
+  const activeItem =
+    location.pathname === "/" ? "programs"
+    : location.pathname.includes("songs") || location.pathname.includes("song") ? "songs"
+    : location.pathname.includes("themes") ? "themes"
+    : "programs";
+
   return (
-    <>
-      <NavBar />
-      <Outlet />
-    </>
+    <div className="flex min-h-screen bg-[#101415]">
+      <Sidebar
+        activeItem={activeItem}
+        collapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed(prev => !prev)}
+      />
+      <div className="flex flex-col flex-1 min-h-screen min-w-0 ml-[72px]">
+        <Outlet />
+      </div>
+    </div>
   );
 }
 
 const router = createBrowserRouter([
   {
-    path: "/",
     element: <Layout />,
     children: [
-      { path: "", element: <Home /> },
-      { path: "songs", element: <Songs /> },
-      { path: "song/:songId", element: <Song /> },
-      { path: "add", element: <AddSong /> },
-      { path: "program/:programId", element: <Program /> },
-      { path: "themes", element: <Themes /> },
+      { path: "/", element: <Home /> },
+      { path: "/songs", element: <Songs /> },
+      { path: "/song/:songId", element: <Song /> },
+      { path: "/add", element: <AddSong /> },
+      { path: "/program/:programId", element: <Program /> },
+      { path: "/themes", element: <Themes /> },
     ],
   },
   { path: "/caption", element: <Caption /> },

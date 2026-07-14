@@ -13,6 +13,7 @@ jobs:
       - name: Trigger Re-run on Other Open PRs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           CLOSED_PR: ${{ github.event.pull_request.number }}
         run: |
           echo "PR #$CLOSED_PR (which held the lock) has been closed or merged."

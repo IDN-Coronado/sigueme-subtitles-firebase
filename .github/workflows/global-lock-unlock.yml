@@ -1,45 +1,78 @@
-name: "Global PR Lock Auto Unblock"
+name: "Global PR Lock Propagate"
 
+# When a merge lock is applied, removed, or a locked PR closes, other open PRs
+# ee-evaluate and post a fresh check run
+# for each of them so the Freeze ruleset sees the current lock state.
 on:
   pull_request:
-    types: [closed]
+    types: [labeled, unlabeled, closed]
 
 jobs:
-  trigger-unblock:
-    # Only run if the PR being closed actually had the lock label applied
-    if: contains(github.event.pull_request.labels.*.name, 'lock-for-merge')
+  propagate-lock-status:
+    if: |
+      (github.event.action == 'labeled' && github.event.label.name == 'lock-for-merge') ||
+      (github.event.action == 'unlabeled' && github.event.label.name == 'lock-for-merge') ||
+      (github.event.action == 'closed' && contains(github.event.pull_request.labels.*.name, 'lock-for-merge'))
     runs-on: ubuntu-latest
     permissions:
-        contents: read
-        pull-requests: read
-        actions: write
+      checks: write
+      pull-requests: read
     steps:
-      - name: Trigger Re-run on Other Open PRs
+      - name: Re-evaluate enforce-lock on other open PRs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
-          CLOSED_PR: ${{ github.event.pull_request.number }}
+          TRIGGER_PR: ${{ github.event.pull_request.number }}
+          EVENT_ACTION: ${{ github.event.action }}
         run: |
-          echo "PR #$CLOSED_PR (which held the lock) has been closed or merged."
-          echo "Fetching other open PRs to trigger a re-evalution..."
+          LOCK_LABEL="lock-for-merge"
 
-          # Get a list of all other open PR numbers
-          OPEN_PRS=$(gh pr list --state open --json number --jq '.[].number')
+          echo "Lock state changed via '$EVENT_ACTION' on PR #$TRIGGER_PR."
+          echo "Re-evaluating enforce-lock on other open PRs..."
 
-          if [ -z "$OPEN_PRS" ]; then
-            echo "No other open PRs found."
+          LOCKED_PRS=$(gh pr list --state open --label "$LOCK_LABEL" --json number --jq '.[].number')
+          if [ -z "$LOCKED_PRS" ]; then
+            echo "No open PRs currently hold '$LOCK_LABEL'."
+          else
+            echo "Locked PR(s): $(echo "$LOCKED_PRS" | tr '\n' ' ')"
+          fi
+
+          # number<TAB>headRefOid for every open PR except the one that triggered this run
+          OTHER_PRS=$(gh pr list --state open --json number,headRefOid \
+            --jq ".[] | select(.number != ${TRIGGER_PR}) | \"\(.number)\t\(.headRefOid)\"")
+
+          if [ -z "$OTHER_PRS" ]; then
+            echo "No other open PRs to update."
             exit 0
           fi
 
-          # Loop through each open PR and trigger the check workflow to run again
-          for PR in $OPEN_PRS; do
-            if [ "$PR" != "$CLOSED_PR" ]; then
-              echo "Requesting re-run for check on PR #$PR..."
-              
-              # Triggers a new check run event by pinging GitHub's API for that PR's head branch
-              gh api -X POST /repos/${{ github.repository }}/actions/workflows/global-lock-check.yml/dispatches \
-                -f ref=$(gh pr view $PR --json headRefName --jq '.headRefName')
+          while IFS=$'\t' read -r PR HEAD_SHA; do
+            [ -z "$PR" ] && continue
+
+            if [ -z "$LOCKED_PRS" ]; then
+              CONCLUSION="success"
+              TITLE="No merge lock"
+              SUMMARY="No open PRs hold the \`$LOCK_LABEL\` label. Safe to proceed."
+            elif echo "$LOCKED_PRS" | grep -Fxq "$PR"; then
+              CONCLUSION="success"
+              TITLE="This PR holds the lock"
+              SUMMARY="PR #$PR holds the \`$LOCK_LABEL\` label and may merge."
+            else
+              PR_LIST=$(echo "$LOCKED_PRS" | tr '\n' ',' | sed 's/,$//')
+              CONCLUSION="failure"
+              TITLE="Merge blocked by lock"
+              SUMMARY="Merge blocked. PR(s) #$PR_LIST currently hold the \`$LOCK_LABEL\` label."
             fi
-          done
-          
-          echo "All remaining open PRs have been queued for unblocking."
+
+            echo "Updating enforce-lock on PR #$PR (sha ${HEAD_SHA:0:7}) -> $CONCLUSION"
+
+            gh api --method POST "/repos/$GH_REPO/check-runs" \
+              -f name='enforce-lock' \
+              -f head_sha="$HEAD_SHA" \
+              -f status='completed' \
+              -f conclusion="$CONCLUSION" \
+              -f "output[title]=$TITLE" \
+              -f "output[summary]=$SUMMARY"
+          done <<< "$OTHER_PRS"
+
+          echo "Finished propagating lock status."

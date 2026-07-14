@@ -1,7 +1,7 @@
 name: "Global PR Lock Propagate"
 
 # When a merge lock is applied, removed, or a locked PR closes, other open PRs
-# ee-evaluate and post a fresh check run
+# still have a stale enforce-lock check. Re-evaluate and post a fresh check run
 # for each of them so the Freeze ruleset sees the current lock state.
 on:
   pull_request:
@@ -30,7 +30,20 @@ jobs:
           echo "Lock state changed via '$EVENT_ACTION' on PR #$TRIGGER_PR."
           echo "Re-evaluating enforce-lock on other open PRs..."
 
-          LOCKED_PRS=$(gh pr list --state open --label "$LOCK_LABEL" --json number --jq '.[].number')
+          # Prefer labels from each PR payload over `gh pr list --label`, which can
+          # lag behind labeled/unlabeled events via GitHub's issue search index.
+          LOCKED_PRS=$(gh pr list --state open --json number,labels \
+            --jq "[.[] | select(any(.labels[]; .name == \"$LOCK_LABEL\")) | .number][]")
+
+          # Trust this event for the PR that just changed.
+          if [ "$EVENT_ACTION" = "unlabeled" ] || [ "$EVENT_ACTION" = "closed" ]; then
+            LOCKED_PRS=$(echo "$LOCKED_PRS" | grep -vx "$TRIGGER_PR" || true)
+          elif [ "$EVENT_ACTION" = "labeled" ]; then
+            if ! echo "$LOCKED_PRS" | grep -Fxq "$TRIGGER_PR"; then
+              LOCKED_PRS=$(printf '%s\n%s\n' "$LOCKED_PRS" "$TRIGGER_PR" | sed '/^$/d')
+            fi
+          fi
+
           if [ -z "$LOCKED_PRS" ]; then
             echo "No open PRs currently hold '$LOCK_LABEL'."
           else

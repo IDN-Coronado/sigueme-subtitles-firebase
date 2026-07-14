@@ -16,19 +16,31 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
           CURRENT_PR: ${{ github.event.pull_request.number }}
+          EVENT_ACTION: ${{ github.event.action }}
+          EVENT_LABEL: ${{ github.event.label.name }}
         run: |
           LOCK_LABEL="lock-for-merge"
-          
+
           echo "Checking if PR #$CURRENT_PR is affected by a global lock..."
-          
-          # Query GitHub CLI for any open PRs with the lock label
-          LOCKED_PRS=$(gh pr list --state open --label "$LOCK_LABEL" --json number --jq '.[].number')
-          
+
+          # Prefer per-PR labels over `gh pr list --label` (search index can lag).
+          LOCKED_PRS=$(gh pr list --state open --json number,labels \
+            --jq "[.[] | select(any(.labels[]; .name == \"$LOCK_LABEL\")) | .number][]")
+
+          # Trust this event for the PR that just changed.
+          if [ "$EVENT_ACTION" = "unlabeled" ] && [ "$EVENT_LABEL" = "$LOCK_LABEL" ]; then
+            LOCKED_PRS=$(echo "$LOCKED_PRS" | grep -vx "$CURRENT_PR" || true)
+          elif [ "$EVENT_ACTION" = "labeled" ] && [ "$EVENT_LABEL" = "$LOCK_LABEL" ]; then
+            if ! echo "$LOCKED_PRS" | grep -Fxq "$CURRENT_PR"; then
+              LOCKED_PRS=$(printf '%s\n%s\n' "$LOCKED_PRS" "$CURRENT_PR" | sed '/^$/d')
+            fi
+          fi
+
           if [ -z "$LOCKED_PRS" ]; then
             echo "No PRs are currently locked. Safe to proceed."
             exit 0
           fi
-          
+
           # If the current PR is the one holding the lock, allow it
           if echo "$LOCKED_PRS" | grep -Fxq "$CURRENT_PR"; then
             echo "This PR (#$CURRENT_PR) holds the lock tag. It is allowed to merge."

@@ -7,7 +7,7 @@ on:
 jobs:
   trigger-unblock:
     # Only run if the PR being closed actually had the lock label applied
-    if: contains(github.event.pull_request.labels.*.name, 'do-not-merge-others')
+    if: contains(github.event.pull_request.labels.*.name, 'lock-for-merge')
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Re-run on Other Open PRs

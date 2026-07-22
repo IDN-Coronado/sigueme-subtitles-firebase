@@ -69,3 +69,61 @@ export function IconChevron({ collapsed }) {
     </svg>
   );
 }
+
+export function IconPlay({ color = "currentColor" }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+      <path d="M4 2.5v11l10-5.5L4 2.5z" fill={color} />
+    </svg>
+  );
+}
+
+export function IconPause({ color = "currentColor" }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+      <rect x="3.5" y="2.5" width="3" height="11" rx="0.5" fill={color} />
+      <rect x="9.5" y="2.5" width="3" height="11" rx="0.5" fill={color} />
+    </svg>
+  );
+}
+
+export function IconStop({ color = "currentColor" }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+      <rect x="3.5" y="3.5" width="9" height="9" rx="1" fill={color} />
+    </svg>
+  );
+}
+
+export function IconLoop({ color = "currentColor" }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+      <path
+        d="M12.5 3.5H6a3.5 3.5 0 0 0 0 7h.5"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M10.5 1.5 12.5 3.5 10.5 5.5"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M3.5 12.5H10a3.5 3.5 0 0 0 0-7h-.5"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M5.5 14.5 3.5 12.5 5.5 10.5"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}

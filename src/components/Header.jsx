@@ -18,7 +18,7 @@ const Header = ({
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">
           Canciones
         </h1>
-        {isAddVisible && <Link to="/add" className="p-0 text-cyan-500 font-bold flex items-center">
+        {isAddVisible && <Link to="/" className="p-0 text-cyan-500 font-bold flex items-center">
           <span>Agregar canción</span>
         </Link>}
       </div>

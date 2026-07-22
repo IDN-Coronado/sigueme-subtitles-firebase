@@ -1,216 +1,350 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
-import "dayjs/locale/es";
-import { deleteDoc, doc } from "firebase/firestore";
 
-import db from "../firebase/firebase";
 import usePrograms from "../firebase/usePrograms";
+import useSongs from "../firebase/useSongs";
+import useThemes from "../firebase/useThemes";
+import useMedia from "../firebase/useMedia";
+import openLiveView from "../utils/openLiveView";
+
 import NewProgramModal from "../components/Program/NewProgramModal";
-import ProgramDeleteModal from "../components/Program/ProgramDeleteModal";
-import { IconCalendar, IconSearch, IconPlus, IconDots } from "../components/Icons";
+import OpenProgramModal from "../components/Program/OpenProgramModal";
+import NewSongModal from "../components/Song/NewSongModal";
+import SlideUploadModal from "../components/SlideUploadModal";
+import NewThemeModal from "../components/Theme/NewThemeModal";
+import { IconPlus, IconCalendar } from "../components/Icons";
 
-dayjs.locale("es");
+const MONO = { fontFamily: "JetBrains Mono, monospace" };
 
-// ─── Component ───────────────────────────────────────────────────────────────
+const MENU_ITEMS = [
+  {
+    id: "new-program",
+    label: "Create new program",
+    description: "Start a fresh service schedule",
+    shortcut: "Ctrl+N",
+  },
+  {
+    id: "open-program",
+    label: "Open program",
+    description: "Continue with a saved program",
+    shortcut: "Ctrl+O",
+  },
+  {
+    id: "new-song",
+    label: "Create new song",
+    description: "Add lyrics to your library",
+    shortcut: null,
+  },
+  {
+    id: "upload-file",
+    label: "Upload a file",
+    description: "Add media to the general library",
+    shortcut: null,
+  },
+  {
+    id: "upload-theme",
+    label: "Upload a theme",
+    description: "Import a background image or video",
+    shortcut: null,
+  },
+];
+
+function MenuIcon({ id }) {
+  const stroke = "currentColor";
+  if (id === "new-program") {
+    return (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
+        <rect x="3" y="4" width="16" height="14" rx="2" stroke={stroke} strokeWidth="1.5" />
+        <path d="M11 8v6M8 11h6" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  if (id === "open-program") {
+    return (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
+        <path
+          d="M3 7.5A2.5 2.5 0 0 1 5.5 5H9l2 2h5.5A2.5 2.5 0 0 1 19 9.5v6A2.5 2.5 0 0 1 16.5 18h-11A2.5 2.5 0 0 1 3 15.5v-8z"
+          stroke={stroke}
+          strokeWidth="1.5"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+  if (id === "new-song") {
+    return (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
+        <path
+          d="M9 16V6l9-2v10"
+          stroke={stroke}
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <circle cx="7" cy="16" r="2.5" stroke={stroke} strokeWidth="1.5" />
+        <circle cx="16" cy="14" r="2.5" stroke={stroke} strokeWidth="1.5" />
+      </svg>
+    );
+  }
+  if (id === "upload-file") {
+    return (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
+        <path
+          d="M11 14V4M7 8l4-4 4 4"
+          stroke={stroke}
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M4 14v2.5A1.5 1.5 0 0 0 5.5 18h11a1.5 1.5 0 0 0 1.5-1.5V14"
+          stroke={stroke}
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+  // upload-theme
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
+      <rect x="2" y="4" width="18" height="14" rx="2" stroke={stroke} strokeWidth="1.5" />
+      <path d="M11 4v14" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 function Home() {
-  const { programs, addProgram } = usePrograms();
-  const [currentPrograms, setCurrentPrograms] = useState(programs);
-  const [isNewProgramModalVisible, setIsNewProgramModalVisible] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [programToDelete, setProgramToDelete] = useState(null);
   const navigate = useNavigate();
+  const { programs, addProgram } = usePrograms();
+  const { addSong } = useSongs();
+  const { addTheme } = useThemes();
+  const { uploadMedia } = useMedia();
 
-  useEffect(() => {
-    setCurrentPrograms(programs);
-  }, [programs]);
+  const [modal, setModal] = useState(null); // 'new-program' | 'open-program' | 'new-song' | 'upload-file' | 'upload-theme'
+
+  const closeModal = () => setModal(null);
 
   const handleCreateProgram = async ({ date, title }) => {
     const jsDate = date.toDate();
     const docRef = await addProgram({ date: jsDate, title });
+    closeModal();
     navigate(`/program/${docRef.id}`);
   };
 
-  const handleOpenDelete = (programId) => {
-    setProgramToDelete(programId);
-    setShowDeleteConfirm(true);
+  const handleOpenProgram = (program) => {
+    closeModal();
+    navigate(`/program/${program.id}`);
   };
 
-  const handleConfirmDelete = async () => {
-    if (programToDelete) {
-      await deleteDoc(doc(db, "programs", programToDelete));
-      setShowDeleteConfirm(false);
-      setProgramToDelete(null);
+  const handleCreateSong = async ({ title, body }) => {
+    await addSong(title, body);
+  };
+
+  const handleUploadFile = async ({ file, title }) => {
+    try {
+      await uploadMedia({ file, title });
+      closeModal();
+    } catch {
+      alert("Error al subir el archivo.");
     }
   };
 
-  const handleCancelDelete = () => {
-    setShowDeleteConfirm(false);
-    setProgramToDelete(null);
+  const handleCreateTheme = async ({ title, storagePath, file }) => {
+    try {
+      await addTheme({ title, storagePath, file });
+    } catch {
+      alert("Error al subir el archivo o guardar el tema.");
+    }
   };
+
+  const activeProgram = programs.find((p) => p.active);
 
   return (
     <>
-      {/* Top App Bar */}
-      <header className="sticky top-0 z-10 h-14 sm:h-16 bg-[#191c1e]/80 backdrop-blur-md border-b border-[rgba(69,70,77,0.3)] flex items-center justify-end px-4 sm:px-6">
-        <div className="flex items-center gap-3 sm:gap-6 min-w-0">
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="w-2 h-2 rounded-full bg-[#ffb4ab]" />
+      <div className="h-full overflow-y-auto flex flex-col bg-[#101415] relative">
+        {/* Atmosphere */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 80% 50% at 20% 0%, rgba(123,208,255,0.08) 0%, transparent 55%), radial-gradient(ellipse 60% 40% at 90% 100%, rgba(0,166,224,0.06) 0%, transparent 50%)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.035]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(224,227,229,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(224,227,229,0.5) 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+          }}
+        />
+
+        <header className="relative z-10 h-14 sm:h-16 border-b border-[rgba(69,70,77,0.3)] flex items-center justify-between px-5 sm:px-8 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="text-[#e0e3e5] font-bold text-lg sm:text-xl tracking-tight truncate">
+              Presenter Pro
+            </span>
             <span
-              className="hidden sm:inline text-[#c6c6cd] text-xs font-medium uppercase tracking-[0.05em] leading-4"
-              style={{ fontFamily: "JetBrains Mono, monospace" }}
+              className="hidden sm:inline text-[#6b7280] text-[10px] tracking-[0.12em] uppercase"
+              style={MONO}
             >
-              SISTEMA LISTO
+              Live Console
             </span>
           </div>
-          <button className="bg-[rgba(123,208,255,0.1)] border border-[rgba(123,208,255,0.3)] text-[#7bd0ff] font-bold text-xs sm:text-sm px-3 sm:px-6 py-1.5 sm:py-2 rounded-xl hover:bg-[rgba(123,208,255,0.2)] transition-colors whitespace-nowrap">
-            Vista en Vivo
-          </button>
-        </div>
-      </header>
-
-      {/* Canvas */}
-      <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-10 flex flex-col gap-6 sm:gap-8 lg:gap-10 bg-[#101415]">
-
-        {/* Dashboard Header */}
-        <div className="flex flex-col gap-4 sm:gap-6 min-w-0">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="min-w-0">
-              <h2 className="text-[#e0e3e5] font-bold text-3xl sm:text-4xl lg:text-5xl tracking-tight leading-10 sm:leading-[48px] lg:leading-[56px]">
-                Dashboard
-              </h2>
-              <p className="text-[#c6c6cd] text-base sm:text-lg leading-6 sm:leading-7 mt-1 max-w-2xl">
-                Administra tus producciones y revisa sesiones pasadas desde un centro de control centralizado.
-              </p>
-            </div>
+          <div className="flex items-center gap-3 shrink-0">
+            {activeProgram && (
+              <button
+                type="button"
+                onClick={() => navigate(`/program/${activeProgram.id}`)}
+                className="hidden md:inline-flex items-center gap-2 text-[#c6c6cd] text-xs border border-[rgba(69,70,77,0.4)] px-3 py-1.5 rounded-sm hover:border-[#7bd0ff] hover:text-[#7bd0ff] transition-colors"
+                style={MONO}
+              >
+                <IconCalendar color="currentColor" />
+                {activeProgram.title || "Programa activo"}
+              </button>
+            )}
             <button
-              onClick={() => setIsNewProgramModalVisible(true)}
-              className="flex items-center justify-center gap-3 sm:gap-4 bg-[#7bd0ff] text-[#00354a] font-bold text-sm sm:text-base px-5 sm:px-10 py-3 sm:py-4 rounded-lg hover:bg-[#5bc0ef] transition-colors w-full sm:w-auto shrink-0"
+              type="button"
+              onClick={() => openLiveView().catch(() => {})}
+              className="text-[#7bd0ff] font-medium text-sm border border-[rgba(123,208,255,0.35)] px-3 py-1.5 rounded-sm hover:bg-[rgba(123,208,255,0.08)] transition-colors"
+              style={MONO}
+              title="Abrir Live View en otra pantalla"
             >
-              <IconPlus />
-              <span className="sm:hidden">Nuevo Programa</span>
-              <span className="hidden sm:inline">Crear Nuevo Programa</span>
+              Live View
             </button>
           </div>
-          <div className="relative w-full max-w-[448px]">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-              <IconSearch />
-            </span>
-            <input
-              type="text"
-              placeholder="Buscar programas..."
-              className="bg-[#0b0f10] text-[#6b7280] placeholder-[#6b7280] text-sm sm:text-base rounded-xl pl-10 pr-4 sm:pr-6 py-2.5 w-full outline-none border border-[rgba(69,70,77,0.2)] focus:border-[#7bd0ff] transition-colors"
-            />
-          </div>
-        </div>
+        </header>
 
-        {/* Upcoming Programs section */}
-        <div className="flex flex-col gap-4 sm:gap-6 min-w-0">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2 min-w-0">
-              <IconCalendar />
-              <h3 className="text-[#e0e3e5] font-semibold text-xl sm:text-2xl tracking-tight leading-7 sm:leading-8 truncate">
-                Próximos Programas
-              </h3>
-            </div>
-            <div
-              className="bg-[rgba(50,53,55,0.3)] text-[#c6c6cd] text-[10px] sm:text-xs font-medium tracking-[0.05em] px-3 sm:px-4 py-1 rounded-xl uppercase leading-4 self-start sm:self-auto shrink-0"
-              style={{ fontFamily: "JetBrains Mono, monospace" }}
-            >
-              {currentPrograms.length} PROGRAMADOS
-            </div>
-          </div>
-
-          {/* Program grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-            {currentPrograms.map((program) => {
-              const formattedDate = dayjs(program.date.toDate())
-                .format("D MMM, YYYY")
-                .toUpperCase();
-              return (
-                <div
-                  key={program.id}
-                  className="bg-[rgba(29,32,34,0.6)] backdrop-blur-md border border-[rgba(255,255,255,0.05)] rounded-lg p-4 sm:p-6 flex flex-col justify-between hover:border-[rgba(123,208,255,0.2)] transition-colors cursor-pointer min-h-[220px] sm:min-h-[264px] min-w-0"
-                  onClick={() => navigate(`/program/${program.id}`)}
-                >
-                  <div className="min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-4">
-                      <span
-                        className="bg-[rgba(0,166,224,0.2)] text-[#7bd0ff] text-[10px] sm:text-xs font-medium tracking-[0.05em] px-2 py-1 rounded-sm uppercase leading-4"
-                        style={{ fontFamily: "JetBrains Mono, monospace" }}
-                      >
-                        PRÓXIMO
-                      </span>
-                      <button
-                        className="text-[#6b7280] hover:text-red-400 transition-colors p-1 leading-none shrink-0"
-                        onClick={(e) => { e.stopPropagation(); handleOpenDelete(program.id); }}
-                        title="Eliminar programa"
-                      >
-                        <IconDots />
-                      </button>
-                    </div>
-                    <h4 className="text-[#e0e3e5] font-bold text-base sm:text-lg leading-6 sm:leading-7 mb-2 break-words">
-                      {program.title || "Programa"}
-                    </h4>
-                    <p
-                      className="text-[#c6c6cd] text-[10px] sm:text-xs font-medium tracking-[0.05em] leading-4"
-                      style={{ fontFamily: "JetBrains Mono, monospace" }}
-                    >
-                      {formattedDate}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-6">
-                    <button
-                      className="flex-1 bg-[rgba(123,208,255,0.1)] border border-[rgba(123,208,255,0.2)] text-[#7bd0ff] font-bold text-sm sm:text-base py-2 rounded-sm hover:bg-[rgba(123,208,255,0.2)] transition-colors"
-                      onClick={(e) => { e.stopPropagation(); navigate(`/program/${program.id}`); }}
-                    >
-                      Previsualizar
-                    </button>
-                    <button
-                      className="flex-1 border border-[#45464d] text-[#c6c6cd] text-sm sm:text-base py-2 rounded-sm hover:bg-[rgba(50,53,55,0.3)] transition-colors"
-                      onClick={(e) => { e.stopPropagation(); navigate(`/program/${program.id}`); }}
-                    >
-                      Editar
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-
-            {/* "Add new" card */}
-            <div
-              className="border-2 border-dashed border-[rgba(69,70,77,0.3)] rounded-lg p-4 sm:p-6 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-[rgba(123,208,255,0.3)] hover:bg-[rgba(123,208,255,0.05)] transition-colors min-h-[120px] sm:min-h-[135px]"
-              onClick={() => setIsNewProgramModalVisible(true)}
-            >
-              <div className="text-[#c6c6cd]">
-                <IconPlus color="#c6c6cd" />
-              </div>
-              <p className="text-[#c6c6cd] font-bold text-sm sm:text-base leading-6">
-                Nuevo Programa
-              </p>
+        <main className="relative z-10 flex-1 flex items-center justify-center p-5 sm:p-8">
+          <div className="w-full max-w-xl">
+            <div className="mb-8 sm:mb-10">
               <p
-                className="text-[rgba(198,198,205,0.6)] text-[10px] sm:text-xs font-medium tracking-[0.05em] text-center leading-4"
-                style={{ fontFamily: "JetBrains Mono, monospace" }}
+                className="text-[#7bd0ff] text-xs tracking-[0.14em] uppercase mb-3"
+                style={MONO}
               >
-                Llenar el calendario
+                File menu
+              </p>
+              <h1 className="text-[#e0e3e5] font-bold text-3xl sm:text-4xl tracking-tight leading-tight">
+                Presenter Pro
+              </h1>
+              <p className="text-[#c6c6cd] text-base sm:text-lg mt-2 max-w-md">
+                Create or open a program to start building your service.
               </p>
             </div>
-          </div>
-        </div>
-      </main>
 
-      {/* ── Modals ── */}
+            <nav
+              className="bg-[rgba(29,32,34,0.65)] border border-[rgba(69,70,77,0.4)] rounded-lg overflow-hidden backdrop-blur-sm"
+              aria-label="Main actions"
+            >
+              {MENU_ITEMS.map((item, index) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setModal(item.id)}
+                  className={`w-full flex items-center gap-4 px-4 sm:px-5 py-3.5 sm:py-4 text-left transition-colors hover:bg-[rgba(123,208,255,0.08)] group ${
+                    index > 0 ? "border-t border-[rgba(69,70,77,0.3)]" : ""
+                  }`}
+                >
+                  <span className="w-10 h-10 rounded-sm bg-[rgba(50,53,55,0.5)] border border-[rgba(69,70,77,0.35)] flex items-center justify-center text-[#c6c6cd] group-hover:text-[#7bd0ff] group-hover:border-[rgba(123,208,255,0.35)] transition-colors shrink-0">
+                    <MenuIcon id={item.id} />
+                  </span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-[#e0e3e5] font-semibold text-sm sm:text-base">
+                      {item.label}
+                    </span>
+                    <span className="block text-[#6b7280] text-xs sm:text-sm mt-0.5 truncate">
+                      {item.description}
+                    </span>
+                  </span>
+                  {item.shortcut && (
+                    <span
+                      className="hidden sm:inline text-[#45464d] text-[10px] tracking-[0.06em] shrink-0"
+                      style={MONO}
+                    >
+                      {item.shortcut}
+                    </span>
+                  )}
+                  <span className="text-[#45464d] group-hover:text-[#7bd0ff] transition-colors shrink-0">
+                    <IconPlus color="currentColor" />
+                  </span>
+                </button>
+              ))}
+            </nav>
+
+            {programs.length > 0 && (
+              <div className="mt-8">
+                <p
+                  className="text-[#6b7280] text-[10px] tracking-[0.1em] uppercase mb-3"
+                  style={MONO}
+                >
+                  Recent
+                </p>
+                <div className="flex flex-col gap-1">
+                  {programs.slice(0, 3).map((program) => {
+                    const dateLabel = program.date?.toDate
+                      ? dayjs(program.date.toDate()).format("D MMM YYYY")
+                      : "";
+                    return (
+                      <button
+                        key={program.id}
+                        type="button"
+                        onClick={() => navigate(`/program/${program.id}`)}
+                        className="flex items-center justify-between gap-3 px-3 py-2 rounded-sm text-left hover:bg-[rgba(50,53,55,0.35)] transition-colors"
+                      >
+                        <span className="flex items-center gap-2 min-w-0">
+                          <span className="text-[#c6c6cd] text-sm truncate">
+                            {program.title || "Programa"}
+                          </span>
+                          {program.active && (
+                            <span
+                              className="shrink-0 inline-flex items-center gap-1.5 bg-[rgba(0,166,224,0.2)] text-[#7bd0ff] text-[10px] font-medium tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-sm"
+                              style={MONO}
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#7bd0ff] animate-pulse" />
+                              Active
+                            </span>
+                          )}
+                        </span>
+                        <span className="text-[#45464d] text-xs shrink-0" style={MONO}>
+                          {dateLabel}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+
       <NewProgramModal
-        isOpen={isNewProgramModalVisible}
-        onCancel={() => setIsNewProgramModalVisible(false)}
+        isOpen={modal === "new-program"}
+        onCancel={closeModal}
         onSubmit={handleCreateProgram}
       />
-      <ProgramDeleteModal
-        isOpen={showDeleteConfirm}
-        onCancel={handleCancelDelete}
-        onConfirm={handleConfirmDelete}
+      <OpenProgramModal
+        isOpen={modal === "open-program"}
+        onClose={closeModal}
+        programs={programs}
+        onSelect={handleOpenProgram}
+      />
+      <NewSongModal
+        isOpen={modal === "new-song"}
+        onClose={closeModal}
+        onSubmit={handleCreateSong}
+      />
+      <SlideUploadModal
+        isOpen={modal === "upload-file"}
+        onClose={closeModal}
+        onUpload={handleUploadFile}
+      />
+      <NewThemeModal
+        isVisible={modal === "upload-theme"}
+        onClose={closeModal}
+        onSubmit={handleCreateTheme}
       />
     </>
   );

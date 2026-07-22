@@ -86,7 +86,7 @@ function ProgramsItemsList({ title, songs, slides, onRemoveSong, onRemoveSlide, 
                   <span className="font-semibold text-center z-10">{song.title}</span>
                 ) : (
                   <Link
-                    to={`/song/${song.id}`}
+                    to="/"
                     className="w-full h-full flex flex-col items-center justify-center z-10"
                     tabIndex={-1}
                   >

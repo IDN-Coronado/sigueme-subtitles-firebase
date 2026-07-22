@@ -50,7 +50,7 @@ function Sidebar({ activeItem = "programs", collapsed = false, onToggle }) {
             </Link>
           )}
 
-          <Link to="/songs" className={navItemBase}>
+          <Link to="/" className={navItemBase}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0">
               <path d="M9 3H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" stroke="#c6c6cd" strokeWidth="1.5" strokeLinecap="round" />
               <path d="M14 2l4 4-7 7H7v-4l7-7z" stroke="#c6c6cd" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -58,7 +58,7 @@ function Sidebar({ activeItem = "programs", collapsed = false, onToggle }) {
             {!c && <span className="text-base leading-6">Canciones</span>}
           </Link>
 
-          <Link to="/themes" className={navItemBase}>
+          <Link to="/" className={navItemBase}>
             <svg width="22" height="16" viewBox="0 0 22 16" fill="none" className="shrink-0">
               <rect x="1" y="1" width="20" height="14" rx="2" stroke="#c6c6cd" strokeWidth="1.5" />
               <path d="M11 1v14" stroke="#c6c6cd" strokeWidth="1.5" strokeLinecap="round" />

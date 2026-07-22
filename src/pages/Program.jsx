@@ -1,273 +1,300 @@
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { useParams } from "react-router-dom";
+import { doc, setDoc } from "firebase/firestore";
+
+import db from "../firebase/firebase";
 import useSongs from "../firebase/useSongs";
-import dayjs from "dayjs";
 import useThemes from "../firebase/useThemes";
 import usePrograms from "../firebase/usePrograms";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import storage from "../firebase/storage";
-
-import ThemeDropdown from "../components/ThemeDropdown";
-import SongDropdown from "../components/SongDropdown";
+import useMedia from "../firebase/useMedia";
+import usePreview from "../firebase/usePreview";
+import useProgramSchedule from "../hooks/useProgramSchedule";
+import { IconPlus } from "../components/Icons";
+import NewSongModal from "../components/Song/NewSongModal";
 import SlideUploadModal from "../components/SlideUploadModal";
-import ConfirmationModal from "../components/Theme/ConfirmationModal";
-import ProgramsItemsList from "../components/ProgramItemsList";
+import NewThemeModal from "../components/Theme/NewThemeModal";
+import Panel from "../components/Program/Panel";
+import ScheduleItemRow from "../components/Program/ScheduleItemRow";
+import PreviewPanel from "../components/Program/PreviewPanel";
+import PreviewConsole from "../components/Program/PreviewConsole";
+import MediaConsoleControls from "../components/Program/MediaConsoleControls";
+import ResourceBrowser from "../components/Program/ResourceBrowser";
+import ProgramHeader from "../components/Program/ProgramHeader";
+import { RESOURCE_TABS } from "../components/Program/constants";
 
-function Section({ title, children }) {
-  const [collapsed, setCollapsed] = useState(false);
-  return (
-    <div className="border rounded-lg bg-white shadow">
-      <button
-        type="button"
-        className="w-full flex justify-between items-center px-4 py-3 font-semibold text-lg"
-        onClick={() => setCollapsed(v => !v)}
-      >
-        {title}
-        <span>{collapsed ? "▼" : "▲"}</span>
-      </button>
-      {!collapsed && <div className="pt-4">{children}</div>}
-    </div>
-  );
-}
+const CAPTION_COLLECTION = "caption";
+const CAPTION_DOC = "caption";
 
-// Toast component
-function Toast({ message, onClose }) {
-  useEffect(() => {
-    const timer = setTimeout(onClose, 4000);
-    return () => clearTimeout(timer);
-  }, [onClose]);
-  return (
-    <div className="fixed bottom-6 right-6 bg-cyan-600 text-white px-6 py-3 rounded shadow-lg z-50 animate-fade-in">
-      {message}
-    </div>
+async function setCaption(caption) {
+  await setDoc(
+    doc(db, CAPTION_COLLECTION, CAPTION_DOC),
+    { caption },
+    { merge: true }
   );
 }
 
 function Program() {
   const { programId } = useParams();
-  const [slides, setSlides] = useState([]);
-  const [selectedTheme, setSelectedTheme] = useState("");
-  const [selectedSongs, setSelectedSongs] = useState([]);
-  const [showSlideModal, setShowSlideModal] = useState(false);
-  const [showConfirmTheme, setShowConfirmTheme] = useState(false);
-  const [showConfirmPantallas, setShowConfirmPantallas] = useState(false);
-  const [toast, setToast] = useState(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [programTheme, setProgramTheme] = useState({});
-  const { songs } = useSongs();
-  const { themes, getThemeById } = useThemes();
+  const resourcesRef = useRef(null);
+  const consoleMediaRef = useRef(null);
+  const [resourceTab, setResourceTab] = useState("songs");
+  const [createModal, setCreateModal] = useState(null);
+
+  const { songs, addSong } = useSongs();
+  const { themes, addTheme } = useThemes();
+  const { media, uploadMedia } = useMedia();
   const { program, updateProgram, activateProgram } = usePrograms(programId);
+  const { preview, setPreview, clearPreviewResource } = usePreview();
 
-  const handleUploadSlide = async ({ file, title }) => {
-    // Save slide in local state for now
-    setSlides(prev => [
-      ...prev,
-      {
-        id: `${Date.now()}-${file.name}`,
-        file,
-        title,
-        name: file.name
-      }
-    ]);
-    setShowSlideModal(false);
+  const {
+    schedule,
+    selectedId,
+    selectedItem,
+    hydrated,
+    setSelectedId,
+    removeItem,
+    addSong: addSongToSchedule,
+    addMedia,
+    addTheme: addThemeToSchedule,
+    addBible,
+  } = useProgramSchedule({
+    programId,
+    program,
+    songs,
+    themes,
+    updateProgram,
+  });
+
+  const closeCreateModal = () => setCreateModal(null);
+
+  const handleCreateSong = async ({ title, body }) => {
+    await addSong(title, body);
   };
 
-  const onSelectSongs = (songId) => {
-    setSelectedSongs(prev => [ ...prev, { id: songId } ]);
-  };
-
-  const handleConfirmSaveTheme = async () => {
-    setShowConfirmTheme(false);
-    if (!selectedTheme) return;
-    await updateProgram(programId, {
-      theme: { id: selectedTheme },
-      updatedAt: dayjs().toISOString(),
-    });
-    setSelectedTheme("");
-    setToast("Tema guardado correctamente.");
-  };
-
-  const handleConfirmSavePantallas = async () => {
-    setShowConfirmPantallas(false);
-    setIsSaving(true);
-    // 1. Upload slide files
-    const slidesData = [];
-    for (const slide of slides) {
-      let fileUrl = null;
-      let storagePath = null;
-      let name = slide.name || (slide.file && slide.file.name) || "";
-      if (slide.file) {
-        const storageRef = ref(storage, `programs/${programId}/slides/${Date.now()}_${slide.file.name}`);
-        await uploadBytes(storageRef, slide.file);
-        fileUrl = await getDownloadURL(storageRef);
-        storagePath = storageRef.fullPath;
-      }
-      slidesData.push({
-        title: slide.title || name,
-        name,
-        ...(fileUrl ? { url: fileUrl } : {}),
-        ...(storagePath ? { storagePath } : {}),
-      });
+  const handleCreateMedia = async ({ file, title }) => {
+    try {
+      await uploadMedia({ file, title });
+      closeCreateModal();
+    } catch {
+      alert("Error al subir el archivo.");
     }
-    // 2. Songs references
-    const songsRefs = selectedSongs.map(song => ({ id: song.id }));
-    await updateProgram(programId, {
-      slides: [...(program.slides ?? []), ...slidesData],
-      songs: [...(program.songs ?? []), ...songsRefs],
-      updatedAt: dayjs().toISOString(),
-    });
-    setSelectedSongs([]);
-    setSlides([]);
-    setToast("Pantallas guardadas correctamente.");
-    setIsSaving(false);
   };
 
-  const onRemoveTemporalSong = (songId) => (
-    setSelectedSongs(prev => prev.filter(s => s.id !== songId))
-  );
-
-  const onRemoveTemporalSlide = (slideId) => (
-    setSlides(prev => prev.filter(slide => slide.id !== slideId))
-  );
-
-  const onRemoveSong = (songId) => {
-    const updatedSongs = program.songs.filter(s => s.id !== songId);
-    updateProgram(programId, { songs: updatedSongs });
-  };
-
-  const onRemoveSlide = (slideId) => {
-    const updatedSlides = program.slides.filter(s => s.id !== slideId);
-    updateProgram(programId, { slides: updatedSlides });
-  };
-
-  const getFullSongs = songsList => {
-    if (!songsList) return [];
-    return songs.filter(song => songsList?.find(s => s.id === song.id));
-  };
-
-  useEffect(() => {
-    if (program) {
-      setProgramTheme(getThemeById(program.theme?.id));
+  const handleCreateTheme = async ({ title, storagePath, file }) => {
+    try {
+      await addTheme({ title, storagePath, file });
+    } catch {
+      alert("Error al subir el archivo o guardar el tema.");
     }
-  }, [program, getThemeById]);
+  };
+
+  const handlePreviewSelect = async (resource) => {
+    const themeItem = schedule.find((i) => i.type === "theme");
+    const theme =
+      themeItem
+        ? {
+            id: themeItem.themeId,
+            title: themeItem.title,
+            backgroundUrl: themeItem.backgroundUrl,
+            themeType: themeItem.themeType,
+          }
+        : preview?.theme || null;
+
+    await setPreview({
+      programId,
+      theme,
+      resource,
+    });
+
+    if (resource.type === "song") {
+      await setCaption(resource.song?.line || "");
+    }
+  };
+
+  const handleAddTheme = async (theme) => {
+    await addThemeToSchedule(theme);
+    await setPreview({
+      programId,
+      theme: {
+        id: theme.id,
+        title: theme.title,
+        backgroundUrl: theme.backgroundUrl,
+        themeType: theme.type,
+      },
+    });
+  };
+
+  const handleClear = async () => {
+    await Promise.all([setCaption(""), clearPreviewResource()]);
+  };
+
+  const consoleMedia =
+    preview?.resource?.type === "media" ? preview.resource.media : null;
+  const showMediaControls =
+    consoleMedia &&
+    (consoleMedia.mediaType === "audio" || consoleMedia.mediaType === "video");
 
   return (
-    <div className="max-w-5xl mx-auto py-8 px-4 flex flex-col gap-6">
+    <div
+      className="flex flex-col overflow-hidden bg-[#101415]"
+      style={{ height: "100vh", maxHeight: "100vh" }}
+    >
+      <ProgramHeader
+        title={program?.title}
+        isActive={!!program?.active}
+        onActivate={() => activateProgram(programId)}
+        onClear={handleClear}
+      />
 
-      {/* ── Configuración ── */}
-      <Section title="Configuración">
-        <div className="px-4 pb-4 flex items-center gap-3">
-          <span className="font-medium">Activo:</span>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={!!program?.active}
-            onClick={() => activateProgram(program?.active ? null : programId)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-              program?.active ? "bg-cyan-600" : "bg-gray-300"
-            }`}
+      <main
+        className="min-h-0 min-w-0 p-4 sm:p-5 overflow-hidden"
+        style={{
+          flex: "1 1 0%",
+          display: "grid",
+          gridTemplateRows: "minmax(0, 1fr) minmax(0, 1fr)",
+          gap: "1rem",
+        }}
+      >
+        <div
+          className="min-h-0 min-w-0 overflow-hidden gap-4"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(12, minmax(0, 1fr))",
+          }}
+        >
+          <Panel
+            title="Schedule"
+            className="min-h-0"
+            style={{ gridColumn: "span 3" }}
+            action={
+              <button
+                type="button"
+                title="Ir a recursos"
+                className="text-[#e0e3e5] hover:text-[#7bd0ff] transition-colors"
+                onClick={() =>
+                  resourcesRef.current?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest",
+                  })
+                }
+              >
+                <IconPlus color="currentColor" />
+              </button>
+            }
           >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                program?.active ? "translate-x-6" : "translate-x-1"
-              }`}
-            />
-          </button>
-          <span className="text-sm text-gray-500">{program?.active ? "Activo" : "Inactivo"}</span>
-        </div>
-        <div className="px-4 pb-4">
-          <label className="block font-medium mb-1">Tema:</label>
-          <ThemeDropdown
-            themes={themes}
-            value={selectedTheme}
-            onSelect={setSelectedTheme}
-          />
-        </div>
-        <div className="px-4 pb-4 flex justify-end">
-          <button
-            className="px-6 py-2 bg-cyan-600 text-white rounded font-semibold hover:bg-cyan-700 transition disabled:opacity-50"
-            type="button"
-            disabled={!selectedTheme}
-            onClick={() => setShowConfirmTheme(true)}
-          >
-            Guardar tema
-          </button>
-        </div>
-        <ConfirmationModal
-          isVisible={showConfirmTheme}
-          message="¿Guardar el tema seleccionado?"
-          onCancel={() => setShowConfirmTheme(false)}
-          onConfirm={handleConfirmSaveTheme}
-        />
-      </Section>
+            <div className="flex flex-col gap-2">
+              {!hydrated && (
+                <p className="text-[#6b7280] text-sm">Cargando…</p>
+              )}
+              {hydrated && schedule.length === 0 && (
+                <p className="text-[#6b7280] text-sm px-1">
+                  Aún no hay elementos. Usa el panel de recursos abajo.
+                </p>
+              )}
+              {schedule.map((item, index) => {
+                const itemIndex =
+                  item.type === "theme"
+                    ? 0
+                    : schedule
+                        .slice(0, index)
+                        .filter((i) => i.type !== "theme").length;
+                return (
+                  <ScheduleItemRow
+                    key={item.id}
+                    item={item}
+                    index={itemIndex}
+                    active={item.id === selectedId}
+                    onSelect={setSelectedId}
+                    onRemove={removeItem}
+                  />
+                );
+              })}
+            </div>
+          </Panel>
 
-      {/* ── Pantallas ── */}
-      <Section title="Pantallas">
-        <div className="px-4 pb-4 flex flex-col md:grid md:grid-cols-2 md:gap-4 gap-4">
-          <div>
-            <label className="block font-medium mb-1">Canción:</label>
-            <SongDropdown
+          <Panel
+            title="Preview"
+            className="min-h-0"
+            style={{ gridColumn: "span 3" }}
+          >
+            <PreviewPanel
+              item={selectedItem}
               songs={songs}
-              selectedSongs={selectedSongs}
-              savedSongs={program?.songs}
-              onSelect={onSelectSongs}
+              preview={preview}
+              onSelect={handlePreviewSelect}
+            />
+          </Panel>
+
+          <Panel
+            title="Console"
+            className="min-h-0"
+            style={{ gridColumn: "span 6" }}
+            action={
+              showMediaControls ? (
+                <MediaConsoleControls
+                  mediaRef={consoleMediaRef}
+                  mediaKey={consoleMedia.url}
+                />
+              ) : null
+            }
+          >
+            <PreviewConsole preview={preview} mediaRef={consoleMediaRef} />
+          </Panel>
+        </div>
+
+        <section
+          ref={resourcesRef}
+          className="min-h-0 min-w-0 bg-[rgba(29,32,34,0.5)] border border-[rgba(69,70,77,0.35)] rounded-lg flex flex-col overflow-hidden"
+        >
+          <div className="shrink-0 flex items-center gap-2 px-3 sm:px-4 py-3 border-b border-[rgba(69,70,77,0.25)] overflow-x-auto">
+            {RESOURCE_TABS.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setResourceTab(t.id)}
+                className={`px-4 py-2 rounded-sm text-sm font-medium whitespace-nowrap transition-colors ${
+                  resourceTab === t.id
+                    ? "bg-[#323537] text-[#e0e3e5]"
+                    : "bg-[rgba(50,53,55,0.35)] text-[#c6c6cd] hover:text-[#e0e3e5]"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex-1 min-h-0 overflow-hidden p-3 sm:p-4">
+            <ResourceBrowser
+              tab={resourceTab}
+              songs={songs}
+              media={media}
+              themes={themes}
+              onAddSong={addSongToSchedule}
+              onAddMedia={addMedia}
+              onAddTheme={handleAddTheme}
+              onAddBible={addBible}
+              onCreateSong={() => setCreateModal("song")}
+              onCreateMedia={() => setCreateModal("media")}
+              onCreateTheme={() => setCreateModal("theme")}
             />
           </div>
-          <div className="flex items-end">
-            <button
-              className="px-4 py-2 border-2 border-cyan-600 text-cyan-600 rounded w-full bg-transparent hover:bg-cyan-50 transition"
-              onClick={() => setShowSlideModal(true)}
-              type="button"
-            >
-              Subir Slide
-            </button>
-          </div>
-        </div>
+        </section>
+      </main>
 
-        <div className="px-4 pb-4 flex justify-end">
-          <button
-            className="px-6 py-2 bg-cyan-600 text-white rounded font-semibold hover:bg-cyan-700 transition disabled:opacity-50"
-            type="button"
-            disabled={selectedSongs.length === 0 && slides.length === 0}
-            onClick={() => setShowConfirmPantallas(true)}
-          >
-            Guardar
-          </button>
-        </div>
-        <ConfirmationModal
-          isVisible={showConfirmPantallas}
-          message="¿Guardar las canciones y slides seleccionados?"
-          onCancel={() => setShowConfirmPantallas(false)}
-          onConfirm={handleConfirmSavePantallas}
-        />
-      </Section>
-
-      {/* ── Lists ── */}
-      <ProgramsItemsList
-        title="Sin guardar"
-        songs={getFullSongs(selectedSongs)}
-        slides={slides}
-        onRemoveSong={onRemoveTemporalSong}
-        onRemoveSlide={onRemoveTemporalSlide}
-        isSaving={isSaving}
-        isTemporal
+      <NewSongModal
+        isOpen={createModal === "song"}
+        onClose={closeCreateModal}
+        onSubmit={handleCreateSong}
       />
-      <ProgramsItemsList
-        title="Guardados"
-        songs={getFullSongs(program?.songs)}
-        slides={program?.slides || []}
-        onRemoveSong={onRemoveSong}
-        onRemoveSlide={onRemoveSlide}
-        programTheme={programTheme}
-      />
-
       <SlideUploadModal
-        isOpen={showSlideModal}
-        onClose={() => setShowSlideModal(false)}
-        onUpload={handleUploadSlide}
+        isOpen={createModal === "media"}
+        onClose={closeCreateModal}
+        onUpload={handleCreateMedia}
       />
-
-      {toast && <Toast message={toast} onClose={() => setToast(null)} />}
+      <NewThemeModal
+        isVisible={createModal === "theme"}
+        onClose={closeCreateModal}
+        onSubmit={handleCreateTheme}
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import PreviewConsole from "../components/Program/PreviewConsole";
 import usePreview from "../firebase/usePreview";
 import { MONO } from "../components/Program/constants";
+import { t } from "../i18n";
 
 async function requestPageFullscreen() {
   if (document.fullscreenElement) return true;
@@ -30,10 +31,10 @@ function Live() {
     };
 
     // Attempt shortly after open (may succeed when opened from a user gesture).
-    const t = window.setTimeout(tryFullscreen, 100);
+    const timeoutId = window.setTimeout(tryFullscreen, 100);
     return () => {
       cancelled = true;
-      window.clearTimeout(t);
+      window.clearTimeout(timeoutId);
     };
   }, []);
 
@@ -64,7 +65,7 @@ function Live() {
           className="absolute bottom-4 right-4 z-20 text-[#c6c6cd]/80 text-xs border border-[rgba(69,70,77,0.5)] bg-[rgba(11,15,16,0.75)] px-3 py-1.5 rounded-sm hover:text-[#e0e3e5] hover:border-[#7bd0ff] transition-colors"
           style={MONO}
         >
-          Click for fullscreen · Esc to exit
+          {t("live.fullscreenHint")}
         </button>
       )}
     </div>

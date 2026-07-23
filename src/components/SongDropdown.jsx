@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { t } from "../i18n";
 
 function SongDropdown({ songs, selectedSongs, savedSongs, onSelect }) {
   const [open, setOpen] = useState(false);
@@ -47,7 +48,7 @@ function SongDropdown({ songs, selectedSongs, savedSongs, onSelect }) {
         className="border rounded px-3 py-2 w-full flex items-center justify-between"
         onClick={() => setOpen((v) => !v)}
       >
-        Selecciona una canción
+        {t("songDropdown.placeholder")}
         <span className="ml-2">{open ? "▲" : "▼"}</span>
       </button>
       {open && (
@@ -55,7 +56,7 @@ function SongDropdown({ songs, selectedSongs, savedSongs, onSelect }) {
           <div className="p-2">
             <input
               type="text"
-              placeholder="Buscar..."
+              placeholder={t("common.search")}
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="border rounded px-2 py-1 w-full"
@@ -77,7 +78,7 @@ function SongDropdown({ songs, selectedSongs, savedSongs, onSelect }) {
             </div>
           ))}
           {filtered.length === 0 && (
-            <div className="px-3 py-2 text-gray-400">No hay resultados</div>
+            <div className="px-3 py-2 text-gray-400">{t("common.noResults")}</div>
           )}
         </div>
       )}

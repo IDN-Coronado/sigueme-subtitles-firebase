@@ -1,3 +1,4 @@
+import { t } from "../../i18n";
 import { typeLabel, getBibleVerses } from "../../utils/programSchedule";
 import { MONO } from "./constants";
 
@@ -28,7 +29,7 @@ function ScheduleItemRow({ item, index, active, onSelect, onRemove }) {
               className="w-full h-full flex items-center justify-center text-[#45464d] text-[8px] tracking-[0.08em]"
               style={MONO}
             >
-              THEME
+              {t("types.theme")}
             </div>
           )}
         </div>
@@ -37,7 +38,7 @@ function ScheduleItemRow({ item, index, active, onSelect, onRemove }) {
             className="text-[#7bd0ff] text-[10px] tracking-[0.1em] uppercase"
             style={MONO}
           >
-            Theme
+            {t("types.theme")}
           </p>
           <p className="text-[#e0e3e5] text-sm font-semibold truncate leading-tight">
             {item.title}
@@ -78,7 +79,7 @@ function ScheduleItemRow({ item, index, active, onSelect, onRemove }) {
         <span
           role="button"
           tabIndex={0}
-          title="Quitar del schedule"
+          title={t("schedule.remove")}
           className="text-[#6b7280] hover:text-[#ffb4ab] text-lg leading-none px-1"
           onClick={(e) => {
             e.stopPropagation();

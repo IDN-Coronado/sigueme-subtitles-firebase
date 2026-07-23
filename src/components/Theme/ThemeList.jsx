@@ -6,6 +6,7 @@ import { IconPlus } from "../Icons";
 import ThemeItem from "./ThemeItem";
 import ConfirmationModal from "./ConfirmationModal";
 import NewThemeModal from "./NewThemeModal";
+import { t } from "../../i18n";
 
 function ThemeList({ themes, onCreateTheme }) {
   const { removeTheme } = useThemes();
@@ -23,7 +24,7 @@ function ThemeList({ themes, onCreateTheme }) {
       try {
         await removeTheme(themeToDelete);
       } catch (err) {
-        alert("Error al eliminar el tema o archivo.");
+        alert(t("errors.deleteTheme"));
       }
       setShowConfirm(false);
       setThemeToDelete(null);
@@ -40,14 +41,14 @@ function ThemeList({ themes, onCreateTheme }) {
       {/* Action Bar */}
       <div className="flex items-center justify-between gap-3 min-h-12 sm:h-14">
         <span className="text-[#c6c6cd] font-semibold text-sm sm:text-base leading-6">
-          {themes.length} recursos
+          {t("themeList.resourceCount", { count: themes.length })}
         </span>
         <button
           onClick={() => setShowModal(true)}
           className="flex items-center gap-2 bg-[rgba(123,208,255,0.08)] border border-[rgba(123,208,255,0.2)] text-[#e0e3e5] font-bold text-sm sm:text-base px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg hover:bg-[rgba(123,208,255,0.15)] transition-colors shrink-0"
         >
           <IconPlus color="#e0e3e5" />
-          Añadir
+          {t("common.add")}
           <span
             className="bg-[rgba(69,70,77,0.4)] text-[#c6c6cd] text-xs px-2 py-0.5 rounded-sm leading-[15px]"
             style={{ fontFamily: "JetBrains Mono, monospace" }}
@@ -67,12 +68,12 @@ function ThemeList({ themes, onCreateTheme }) {
           <div className="text-[#c6c6cd]">
             <IconPlus color="#c6c6cd" />
           </div>
-          <p className="text-[#c6c6cd] font-bold text-base leading-6">Nuevo Tema</p>
+          <p className="text-[#c6c6cd] font-bold text-base leading-6">{t("themeList.newTheme")}</p>
           <p
             className="text-[rgba(198,198,205,0.6)] text-xs font-medium tracking-[0.05em] text-center leading-4"
             style={{ fontFamily: "JetBrains Mono, monospace" }}
           >
-            Subir imagen o video
+            {t("themeList.uploadHint")}
           </p>
         </div>
 
@@ -90,7 +91,7 @@ function ThemeList({ themes, onCreateTheme }) {
 
       <ConfirmationModal
         isVisible={showConfirm}
-        message="¿Estás seguro de eliminar este tema?"
+        message={t("confirm.deleteTheme")}
         onCancel={handleCancelDelete}
         onConfirm={handleConfirmDelete}
       />

@@ -1,4 +1,5 @@
 import { IconTrash } from "../Icons";
+import { t } from "../../i18n";
 
 function ThemeItem({ theme, onDelete }) {
   return (
@@ -23,7 +24,7 @@ function ThemeItem({ theme, onDelete }) {
             className="text-[#45464d] text-xs tracking-[0.1em] uppercase"
             style={{ fontFamily: "JetBrains Mono, monospace" }}
           >
-            SIN VISTA PREVIA
+            {t("common.noPreview")}
           </span>
         </div>
       )}
@@ -34,14 +35,14 @@ function ThemeItem({ theme, onDelete }) {
           className="bg-[rgba(0,166,224,0.2)] text-[#7bd0ff] text-xs font-medium tracking-[0.05em] px-2 py-0.5 rounded-sm uppercase backdrop-blur-sm"
           style={{ fontFamily: "JetBrains Mono, monospace" }}
         >
-          TEMA
+          {t("types.theme").toUpperCase()}
         </span>
       </div>
 
       {/* Delete button */}
       <button
         className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center bg-[rgba(16,20,21,0.6)] rounded text-[#6b7280] hover:text-red-400 transition-colors backdrop-blur-sm"
-        title="Eliminar tema"
+        title={t("themeItem.deleteTooltip")}
         onClick={() => onDelete(theme)}
       >
         <IconTrash />

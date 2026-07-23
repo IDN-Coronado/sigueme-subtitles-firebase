@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { t } from "../i18n";
+
 const MONO = { fontFamily: "JetBrains Mono, monospace" };
 
 function SlideUploadModal({ isOpen, onClose, onUpload }) {
@@ -42,10 +44,10 @@ function SlideUploadModal({ isOpen, onClose, onUpload }) {
               className="text-[#7bd0ff] text-[10px] tracking-[0.12em] uppercase mb-1"
               style={MONO}
             >
-              Media
+              {t("mediaModal.eyebrow")}
             </p>
             <h2 className="text-[#e0e3e5] font-semibold text-lg tracking-tight">
-              Subir archivo
+              {t("mediaModal.title")}
             </h2>
           </div>
           <button
@@ -53,7 +55,7 @@ function SlideUploadModal({ isOpen, onClose, onUpload }) {
             className="text-[#6b7280] hover:text-[#e0e3e5] text-2xl leading-none transition-colors"
             onClick={handleClose}
             disabled={uploading}
-            aria-label="Cerrar"
+            aria-label={t("common.close")}
           >
             ×
           </button>
@@ -62,7 +64,7 @@ function SlideUploadModal({ isOpen, onClose, onUpload }) {
         <div className="flex flex-col gap-4 px-5 sm:px-6 py-5">
           <div className="flex flex-col gap-2">
             <label className="text-[#c6c6cd] text-sm font-medium">
-              Título del archivo
+              {t("mediaModal.titleLabel")}
             </label>
             <input
               type="text"
@@ -75,7 +77,7 @@ function SlideUploadModal({ isOpen, onClose, onUpload }) {
 
           <div className="flex flex-col gap-2">
             <label className="text-[#c6c6cd] text-sm font-medium">
-              Archivo
+              {t("mediaModal.fileLabel")}
             </label>
             <input
               type="file"
@@ -93,14 +95,14 @@ function SlideUploadModal({ isOpen, onClose, onUpload }) {
             onClick={handleClose}
             disabled={uploading}
           >
-            Cancelar
+            {t("common.cancel")}
           </button>
           <button
             type="submit"
             className="px-4 py-2 bg-[#7bd0ff] text-[#00354a] text-sm font-bold rounded-sm hover:bg-[#5bc0ef] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             disabled={!file || !title.trim() || uploading}
           >
-            {uploading ? "Subiendo..." : "Agregar"}
+            {uploading ? t("common.uploading") : t("common.add")}
           </button>
         </div>
       </form>

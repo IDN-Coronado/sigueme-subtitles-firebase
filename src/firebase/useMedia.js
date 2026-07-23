@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { ref, listAll, getDownloadURL, uploadBytes } from "firebase/storage";
+import { ref, listAll, getDownloadURL, uploadBytes, deleteObject } from "firebase/storage";
 import storage from "./storage";
 
 const IMAGE_EXT = /\.(jpe?g|png|gif|webp|svg|bmp|avif)$/i;
@@ -78,7 +78,25 @@ function useMedia() {
     [loadMedia]
   );
 
-  return { media, loading, error, filterByValue, reload: loadMedia, uploadMedia };
+  const removeMedia = useCallback(
+    async (item) => {
+      const path = item?.fullPath || item?.id;
+      if (!path) throw new Error("Missing media path");
+      await deleteObject(ref(storage, path));
+      await loadMedia();
+    },
+    [loadMedia]
+  );
+
+  return {
+    media,
+    loading,
+    error,
+    filterByValue,
+    reload: loadMedia,
+    uploadMedia,
+    removeMedia,
+  };
 }
 
 export default useMedia;

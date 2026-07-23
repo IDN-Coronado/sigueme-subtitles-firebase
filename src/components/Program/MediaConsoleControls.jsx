@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { t } from "../../i18n";
 import { IconLoop, IconPause, IconPlay, IconStop } from "../Icons";
 import {
   publishMediaSync,
@@ -153,7 +154,7 @@ function MediaConsoleControls({ mediaRef, mediaKey }) {
           aria-valuemin={0}
           aria-valuemax={Math.floor(duration) || 0}
           aria-valuenow={Math.floor(currentTime)}
-          aria-label="Progreso de reproducción"
+          aria-label={t("media.progressAria")}
         >
           <div
             className="absolute inset-y-0 left-0 bg-[#7bd0ff] rounded-full transition-[width] duration-100 ease-linear"
@@ -177,8 +178,8 @@ function MediaConsoleControls({ mediaRef, mediaKey }) {
               ? "border-[rgba(123,208,255,0.45)] text-[#7bd0ff] bg-[rgba(123,208,255,0.1)]"
               : "border-[rgba(69,70,77,0.4)] text-[#c6c6cd] hover:border-[#7bd0ff] hover:text-[#7bd0ff]"
           }`}
-          title={playing ? "Pausa" : "Play"}
-          aria-label={playing ? "Pausa" : "Play"}
+          title={playing ? t("media.pause") : t("media.play")}
+          aria-label={playing ? t("media.pause") : t("media.play")}
         >
           {playing ? <IconPause /> : <IconPlay />}
         </button>
@@ -186,8 +187,8 @@ function MediaConsoleControls({ mediaRef, mediaKey }) {
           type="button"
           onClick={stop}
           className={`${btnBase} border-[rgba(69,70,77,0.4)] text-[#c6c6cd] hover:border-[#ffb4ab] hover:text-[#ffb4ab]`}
-          title="Stop"
-          aria-label="Stop"
+          title={t("media.stop")}
+          aria-label={t("media.stop")}
         >
           <IconStop />
         </button>
@@ -199,8 +200,8 @@ function MediaConsoleControls({ mediaRef, mediaKey }) {
               ? "border-[rgba(123,208,255,0.45)] text-[#7bd0ff] bg-[rgba(123,208,255,0.1)]"
               : "border-[rgba(69,70,77,0.4)] text-[#c6c6cd] hover:border-[#7bd0ff] hover:text-[#7bd0ff]"
           }`}
-          title="Loop"
-          aria-label="Loop"
+          title={t("media.loop")}
+          aria-label={t("media.loop")}
           aria-pressed={loop}
         >
           <IconLoop />

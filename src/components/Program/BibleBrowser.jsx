@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { t } from "../../i18n";
 import { MONO } from "./constants";
 
 const BIBLE_VERSIONS = [
@@ -102,7 +103,7 @@ function BookAutocomplete({ books, bookIndex, onSelect }) {
         ref={inputRef}
         type="text"
         value={query}
-        placeholder="Buscar libro..."
+        placeholder={t("bible.searchBook")}
         onFocus={() => {
           pickedRef.current = false;
           setQuery("");
@@ -128,7 +129,9 @@ function BookAutocomplete({ books, bookIndex, onSelect }) {
       {open && (
         <ul className="absolute z-20 left-0 right-0 mt-1 max-h-56 overflow-auto rounded-sm border border-[rgba(69,70,77,0.4)] bg-[#1d2022] shadow-[0_12px_32px_rgba(0,0,0,0.45)]">
           {filtered.length === 0 && (
-            <li className="px-3 py-2 text-[#6b7280] text-sm">Sin resultados</li>
+            <li className="px-3 py-2 text-[#6b7280] text-sm">
+              {t("common.noResults")}
+            </li>
           )}
           {filtered.map(({ book, index }) => (
             <li key={book.book_usfm || index}>
@@ -264,7 +267,7 @@ function BibleBrowser({ onAdd }) {
   if (loading || !bible) {
     return (
       <p className="text-[#6b7280] text-sm">
-        Cargando Biblia {versionLabel}…
+        {t("bible.loading", { version: versionLabel })}
       </p>
     );
   }
@@ -309,7 +312,7 @@ function BibleBrowser({ onAdd }) {
         >
           {chapters.map((ch, idx) => (
             <option key={ch.chapter_usfm || idx} value={idx}>
-              Cap. {idx + 1}
+              {t("bible.chapter", { n: idx + 1 })}
             </option>
           ))}
         </select>
@@ -354,8 +357,8 @@ function BibleBrowser({ onAdd }) {
       <div className="shrink-0 flex items-center justify-between gap-3 border-t border-[rgba(69,70,77,0.25)] pt-3">
         <p className="text-[#6b7280] text-xs" style={MONO}>
           {selectedCount === 0
-            ? "Selecciona uno o más versículos"
-            : `${selectedCount} seleccionado${selectedCount === 1 ? "" : "s"}`}
+            ? t("bible.selectHint")
+            : t("bible.selectedCount", { count: selectedCount })}
         </p>
         <div className="flex items-center gap-2">
           {selectedCount > 0 && (
@@ -364,7 +367,7 @@ function BibleBrowser({ onAdd }) {
               onClick={() => setSelected({})}
               className="px-3 py-2 text-sm text-[#c6c6cd] border border-[rgba(69,70,77,0.4)] rounded-sm hover:border-[#7bd0ff] hover:text-[#7bd0ff] transition-colors"
             >
-              Limpiar
+              {t("common.clear")}
             </button>
           )}
           <button
@@ -373,7 +376,7 @@ function BibleBrowser({ onAdd }) {
             onClick={handleAddSelected}
             className="px-4 py-2 bg-[#7bd0ff] text-[#00354a] text-sm font-bold rounded-sm hover:bg-[#5bc0ef] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Agregar al schedule
+            {t("bible.addToSchedule")}
           </button>
         </div>
       </div>

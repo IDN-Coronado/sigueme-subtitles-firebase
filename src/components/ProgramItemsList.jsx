@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 
-const VIDEO_EXTENSIONS = /\.(mp4|webm|ogg|mov)(\?|$)/i;
+import { t } from "../i18n";
 
+const VIDEO_EXTENSIONS = /\.(mp4|webm|ogg|mov)(\?|$)/i;
 function isVideoUrl(url) {
   return VIDEO_EXTENSIONS.test(url);
 }
@@ -52,7 +53,7 @@ function ProgramsItemsList({ title, songs, slides, onRemoveSong, onRemoveSlide, 
         <div className="absolute inset-0 bg-black bg-opacity-30 flex flex-col items-center justify-center z-50">
           <div className="flex flex-col items-center">
             <div className="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <span className="text-white font-semibold text-lg">Guardando...</span>
+            <span className="text-white font-semibold text-lg">{t("common.saving")}</span>
           </div>
         </div>
       )}
@@ -71,7 +72,7 @@ function ProgramsItemsList({ title, songs, slides, onRemoveSong, onRemoveSlide, 
                 {!isTemporal && <ThemeBackground url={programTheme?.backgroundUrl} />}
                 <button
                   className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center bg-white rounded shadow text-gray-400 hover:text-red-500 font-bold text-xs z-10"
-                  title="Quitar canción"
+                  title={t("programItems.removeSong")}
                   onClick={handleRemoveSong}
                   style={{ padding: 0 }}
                   tabIndex={0}
@@ -104,7 +105,7 @@ function ProgramsItemsList({ title, songs, slides, onRemoveSong, onRemoveSlide, 
             {!isTemporal && <ThemeBackground url={programTheme?.backgroundUrl} />}
             <button
               className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center bg-white rounded shadow text-gray-400 hover:text-red-500 font-bold text-xs z-10"
-              title="Quitar slide"
+              title={t("programItems.removeSlide")}
               data-slide-id={slide.id}
               onClick={handleRemoveSlide}
               style={{ padding: 0 }}

@@ -1,3 +1,5 @@
+import { t } from "../../i18n";
+
 function ProgramDeleteModal({ isOpen, onCancel, onConfirm }) {
   if (!isOpen) return null;
 
@@ -9,10 +11,10 @@ function ProgramDeleteModal({ isOpen, onCancel, onConfirm }) {
             className="text-[#ffb4ab] text-[10px] tracking-[0.12em] uppercase mb-2"
             style={{ fontFamily: "JetBrains Mono, monospace" }}
           >
-            Danger
+            {t("programDelete.eyebrow")}
           </p>
           <p className="text-[#e0e3e5] font-semibold text-lg tracking-tight leading-snug">
-            ¿Estás seguro de eliminar este programa?
+            {t("programDelete.message")}
           </p>
         </div>
         <div className="flex gap-3 justify-end px-5 sm:px-6 py-4 border-t border-[rgba(69,70,77,0.3)]">
@@ -21,14 +23,14 @@ function ProgramDeleteModal({ isOpen, onCancel, onConfirm }) {
             className="px-4 py-2 text-[#c6c6cd] text-sm border border-[rgba(69,70,77,0.4)] rounded-sm hover:border-[#7bd0ff] hover:text-[#7bd0ff] transition-colors"
             onClick={onCancel}
           >
-            Cancelar
+            {t("confirm.cancel")}
           </button>
           <button
             type="button"
             className="px-4 py-2 bg-[rgba(255,180,171,0.15)] border border-[rgba(255,180,171,0.35)] text-[#ffb4ab] text-sm font-bold rounded-sm hover:bg-[rgba(255,180,171,0.25)] transition-colors"
             onClick={onConfirm}
           >
-            Eliminar
+            {t("confirm.delete")}
           </button>
         </div>
       </div>

@@ -1,12 +1,14 @@
 import dayjs from "dayjs";
 import { useState } from "react";
 
+import { t } from "../../i18n";
+
 const MONO = { fontFamily: "JetBrains Mono, monospace" };
 
 function NewProgramModal({ onCancel, onSubmit, isOpen }) {
   const today = dayjs().format("YYYY-MM-DD");
   const [selectedDate, setSelectedDate] = useState(today);
-  const [title, setTitle] = useState("Servicio Dominical");
+  const [title, setTitle] = useState(t("program.defaultTitle"));
 
   const handleDateChange = (e) => {
     setSelectedDate(e.target.value);
@@ -22,7 +24,7 @@ function NewProgramModal({ onCancel, onSubmit, isOpen }) {
 
   const onClickCancel = () => {
     setSelectedDate(today);
-    setTitle("Servicio Dominical");
+    setTitle(t("program.defaultTitle"));
     onCancel();
   };
 
@@ -35,7 +37,7 @@ function NewProgramModal({ onCancel, onSubmit, isOpen }) {
         title: trimmedTitle,
       });
       setSelectedDate(today);
-      setTitle("Servicio Dominical");
+      setTitle(t("program.defaultTitle"));
     }
   };
 
@@ -53,17 +55,17 @@ function NewProgramModal({ onCancel, onSubmit, isOpen }) {
               className="text-[#7bd0ff] text-[10px] tracking-[0.12em] uppercase mb-1"
               style={MONO}
             >
-              New
+              {t("programModal.eyebrow")}
             </p>
             <h2 className="text-[#e0e3e5] font-semibold text-lg tracking-tight">
-              Nuevo programa
+              {t("programModal.title")}
             </h2>
           </div>
           <button
             type="button"
             className="text-[#6b7280] hover:text-[#e0e3e5] text-2xl leading-none transition-colors"
             onClick={onClickCancel}
-            aria-label="Cerrar"
+            aria-label={t("common.close")}
           >
             ×
           </button>
@@ -72,7 +74,7 @@ function NewProgramModal({ onCancel, onSubmit, isOpen }) {
         <div className="flex flex-col gap-4 px-5 sm:px-6 py-5">
           <div className="flex flex-col gap-2">
             <label className="text-[#c6c6cd] text-sm font-medium">
-              Título del programa
+              {t("programModal.titleLabel")}
             </label>
             <div className="relative">
               <input
@@ -88,7 +90,7 @@ function NewProgramModal({ onCancel, onSubmit, isOpen }) {
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-[#6b7280] hover:text-[#ffb4ab] text-lg leading-none"
                   onClick={handleClearTitle}
                   tabIndex={-1}
-                  aria-label="Limpiar título"
+                  aria-label={t("programModal.clearTitle")}
                 >
                   ×
                 </button>
@@ -98,7 +100,7 @@ function NewProgramModal({ onCancel, onSubmit, isOpen }) {
 
           <div className="flex flex-col gap-2">
             <label className="text-[#c6c6cd] text-sm font-medium">
-              Fecha del programa
+              {t("programModal.dateLabel")}
             </label>
             <input
               type="date"
@@ -116,14 +118,14 @@ function NewProgramModal({ onCancel, onSubmit, isOpen }) {
             className="px-4 py-2 text-[#c6c6cd] text-sm border border-[rgba(69,70,77,0.4)] rounded-sm hover:border-[#7bd0ff] hover:text-[#7bd0ff] transition-colors"
             onClick={onClickCancel}
           >
-            Cancelar
+            {t("common.cancel")}
           </button>
           <button
             type="submit"
             className="px-4 py-2 bg-[#7bd0ff] text-[#00354a] text-sm font-bold rounded-sm hover:bg-[#5bc0ef] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             disabled={!title.trim() || !selectedDate}
           >
-            Crear
+            {t("common.create")}
           </button>
         </div>
       </form>

@@ -14,38 +14,39 @@ import NewSongModal from "../components/Song/NewSongModal";
 import SlideUploadModal from "../components/SlideUploadModal";
 import NewThemeModal from "../components/Theme/NewThemeModal";
 import { IconPlus, IconCalendar } from "../components/Icons";
+import { t } from "../i18n";
 
 const MONO = { fontFamily: "JetBrains Mono, monospace" };
 
 const MENU_ITEMS = [
   {
     id: "new-program",
-    label: "Create new program",
-    description: "Start a fresh service schedule",
+    labelKey: "home.menu.newProgram",
+    descriptionKey: "home.menu.newProgramDesc",
     shortcut: "Ctrl+N",
   },
   {
     id: "open-program",
-    label: "Open program",
-    description: "Continue with a saved program",
+    labelKey: "home.menu.openProgram",
+    descriptionKey: "home.menu.openProgramDesc",
     shortcut: "Ctrl+O",
   },
   {
     id: "new-song",
-    label: "Create new song",
-    description: "Add lyrics to your library",
+    labelKey: "home.menu.newSong",
+    descriptionKey: "home.menu.newSongDesc",
     shortcut: null,
   },
   {
     id: "upload-file",
-    label: "Upload a file",
-    description: "Add media to the general library",
+    labelKey: "home.menu.uploadFile",
+    descriptionKey: "home.menu.uploadFileDesc",
     shortcut: null,
   },
   {
     id: "upload-theme",
-    label: "Upload a theme",
-    description: "Import a background image or video",
+    labelKey: "home.menu.uploadTheme",
+    descriptionKey: "home.menu.uploadThemeDesc",
     shortcut: null,
   },
 ];
@@ -138,8 +139,8 @@ function Home() {
     navigate(`/program/${program.id}`);
   };
 
-  const handleCreateSong = async ({ title, body }) => {
-    await addSong(title, body);
+  const handleCreateSong = async ({ title, sections }) => {
+    await addSong(title, sections);
   };
 
   const handleUploadFile = async ({ file, title }) => {
@@ -147,7 +148,7 @@ function Home() {
       await uploadMedia({ file, title });
       closeModal();
     } catch {
-      alert("Error al subir el archivo.");
+      alert(t("errors.uploadFile"));
     }
   };
 
@@ -155,7 +156,7 @@ function Home() {
     try {
       await addTheme({ title, storagePath, file });
     } catch {
-      alert("Error al subir el archivo o guardar el tema.");
+      alert(t("errors.uploadTheme"));
     }
   };
 
@@ -190,7 +191,7 @@ function Home() {
               className="hidden sm:inline text-[#6b7280] text-[10px] tracking-[0.12em] uppercase"
               style={MONO}
             >
-              Live Console
+              {t("home.tagline")}
             </span>
           </div>
           <div className="flex items-center gap-3 shrink-0">
@@ -202,7 +203,7 @@ function Home() {
                 style={MONO}
               >
                 <IconCalendar color="currentColor" />
-                {activeProgram.title || "Programa activo"}
+                {activeProgram.title || t("home.activeProgramFallback")}
               </button>
             )}
             <button
@@ -210,9 +211,9 @@ function Home() {
               onClick={() => openLiveView().catch(() => {})}
               className="text-[#7bd0ff] font-medium text-sm border border-[rgba(123,208,255,0.35)] px-3 py-1.5 rounded-sm hover:bg-[rgba(123,208,255,0.08)] transition-colors"
               style={MONO}
-              title="Abrir Live View en otra pantalla"
+              title={t("program.openLiveView")}
             >
-              Live View
+              {t("home.liveView")}
             </button>
           </div>
         </header>
@@ -224,19 +225,19 @@ function Home() {
                 className="text-[#7bd0ff] text-xs tracking-[0.14em] uppercase mb-3"
                 style={MONO}
               >
-                File menu
+                {t("home.fileMenu")}
               </p>
               <h1 className="text-[#e0e3e5] font-bold text-3xl sm:text-4xl tracking-tight leading-tight">
                 Presenter Pro
               </h1>
               <p className="text-[#c6c6cd] text-base sm:text-lg mt-2 max-w-md">
-                Create or open a program to start building your service.
+                {t("home.subtitle")}
               </p>
             </div>
 
             <nav
               className="bg-[rgba(29,32,34,0.65)] border border-[rgba(69,70,77,0.4)] rounded-lg overflow-hidden backdrop-blur-sm"
-              aria-label="Main actions"
+              aria-label={t("home.mainActionsAria")}
             >
               {MENU_ITEMS.map((item, index) => (
                 <button
@@ -252,10 +253,10 @@ function Home() {
                   </span>
                   <span className="flex-1 min-w-0">
                     <span className="block text-[#e0e3e5] font-semibold text-sm sm:text-base">
-                      {item.label}
+                      {t(item.labelKey)}
                     </span>
                     <span className="block text-[#6b7280] text-xs sm:text-sm mt-0.5 truncate">
-                      {item.description}
+                      {t(item.descriptionKey)}
                     </span>
                   </span>
                   {item.shortcut && (
@@ -279,7 +280,7 @@ function Home() {
                   className="text-[#6b7280] text-[10px] tracking-[0.1em] uppercase mb-3"
                   style={MONO}
                 >
-                  Recent
+                  {t("home.recent")}
                 </p>
                 <div className="flex flex-col gap-1">
                   {programs.slice(0, 3).map((program) => {
@@ -295,7 +296,7 @@ function Home() {
                       >
                         <span className="flex items-center gap-2 min-w-0">
                           <span className="text-[#c6c6cd] text-sm truncate">
-                            {program.title || "Programa"}
+                            {program.title || t("program.untitled")}
                           </span>
                           {program.active && (
                             <span
@@ -303,7 +304,7 @@ function Home() {
                               style={MONO}
                             >
                               <span className="w-1.5 h-1.5 rounded-full bg-[#7bd0ff] animate-pulse" />
-                              Active
+                              {t("program.active")}
                             </span>
                           )}
                         </span>

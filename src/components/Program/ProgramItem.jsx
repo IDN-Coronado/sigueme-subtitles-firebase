@@ -1,5 +1,7 @@
 import dayjs from "dayjs";
 
+import { t } from "../../i18n";
+
 function ProgramItem({
   program,
   onClick,
@@ -16,11 +18,11 @@ function ProgramItem({
         className="absolute top-2 right-2 text-gray-400 hover:text-red-500 font-bold text-lg z-10 p-2"
         data-delete="true"
         onClick={onDelete}
-        title="Eliminar programa"
+        title={t("programDelete.tooltip")}
       >
         ×
       </button>
-      <span className="font-bold text-lg mb-2">{program.title || "Programa"}</span>
+      <span className="font-bold text-lg mb-2">{program.title || t("program.untitled")}</span>
       <span className="text-gray-600">
           {formattedDate}
       </span>

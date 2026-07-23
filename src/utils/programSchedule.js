@@ -1,3 +1,5 @@
+import { t } from "../i18n";
+
 export function newItemId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
@@ -20,7 +22,7 @@ export function buildScheduleFromLegacy(program, songs, themes) {
       id: `theme-${program.theme.id}`,
       type: "theme",
       themeId: program.theme.id,
-      title: theme?.title || "Tema",
+      title: theme?.title || t("types.theme"),
       backgroundUrl: theme?.backgroundUrl,
       themeType: theme?.type,
     });
@@ -32,7 +34,7 @@ export function buildScheduleFromLegacy(program, songs, themes) {
       id: `song-${ref.id}-${items.length}`,
       type: "song",
       songId: ref.id,
-      title: song?.title || "Canción",
+      title: song?.title || t("types.song"),
     });
   }
 
@@ -40,7 +42,7 @@ export function buildScheduleFromLegacy(program, songs, themes) {
     items.push({
       id: `media-${slide.storagePath || slide.url || slide.name || items.length}`,
       type: "media",
-      title: slide.title || slide.name || "Media",
+      title: slide.title || slide.name || t("types.media"),
       name: slide.name || slide.title,
       url: slide.url,
       storagePath: slide.storagePath,
@@ -70,6 +72,9 @@ export function toLegacyFields(schedule) {
 
 export function typeLabel(item) {
   if (item.type === "media") return (item.mediaType || "image").toUpperCase();
+  if (item.type === "song") return t("types.song").toUpperCase();
+  if (item.type === "theme") return t("types.theme").toUpperCase();
+  if (item.type === "bible") return t("types.bible").toUpperCase();
   return item.type.toUpperCase();
 }
 
@@ -94,8 +99,8 @@ export function getBibleVerses(item) {
 
 /** Build a compact reference for one or more verses, e.g. "Juan 3:16-18" or "Juan 3:16; 4:1". */
 export function formatBibleGroupTitle(verses) {
-  if (!verses?.length) return "Biblia";
-  if (verses.length === 1) return verses[0].reference || "Biblia";
+  if (!verses?.length) return t("types.bible");
+  if (verses.length === 1) return verses[0].reference || t("types.bible");
 
   const sorted = [...verses].sort(
     (a, b) =>
@@ -106,7 +111,7 @@ export function formatBibleGroupTitle(verses) {
 
   const byBook = new Map();
   for (const v of sorted) {
-    const book = v.book || "Biblia";
+    const book = v.book || t("types.bible");
     if (!byBook.has(book)) byBook.set(book, new Map());
     const byChapter = byBook.get(book);
     if (!byChapter.has(v.chapter)) byChapter.set(v.chapter, []);
@@ -140,24 +145,4 @@ function formatVerseSpans(nums) {
   }
   spans.push(start === end ? `${start}` : `${start}-${end}`);
   return spans.join(",");
-}
-
-export function groupSongsByLetter(songs) {
-  const groups = [];
-  for (const song of songs) {
-    const normalized = song.title
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .trim();
-    const letter = /^[a-z]/i.test(normalized)
-      ? normalized[0].toUpperCase()
-      : "#";
-    const last = groups[groups.length - 1];
-    if (!last || last.letter !== letter) {
-      groups.push({ letter, songs: [song] });
-    } else {
-      last.songs.push(song);
-    }
-  }
-  return groups;
 }

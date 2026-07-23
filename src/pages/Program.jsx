@@ -9,21 +9,30 @@ import usePrograms from "../firebase/usePrograms";
 import useMedia from "../firebase/useMedia";
 import usePreview from "../firebase/usePreview";
 import useProgramSchedule from "../hooks/useProgramSchedule";
-import { IconPlus } from "../components/Icons";
 import NewSongModal from "../components/Song/NewSongModal";
 import SlideUploadModal from "../components/SlideUploadModal";
 import NewThemeModal from "../components/Theme/NewThemeModal";
+import ConfirmationModal from "../components/Theme/ConfirmationModal";
 import Panel from "../components/Program/Panel";
 import ScheduleItemRow from "../components/Program/ScheduleItemRow";
 import PreviewPanel from "../components/Program/PreviewPanel";
 import PreviewConsole from "../components/Program/PreviewConsole";
 import MediaConsoleControls from "../components/Program/MediaConsoleControls";
+import CaptionConsoleControls from "../components/Program/CaptionConsoleControls";
 import ResourceBrowser from "../components/Program/ResourceBrowser";
 import ProgramHeader from "../components/Program/ProgramHeader";
 import { RESOURCE_TABS } from "../components/Program/constants";
+import { t } from "../i18n";
 
 const CAPTION_COLLECTION = "caption";
 const CAPTION_DOC = "caption";
+
+const DELETE_MESSAGE_KEYS = {
+  song: "confirm.deleteSong",
+  media: "confirm.deleteMedia",
+  theme: "confirm.deleteTheme",
+  schedule: "confirm.removeFromSchedule",
+};
 
 async function setCaption(caption) {
   await setDoc(
@@ -35,14 +44,15 @@ async function setCaption(caption) {
 
 function Program() {
   const { programId } = useParams();
-  const resourcesRef = useRef(null);
   const consoleMediaRef = useRef(null);
   const [resourceTab, setResourceTab] = useState("songs");
   const [createModal, setCreateModal] = useState(null);
+  const [editingSong, setEditingSong] = useState(null);
+  const [pendingDelete, setPendingDelete] = useState(null);
 
-  const { songs, addSong } = useSongs();
-  const { themes, addTheme } = useThemes();
-  const { media, uploadMedia } = useMedia();
+  const { songs, addSong, updateSong, removeSong } = useSongs();
+  const { themes, addTheme, removeTheme } = useThemes();
+  const { media, uploadMedia, removeMedia } = useMedia();
   const { program, updateProgram, activateProgram } = usePrograms(programId);
   const { preview, setPreview, clearPreviewResource } = usePreview();
 
@@ -67,8 +77,17 @@ function Program() {
 
   const closeCreateModal = () => setCreateModal(null);
 
-  const handleCreateSong = async ({ title, body }) => {
-    await addSong(title, body);
+  const closeSongModal = () => {
+    setCreateModal(null);
+    setEditingSong(null);
+  };
+
+  const handleSaveSong = async ({ title, sections, id }) => {
+    if (id) {
+      await updateSong(id, title, sections);
+    } else {
+      await addSong(title, sections);
+    }
   };
 
   const handleCreateMedia = async ({ file, title }) => {
@@ -76,7 +95,7 @@ function Program() {
       await uploadMedia({ file, title });
       closeCreateModal();
     } catch {
-      alert("Error al subir el archivo.");
+      alert(t("errors.uploadFile"));
     }
   };
 
@@ -84,7 +103,22 @@ function Program() {
     try {
       await addTheme({ title, storagePath, file });
     } catch {
-      alert("Error al subir el archivo o guardar el tema.");
+      alert(t("errors.uploadTheme"));
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!pendingDelete) return;
+    const { type, item } = pendingDelete;
+    try {
+      if (type === "song") await removeSong(item.id);
+      else if (type === "media") await removeMedia(item);
+      else if (type === "theme") await removeTheme(item);
+      else if (type === "schedule") await removeItem(item.id);
+    } catch {
+      alert(t("errors.deleteResource"));
+    } finally {
+      setPendingDelete(null);
     }
   };
 
@@ -124,8 +158,64 @@ function Program() {
     });
   };
 
+  const isLogoDisplayed =
+    preview?.resource?.type === "media" &&
+    Boolean(program?.mainLogo?.url) &&
+    (preview.resource.media?.storagePath === program.mainLogo.storagePath ||
+      preview.resource.media?.url === program.mainLogo.url);
+
   const handleClear = async () => {
+    if (isLogoDisplayed) return;
     await Promise.all([setCaption(""), clearPreviewResource()]);
+  };
+
+  const handleShowLogo = async () => {
+    const logo = program?.mainLogo;
+    if (!logo?.url) return;
+
+    const themeItem = schedule.find((i) => i.type === "theme");
+    const theme =
+      themeItem
+        ? {
+            id: themeItem.themeId,
+            title: themeItem.title,
+            backgroundUrl: themeItem.backgroundUrl,
+            themeType: themeItem.themeType,
+          }
+        : preview?.theme || null;
+
+    await setCaption("");
+    await setPreview({
+      programId,
+      theme,
+      resource: {
+        type: "media",
+        media: {
+          title: logo.title,
+          name: logo.name || logo.title,
+          url: logo.url,
+          storagePath: logo.storagePath,
+          mediaType: logo.mediaType || "video",
+        },
+      },
+    });
+  };
+
+  const handleSetMediaAsLogo = async (item) => {
+    if (!item?.url || !programId) return;
+    try {
+      await updateProgram(programId, {
+        mainLogo: {
+          title: item.name,
+          name: item.name,
+          url: item.url,
+          storagePath: item.fullPath || item.storagePath,
+          mediaType: item.type || "image",
+        },
+      });
+    } catch {
+      alert(t("program.logoUpdateError"));
+    }
   };
 
   const consoleMedia =
@@ -141,9 +231,12 @@ function Program() {
     >
       <ProgramHeader
         title={program?.title}
+        date={program?.date}
         isActive={!!program?.active}
         onActivate={() => activateProgram(programId)}
         onClear={handleClear}
+        onShowLogo={handleShowLogo}
+        clearDisabled={isLogoDisplayed}
       />
 
       <main
@@ -163,32 +256,17 @@ function Program() {
           }}
         >
           <Panel
-            title="Schedule"
+            title={t("program.panels.schedule")}
             className="min-h-0"
             style={{ gridColumn: "span 3" }}
-            action={
-              <button
-                type="button"
-                title="Ir a recursos"
-                className="text-[#e0e3e5] hover:text-[#7bd0ff] transition-colors"
-                onClick={() =>
-                  resourcesRef.current?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "nearest",
-                  })
-                }
-              >
-                <IconPlus color="currentColor" />
-              </button>
-            }
           >
             <div className="flex flex-col gap-2">
               {!hydrated && (
-                <p className="text-[#6b7280] text-sm">Cargando…</p>
+                <p className="text-[#6b7280] text-sm">{t("common.loading")}</p>
               )}
               {hydrated && schedule.length === 0 && (
                 <p className="text-[#6b7280] text-sm px-1">
-                  Aún no hay elementos. Usa el panel de recursos abajo.
+                  {t("program.scheduleEmpty")}
                 </p>
               )}
               {schedule.map((item, index) => {
@@ -205,7 +283,9 @@ function Program() {
                     index={itemIndex}
                     active={item.id === selectedId}
                     onSelect={setSelectedId}
-                    onRemove={removeItem}
+                    onRemove={(id) =>
+                      setPendingDelete({ type: "schedule", item: { id } })
+                    }
                   />
                 );
               })}
@@ -213,7 +293,7 @@ function Program() {
           </Panel>
 
           <Panel
-            title="Preview"
+            title={t("program.panels.preview")}
             className="min-h-0"
             style={{ gridColumn: "span 3" }}
           >
@@ -226,41 +306,46 @@ function Program() {
           </Panel>
 
           <Panel
-            title="Console"
+            title={t("program.panels.console")}
             className="min-h-0"
             style={{ gridColumn: "span 6" }}
             action={
-              showMediaControls ? (
-                <MediaConsoleControls
-                  mediaRef={consoleMediaRef}
-                  mediaKey={consoleMedia.url}
-                />
-              ) : null
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 max-w-full overflow-x-auto">
+                {showMediaControls ? (
+                  <MediaConsoleControls
+                    mediaRef={consoleMediaRef}
+                    mediaKey={consoleMedia.url}
+                  />
+                ) : (
+                  <CaptionConsoleControls />
+                )}
+              </div>
             }
           >
             <PreviewConsole preview={preview} mediaRef={consoleMediaRef} />
           </Panel>
         </div>
 
-        <section
-          ref={resourcesRef}
-          className="min-h-0 min-w-0 bg-[rgba(29,32,34,0.5)] border border-[rgba(69,70,77,0.35)] rounded-lg flex flex-col overflow-hidden"
-        >
+        <section className="min-h-0 min-w-0 bg-[rgba(29,32,34,0.5)] border border-[rgba(69,70,77,0.35)] rounded-lg flex flex-col overflow-hidden">
           <div className="shrink-0 flex items-center gap-2 px-3 sm:px-4 py-3 border-b border-[rgba(69,70,77,0.25)] overflow-x-auto">
-            {RESOURCE_TABS.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setResourceTab(t.id)}
-                className={`px-4 py-2 rounded-sm text-sm font-medium whitespace-nowrap transition-colors ${
-                  resourceTab === t.id
-                    ? "bg-[#323537] text-[#e0e3e5]"
-                    : "bg-[rgba(50,53,55,0.35)] text-[#c6c6cd] hover:text-[#e0e3e5]"
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
+            {RESOURCE_TABS.map((tab) => {
+              const Icon = tab.Icon;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setResourceTab(tab.id)}
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-sm text-sm font-medium whitespace-nowrap transition-colors ${
+                    resourceTab === tab.id
+                      ? "bg-[#323537] text-[#e0e3e5]"
+                      : "bg-[rgba(50,53,55,0.35)] text-[#c6c6cd] hover:text-[#e0e3e5]"
+                  }`}
+                >
+                  <Icon color="currentColor" />
+                  {t(`program.tabs.${tab.id}`)}
+                </button>
+              );
+            })}
           </div>
           <div className="flex-1 min-h-0 overflow-hidden p-3 sm:p-4">
             <ResourceBrowser
@@ -272,9 +357,20 @@ function Program() {
               onAddMedia={addMedia}
               onAddTheme={handleAddTheme}
               onAddBible={addBible}
-              onCreateSong={() => setCreateModal("song")}
+              onCreateSong={() => {
+                setEditingSong(null);
+                setCreateModal("song");
+              }}
               onCreateMedia={() => setCreateModal("media")}
               onCreateTheme={() => setCreateModal("theme")}
+              onEditSong={(song) => {
+                setEditingSong(song);
+                setCreateModal("song");
+              }}
+              onDeleteSong={(song) => setPendingDelete({ type: "song", item: song })}
+              onDeleteMedia={(item) => setPendingDelete({ type: "media", item })}
+              onDeleteTheme={(theme) => setPendingDelete({ type: "theme", item: theme })}
+              onSetMediaAsLogo={handleSetMediaAsLogo}
             />
           </div>
         </section>
@@ -282,8 +378,9 @@ function Program() {
 
       <NewSongModal
         isOpen={createModal === "song"}
-        onClose={closeCreateModal}
-        onSubmit={handleCreateSong}
+        onClose={closeSongModal}
+        onSubmit={handleSaveSong}
+        song={editingSong}
       />
       <SlideUploadModal
         isOpen={createModal === "media"}
@@ -294,6 +391,14 @@ function Program() {
         isVisible={createModal === "theme"}
         onClose={closeCreateModal}
         onSubmit={handleCreateTheme}
+      />
+      <ConfirmationModal
+        isVisible={Boolean(pendingDelete)}
+        message={
+          pendingDelete ? t(DELETE_MESSAGE_KEYS[pendingDelete.type]) : ""
+        }
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={handleConfirmDelete}
       />
     </div>
   );

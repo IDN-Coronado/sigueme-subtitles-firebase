@@ -4,6 +4,7 @@ import { ChromePicker } from 'react-color';
 import tinycolor from "tinycolor2";
 
 import db from "../firebase/firebase";
+import { t } from "../i18n";
 
 const CAPTION = 'caption';
 const LOCAL_STORAGE_COLOR = 'sigueme:color';
@@ -110,12 +111,12 @@ const Caption = () => {
         type="button"
         className="text-xs ml-2 text-zinc-900"
         onClick={onCCStyle}
-      >CC Style</button>
+      >{t("caption.ccStyle")}</button>
       <button
         type="button"
         className="text-[8px] ml-6 text-zinc-900"
         onClick={onReset}
-      >RESET</button>
+      >{t("caption.reset")}</button>
     </div>
     {isPickerVisible && <ChromePicker
       className="absolute bottom-10 right-2"

@@ -2,6 +2,8 @@ import React from "react";
 
 import { Link } from "react-router-dom";
 
+import { t } from "../i18n";
+
 const Header = ({
   isBackVisible = true,
   isAddVisible = true,
@@ -11,15 +13,15 @@ const Header = ({
       <Link
         to="/"
         className="ml-6 whitespace-nowrap text-sm font-semibold text-slate-200 hover:text-slate-50"
-      ><span aria-hidden="true">←</span>Home</Link>
+      ><span aria-hidden="true">←</span>{t("common.home")}</Link>
     </div>}
     <header className="bg-white shadow">
       <div className="mx-auto max-w-7xl py-6 px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-          Canciones
+          {t("header.songs")}
         </h1>
         {isAddVisible && <Link to="/" className="p-0 text-cyan-500 font-bold flex items-center">
-          <span>Agregar canción</span>
+          <span>{t("header.addSong")}</span>
         </Link>}
       </div>
     </header>

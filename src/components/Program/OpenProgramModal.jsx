@@ -1,6 +1,8 @@
 import dayjs from "dayjs";
 import "dayjs/locale/es";
 
+import { t } from "../../i18n";
+
 dayjs.locale("es");
 
 const MONO = { fontFamily: "JetBrains Mono, monospace" };
@@ -17,17 +19,17 @@ function OpenProgramModal({ isOpen, onClose, programs = [], onSelect }) {
               className="text-[#7bd0ff] text-[10px] tracking-[0.12em] uppercase mb-1"
               style={MONO}
             >
-              Programs
+              {t("openProgram.eyebrow")}
             </p>
             <h2 className="text-[#e0e3e5] font-semibold text-lg tracking-tight">
-              Abrir programa
+              {t("openProgram.title")}
             </h2>
           </div>
           <button
             type="button"
             className="text-[#6b7280] hover:text-[#e0e3e5] text-2xl leading-none transition-colors"
             onClick={onClose}
-            aria-label="Cerrar"
+            aria-label={t("common.close")}
           >
             ×
           </button>
@@ -36,7 +38,7 @@ function OpenProgramModal({ isOpen, onClose, programs = [], onSelect }) {
         <div className="overflow-y-auto flex-1 p-4 flex flex-col gap-2">
           {programs.length === 0 && (
             <p className="text-[#6b7280] text-sm text-center py-8">
-              No hay programas guardados.
+              {t("openProgram.empty")}
             </p>
           )}
           {programs.map((program) => {
@@ -52,7 +54,7 @@ function OpenProgramModal({ isOpen, onClose, programs = [], onSelect }) {
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <p className="font-semibold text-[#e0e3e5] truncate">
-                    {program.title || "Programa"}
+                    {program.title || t("program.untitled")}
                   </p>
                   {program.active && (
                     <span
@@ -60,7 +62,7 @@ function OpenProgramModal({ isOpen, onClose, programs = [], onSelect }) {
                       style={MONO}
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-[#7bd0ff] animate-pulse" />
-                      Active
+                      {t("program.active")}
                     </span>
                   )}
                 </div>
@@ -80,7 +82,7 @@ function OpenProgramModal({ isOpen, onClose, programs = [], onSelect }) {
             className="px-4 py-2 text-[#c6c6cd] text-sm border border-[rgba(69,70,77,0.4)] rounded-sm hover:border-[#7bd0ff] hover:text-[#7bd0ff] transition-colors"
             onClick={onClose}
           >
-            Cancelar
+            {t("common.cancel")}
           </button>
         </div>
       </div>

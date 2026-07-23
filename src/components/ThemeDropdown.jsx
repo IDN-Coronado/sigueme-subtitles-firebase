@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { t } from "../i18n";
 
 function ThemeDropdown({ themes, value, onSelect }) {
   const [open, setOpen] = useState(false);
@@ -35,15 +36,15 @@ function ThemeDropdown({ themes, value, onSelect }) {
             <div className="flex items-center gap-2">
               <span>
                 <img
-                  src={themes.find(t => t.id === value)?.backgroundUrl}
+                  src={themes.find(theme => theme.id === value)?.backgroundUrl}
                   alt=""
                   className="w-8 h-5 object-cover rounded"
                 />
               </span>
-              <span>{themes.find(t => t.id === value)?.title}</span>
+              <span>{themes.find(theme => theme.id === value)?.title}</span>
             </div>
           )
-          : <span className="text-gray-400">Selecciona un tema</span>
+          : <span className="text-gray-400">{t("themeDropdown.placeholder")}</span>
         }
         <span className="ml-2">{open ? "▲" : "▼"}</span>
       </button>

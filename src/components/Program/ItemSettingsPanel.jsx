@@ -1,3 +1,4 @@
+import { t } from "../../i18n";
 import { MONO } from "./constants";
 
 function ItemSettingsPanel() {
@@ -8,10 +9,10 @@ function ItemSettingsPanel() {
           className="text-[#c6c6cd] text-xs tracking-[0.06em] mb-3"
           style={MONO}
         >
-          TEXT CONFIGURATION
+          {t("settings.textConfig")}
         </p>
         <div className="flex items-center justify-between mb-3">
-          <span className="text-[#c6c6cd] text-sm">Font Size</span>
+          <span className="text-[#c6c6cd] text-sm">{t("settings.fontSize")}</span>
           <span className="text-[#7bd0ff] text-sm underline" style={MONO}>
             36px
           </span>
@@ -36,13 +37,13 @@ function ItemSettingsPanel() {
           className="text-[#c6c6cd] text-xs tracking-[0.06em] mb-3"
           style={MONO}
         >
-          TRANSITION STYLE
+          {t("settings.transitionStyle")}
         </p>
         <div className="bg-[#0b0f10] border border-[rgba(69,70,77,0.35)] rounded-sm px-3 py-2.5 text-[#c6c6cd] text-sm">
-          Cross Dissolve (0.5s)
+          {t("settings.crossDissolve")}
         </div>
       </div>
-      <p className="text-[#6b7280] text-xs">Próximamente</p>
+      <p className="text-[#6b7280] text-xs">{t("common.comingSoon")}</p>
     </div>
   );
 }

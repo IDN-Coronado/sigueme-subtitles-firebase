@@ -1,5 +1,11 @@
 import { useEffect } from "react";
 
+import useCaptionSettings from "../../hooks/useCaptionSettings";
+import { t } from "../../i18n";
+import {
+  alignClass,
+  textSizeClass,
+} from "../../utils/captionSettings";
 import {
   applyMediaSyncCommand,
   publishMediaSync,
@@ -57,12 +63,19 @@ function ConsoleFrame({ theme, children, className = "", variant = "console" }) 
 
 function PreviewConsole({ preview, mediaRef, variant = "console" }) {
   const isLive = variant === "live";
+  const caption = useCaptionSettings();
   const resource = preview?.resource;
   const theme = preview?.theme;
   const media = resource?.type === "media" ? resource.media : null;
   const isPlayable =
     media && (media.mediaType === "audio" || media.mediaType === "video");
   const mediaKey = isPlayable ? media.url : null;
+  const captionTextClass = `${textSizeClass(caption, variant)} ${alignClass(
+    caption.align
+  )}`;
+  const captionBoxClass = caption.isCC
+    ? "bg-[rgba(9,9,11,0.88)] px-4 py-3 rounded-sm"
+    : "";
 
   // Console master: muted local playback + broadcast state to Live View.
   useEffect(() => {
@@ -144,7 +157,7 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
       <ConsoleFrame theme={theme} variant={variant}>
         {isLive ? null : (
           <div className="h-full flex items-center justify-center text-[#c6c6cd] text-sm px-4 text-center">
-            Haz clic en un elemento del preview para enviarlo al console
+            {t("console.clickToSend")}
           </div>
         )}
       </ConsoleFrame>
@@ -163,7 +176,7 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
           {!isLive && (
             <div className="flex items-center justify-between gap-2 mb-4 shrink-0">
               <p className="text-[#7bd0ff] text-xs tracking-[0.08em]" style={MONO}>
-                LYRICS
+                {t("console.lyricsLabel")}
               </p>
               <p className="text-[#c6c6cd] text-xs truncate" style={MONO}>
                 {title}
@@ -173,18 +186,11 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
           )}
           <div className="flex-1 flex items-center justify-center">
             <div
-              className={
-                isLive
-                  ? "w-full max-w-5xl px-2"
-                  : "bg-[rgba(29,32,34,0.85)] border border-[rgba(123,208,255,0.25)] border-l-4 border-l-[#7bd0ff] rounded-sm px-4 py-3 w-full backdrop-blur-sm"
-              }
+              className={`w-full ${isLive ? "max-w-5xl px-2" : ""} ${captionBoxClass}`}
             >
               <p
-                className={`text-center font-medium drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)] ${
-                  isLive
-                    ? "text-[#e0e3e5] text-4xl sm:text-5xl md:text-6xl leading-tight"
-                    : "text-[#7bd0ff] text-xl leading-8"
-                }`}
+                className={`font-medium drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)] leading-tight ${captionTextClass}`}
+                style={{ color: caption.textColor }}
               >
                 {line || "—"}
               </p>
@@ -213,15 +219,16 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
             {reference}
           </p>
           <div className="flex-1 flex items-center justify-center">
-            <p
-              className={`text-[#e0e3e5] text-center drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)] ${
-                isLive
-                  ? "text-3xl sm:text-4xl md:text-5xl leading-snug max-w-5xl px-2"
-                  : "text-xl leading-8 px-2"
-              }`}
+            <div
+              className={`w-full ${isLive ? "max-w-5xl px-2" : ""} ${captionBoxClass}`}
             >
-              {text}
-            </p>
+              <p
+                className={`drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)] leading-snug ${captionTextClass}`}
+                style={{ color: caption.textColor }}
+              >
+                {text}
+              </p>
+            </div>
           </div>
         </div>
       </ConsoleFrame>
@@ -243,7 +250,9 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
               playsInline
               preload="auto"
               muted={!isLive}
-              {...(!isLive ? { "aria-label": "Console preview (muted)" } : {})}
+              {...(!isLive
+                ? { "aria-label": t("console.mutedPreviewAria") }
+                : {})}
             />
           ) : mediaType === "audio" ? (
             <>
@@ -262,7 +271,7 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
                   }`}
                   style={MONO}
                 >
-                  AUDIO
+                  {t("media.audioBadge")}
                 </span>
                 <p
                   className={`text-[#e0e3e5] text-center drop-shadow-[0_1px_8px_rgba(0,0,0,0.85)] ${
@@ -289,7 +298,7 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
     <ConsoleFrame theme={theme} variant={variant}>
       {!isLive && (
         <div className="h-full flex items-center justify-center text-[#6b7280] text-sm">
-          Recurso no soportado
+          {t("console.unsupported")}
         </div>
       )}
     </ConsoleFrame>

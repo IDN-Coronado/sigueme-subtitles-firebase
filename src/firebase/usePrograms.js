@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { collection, query, orderBy, onSnapshot, addDoc, doc, updateDoc, deleteDoc, limit, writeBatch } from "firebase/firestore";
 import db from "./firebase";
 import { create } from "zustand";
+import { buildDefaultMainLogo } from "./defaultMainLogo";
 
 const COLLECTION_NAME = 'programs';
 
@@ -19,10 +20,12 @@ function usePrograms(id) {
     dbPrograms.filter(p => p.id === id).shift() || {};
 
   const addProgram = async (program) => {
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), program);
+    const mainLogo = program.mainLogo || (await buildDefaultMainLogo());
+    const payload = { ...program, mainLogo };
+    const docRef = await addDoc(collection(db, COLLECTION_NAME), payload);
     setPrograms([
       ...programs,
-      { ...program, id: docRef.id }
+      { ...payload, id: docRef.id }
     ]);
     return docRef;
   };

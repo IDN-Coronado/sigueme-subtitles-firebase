@@ -2,6 +2,8 @@ import { useState, useRef } from "react";
 import dayjs from "dayjs";
 import DOMPurify from "dompurify";
 
+import { t } from "../../i18n";
+
 const MONO = { fontFamily: "JetBrains Mono, monospace" };
 
 function NewThemeModal({ isVisible, onClose, onSubmit }) {
@@ -27,7 +29,7 @@ function NewThemeModal({ isVisible, onClose, onSubmit }) {
     const f = e.target.files[0];
     if (!f) return;
     if (!["image/", "video/"].some((type) => f.type.startsWith(type))) {
-      alert("Solo se aceptan imágenes o videos.");
+      alert(t("themeModal.invalidType"));
       return;
     }
     setFileType(f.type);
@@ -41,7 +43,7 @@ function NewThemeModal({ isVisible, onClose, onSubmit }) {
       setPreviewUrl(safeUrl);
       setFile(f);
     } else {
-      alert("Archivo no válido para previsualización.");
+      alert(t("themeModal.invalidPreview"));
       setPreviewUrl("");
       setFile(null);
     }
@@ -75,10 +77,10 @@ function NewThemeModal({ isVisible, onClose, onSubmit }) {
               className="text-[#7bd0ff] text-[10px] tracking-[0.12em] uppercase mb-1"
               style={MONO}
             >
-              Themes
+              {t("themeModal.eyebrow")}
             </p>
             <h2 className="text-[#e0e3e5] font-semibold text-lg tracking-tight">
-              Nuevo tema
+              {t("themeModal.title")}
             </h2>
           </div>
           <button
@@ -86,7 +88,7 @@ function NewThemeModal({ isVisible, onClose, onSubmit }) {
             className="text-[#6b7280] hover:text-[#e0e3e5] text-2xl leading-none transition-colors"
             onClick={handleModalClose}
             disabled={uploading}
-            aria-label="Cerrar"
+            aria-label={t("common.close")}
           >
             ×
           </button>
@@ -95,7 +97,7 @@ function NewThemeModal({ isVisible, onClose, onSubmit }) {
         <div className="flex flex-col gap-4 px-5 sm:px-6 py-5">
           <div className="flex flex-col gap-2">
             <label className="text-[#c6c6cd] text-sm font-medium">
-              Nombre del tema
+              {t("themeModal.nameLabel")}
             </label>
             <input
               type="text"
@@ -108,7 +110,7 @@ function NewThemeModal({ isVisible, onClose, onSubmit }) {
 
           <div className="flex flex-col gap-2">
             <label className="text-[#c6c6cd] text-sm font-medium">
-              Archivo (imagen o video)
+              {t("themeModal.fileLabel")}
             </label>
             <input
               type="file"
@@ -127,7 +129,7 @@ function NewThemeModal({ isVisible, onClose, onSubmit }) {
               previewUrl.startsWith("blob:") ? (
                 <img
                   src={previewUrl}
-                  alt="preview"
+                  alt={t("themeModal.previewAlt")}
                   className="max-h-40 w-full object-contain"
                 />
               ) : file &&
@@ -154,14 +156,14 @@ function NewThemeModal({ isVisible, onClose, onSubmit }) {
             onClick={handleModalClose}
             disabled={uploading}
           >
-            Cancelar
+            {t("common.cancel")}
           </button>
           <button
             type="submit"
             className="px-4 py-2 bg-[#7bd0ff] text-[#00354a] text-sm font-bold rounded-sm hover:bg-[#5bc0ef] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             disabled={!title.trim() || !file || uploading}
           >
-            {uploading ? "Subiendo..." : "Crear"}
+            {uploading ? t("common.uploading") : t("common.create")}
           </button>
         </div>
       </form>

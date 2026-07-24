@@ -2,6 +2,7 @@ const en = {
   common: {
     cancel: "Cancel",
     close: "Close",
+    done: "Done",
     create: "Create",
     add: "Add",
     delete: "Delete",
@@ -46,11 +47,15 @@ const en = {
   home: {
     tagline: "Live Console",
     liveView: "Live View",
+    settings: "Settings",
     fileMenu: "File menu",
     subtitle: "Create or open a program to start building your service.",
     mainActionsAria: "Main actions",
     recent: "Recent",
     activeProgramFallback: "Active program",
+    openActiveProgram: "Open active program",
+    activeProgramItem: "{count} item",
+    activeProgramItems: "{count} items",
     menu: {
       newProgram: "Create new program",
       newProgramDesc: "Start a fresh service schedule",
@@ -62,12 +67,15 @@ const en = {
       uploadFileDesc: "Add media to the general library",
       uploadTheme: "Upload a theme",
       uploadThemeDesc: "Import a background image or video",
+      settings: "Settings",
+      settingsDesc: "Language and default caption styles",
     },
   },
   program: {
     untitled: "Program",
     home: "Main menu",
     openLiveView: "Open Live View on another screen",
+    closeLiveView: "Close Live View",
     liveView: "Live View",
     active: "Active",
     activate: "ACTIVATE",
@@ -143,6 +151,10 @@ const en = {
     ccAlignCenter: "Align center",
     ccAlignRight: "Align right",
     ccReset: "RESET",
+    ccSong: "Song",
+    ccBible: "Bible",
+    ccResetProgramHint: "Reset this style to the global default",
+    ccResetGlobalHint: "Reset this style to the built-in default",
   },
   media: {
     audioBadge: "AUDIO",
@@ -160,6 +172,16 @@ const en = {
     fontSize: "Font Size",
     transitionStyle: "TRANSITION STYLE",
     crossDissolve: "Cross Dissolve (0.5s)",
+  },
+  settingsModal: {
+    eyebrow: "Preferences",
+    title: "Settings",
+    language: "Language",
+    langEs: "Español",
+    langEn: "English",
+    captionDefaults: "Caption defaults",
+    captionDefaultsHint:
+      "These styles apply to new programs. Each program can still override them from the console.",
   },
   mediaModal: {
     eyebrow: "Media",

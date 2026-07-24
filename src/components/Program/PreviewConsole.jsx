@@ -1,10 +1,13 @@
 import { useEffect } from "react";
 
 import useCaptionSettings from "../../hooks/useCaptionSettings";
+import useLiveViewSize from "../../hooks/useLiveViewSize";
 import { t } from "../../i18n";
 import {
   alignClass,
-  textSizeClass,
+  getStyleFromBundle,
+  justifyClass,
+  textSizePx,
 } from "../../utils/captionSettings";
 import {
   applyMediaSyncCommand,
@@ -12,6 +15,7 @@ import {
   subscribeMediaSync,
 } from "../../utils/mediaSync";
 import { MONO } from "./constants";
+import ScaledLiveStage from "./ScaledLiveStage";
 
 function ThemeBackground({ theme }) {
   if (!theme?.backgroundUrl) return null;
@@ -40,42 +44,100 @@ function ThemeBackground({ theme }) {
   );
 }
 
-function ConsoleFrame({ theme, children, className = "", variant = "console" }) {
+function StageFrame({
+  theme,
+  children,
+  variant = "console",
+  className = "",
+  dimmed = true,
+}) {
   const isLive = variant === "live";
   return (
     <div
-      className={`relative h-full min-h-0 overflow-hidden bg-[#0b0f10] ${
-        isLive
-          ? "rounded-none border-0"
-          : "rounded-lg border border-[rgba(69,70,77,0.25)]"
-      } ${className}`}
+      className={`relative h-full w-full min-h-0 overflow-hidden bg-[#0b0f10] ${className}`}
     >
       <ThemeBackground theme={theme} />
-      <div
-        className={`absolute inset-0 pointer-events-none ${
-          isLive ? "bg-[rgba(11,15,16,0.25)]" : "bg-[rgba(11,15,16,0.35)]"
-        }`}
-      />
+      {dimmed && (
+        <div
+          className={`absolute inset-0 pointer-events-none ${
+            isLive ? "bg-[rgba(11,15,16,0.25)]" : "bg-[rgba(11,15,16,0.35)]"
+          }`}
+        />
+      )}
       <div className="relative z-10 h-full min-h-0 flex flex-col">{children}</div>
+    </div>
+  );
+}
+
+function LiveCanvas({ theme, variant, children, dimmed = true }) {
+  const isLive = variant === "live";
+  const liveSize = useLiveViewSize();
+
+  const frame = (
+    <StageFrame theme={theme} variant={variant} dimmed={dimmed}>
+      {children}
+    </StageFrame>
+  );
+
+  // Live view is the source of truth — fill the real viewport.
+  if (isLive) {
+    return <div className="relative h-full min-h-0 overflow-hidden bg-black">{frame}</div>;
+  }
+
+  // Console: same layout at live W×H, scaled to fit the console section.
+  return (
+    <div className="relative h-full min-h-0 overflow-hidden bg-black rounded-lg border border-[rgba(69,70,77,0.25)]">
+      <ScaledLiveStage
+        stageWidth={liveSize.width}
+        stageHeight={liveSize.height}
+      >
+        {frame}
+      </ScaledLiveStage>
     </div>
   );
 }
 
 function PreviewConsole({ preview, mediaRef, variant = "console" }) {
   const isLive = variant === "live";
-  const caption = useCaptionSettings();
+  const styles = useCaptionSettings(preview?.programId);
   const resource = preview?.resource;
   const theme = preview?.theme;
   const media = resource?.type === "media" ? resource.media : null;
   const isPlayable =
     media && (media.mediaType === "audio" || media.mediaType === "video");
   const mediaKey = isPlayable ? media.url : null;
-  const captionTextClass = `${textSizeClass(caption, variant)} ${alignClass(
-    caption.align
-  )}`;
+  const contentType = resource?.type === "bible" ? "bible" : "song";
+  const caption = getStyleFromBundle(styles, contentType);
+  const fontSize = textSizePx(caption);
+  const captionAlignClass = alignClass(caption.align);
+  const captionJustifyClass = justifyClass(caption.align);
   const captionBoxClass = caption.isCC
-    ? "bg-[rgba(9,9,11,0.88)] px-4 py-3 rounded-sm"
-    : "";
+    ? "inline-block w-fit max-w-full bg-[rgba(9,9,11,0.88)] px-8 py-6 rounded-sm"
+    : "inline-block w-fit max-w-full";
+  const captionTextStyle = {
+    color: caption.textColor,
+    fontSize,
+    ...(caption.isCC
+      ? {}
+      : {
+          // Hard outline + soft halo so light text stays readable on light themes.
+          WebkitTextStroke: "1.5px rgba(0,0,0,0.85)",
+          paintOrder: "stroke fill",
+          textShadow: [
+            "-2px -2px 0 #000",
+            "2px -2px 0 #000",
+            "-2px 2px 0 #000",
+            "2px 2px 0 #000",
+            "-3px 0 0 #000",
+            "3px 0 0 #000",
+            "0 -3px 0 #000",
+            "0 3px 0 #000",
+            "0 0 8px rgba(0,0,0,1)",
+            "0 0 18px rgba(0,0,0,0.95)",
+            "0 4px 14px rgba(0,0,0,0.9)",
+          ].join(", "),
+        }),
+  };
 
   // Console master: muted local playback + broadcast state to Live View.
   useEffect(() => {
@@ -153,85 +215,85 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
   }, [isLive, isPlayable, mediaKey, mediaRef]);
 
   if (!resource) {
+    // Cleared (or idle): show program theme when available.
+    if (theme?.backgroundUrl || isLive) {
+      return (
+        <LiveCanvas theme={theme} variant={variant}>
+          {null}
+        </LiveCanvas>
+      );
+    }
     return (
-      <ConsoleFrame theme={theme} variant={variant}>
-        {isLive ? null : (
-          <div className="h-full flex items-center justify-center text-[#c6c6cd] text-sm px-4 text-center">
-            {t("console.clickToSend")}
-          </div>
-        )}
-      </ConsoleFrame>
+      <div className="relative h-full min-h-0 overflow-hidden bg-[#0b0f10] rounded-lg border border-[rgba(69,70,77,0.25)]">
+        <div className="h-full flex items-center justify-center text-[#c6c6cd] text-sm px-4 text-center">
+          {t("console.clickToSend")}
+        </div>
+      </div>
     );
   }
 
   if (resource.type === "song") {
-    const { title, line, lineIndex } = resource.song || {};
+    const { line } = resource.song || {};
     return (
-      <ConsoleFrame theme={theme} variant={variant}>
-        <div
-          className={`h-full min-h-0 flex flex-col overflow-auto ${
-            isLive ? "p-8 sm:p-12" : "p-4"
-          }`}
-        >
-          {!isLive && (
-            <div className="flex items-center justify-between gap-2 mb-4 shrink-0">
-              <p className="text-[#7bd0ff] text-xs tracking-[0.08em]" style={MONO}>
-                {t("console.lyricsLabel")}
-              </p>
-              <p className="text-[#c6c6cd] text-xs truncate" style={MONO}>
-                {title}
-                {typeof lineIndex === "number" ? ` · L${lineIndex + 1}` : ""}
-              </p>
-            </div>
-          )}
-          <div className="flex-1 flex items-center justify-center">
-            <div
-              className={`w-full ${isLive ? "max-w-5xl px-2" : ""} ${captionBoxClass}`}
-            >
+      <LiveCanvas theme={theme} variant={variant}>
+        <div className="h-full min-h-0 flex flex-col overflow-hidden p-12">
+          <div
+            className={`flex-1 flex items-center min-h-0 ${captionJustifyClass}`}
+          >
+            <div className={captionBoxClass}>
               <p
-                className={`font-medium drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)] leading-tight ${captionTextClass}`}
-                style={{ color: caption.textColor }}
+                className={`font-medium leading-tight ${captionAlignClass} ${
+                  caption.isCC
+                    ? "drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)]"
+                    : ""
+                }`}
+                style={captionTextStyle}
               >
                 {line || "—"}
               </p>
             </div>
           </div>
         </div>
-      </ConsoleFrame>
+      </LiveCanvas>
     );
   }
 
   if (resource.type === "bible") {
     const { reference, text } = resource.bible || {};
     return (
-      <ConsoleFrame theme={theme} variant={variant}>
-        <div
-          className={`h-full min-h-0 flex flex-col overflow-auto ${
-            isLive ? "p-8 sm:p-12" : "p-4"
-          }`}
-        >
-          <p
-            className={`text-[#7bd0ff] tracking-[0.08em] shrink-0 ${
-              isLive ? "text-sm sm:text-base mb-6 text-center" : "text-xs mb-4"
-            }`}
-            style={MONO}
+      <LiveCanvas theme={theme} variant={variant}>
+        <div className="h-full min-h-0 flex flex-col overflow-hidden px-28 py-12">
+          <div
+            className={`flex-1 flex items-center min-h-0 ${captionJustifyClass}`}
           >
-            {reference}
-          </p>
-          <div className="flex-1 flex items-center justify-center">
-            <div
-              className={`w-full ${isLive ? "max-w-5xl px-2" : ""} ${captionBoxClass}`}
-            >
+            <div className={captionBoxClass}>
               <p
-                className={`drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)] leading-snug ${captionTextClass}`}
-                style={{ color: caption.textColor }}
+                className={`leading-snug ${captionAlignClass} ${
+                  caption.isCC
+                    ? "drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)]"
+                    : ""
+                }`}
+                style={captionTextStyle}
               >
                 {text}
               </p>
+              {reference && (
+                <p
+                  className={`mt-4 tracking-[0.08em] uppercase ${captionAlignClass}`}
+                  style={{
+                    ...MONO,
+                    color: caption.textColor,
+                    fontSize: Math.max(26, Math.round(fontSize * 0.52)),
+                    filter: "brightness(0.8)",
+                  }}
+                >
+                  {reference}
+                </p>
+              )}
             </div>
           </div>
         </div>
-      </ConsoleFrame>
+      </LiveCanvas>
     );
   }
 
@@ -239,8 +301,12 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
     const { url, mediaType, title } = resource.media || {};
     const showTheme = mediaType === "audio";
     return (
-      <ConsoleFrame theme={showTheme ? theme : null} variant={variant}>
-        <div className="h-full min-h-0 flex items-center justify-center relative">
+      <LiveCanvas
+        theme={showTheme ? theme : null}
+        variant={variant}
+        dimmed={showTheme}
+      >
+        <div className="h-full w-full min-h-0 flex items-center justify-center relative">
           {mediaType === "video" ? (
             <video
               key={url}
@@ -264,19 +330,16 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
                 className="hidden"
                 muted={!isLive}
               />
-              <div className="flex flex-col items-center gap-3 px-6">
+              <div className="flex flex-col items-center gap-6 px-12">
                 <span
-                  className={`text-[#c6c6cd] tracking-[0.1em] ${
-                    isLive ? "text-sm" : "text-xs"
-                  }`}
-                  style={MONO}
+                  className="text-[#c6c6cd] tracking-[0.1em]"
+                  style={{ ...MONO, fontSize: 20 }}
                 >
                   {t("media.audioBadge")}
                 </span>
                 <p
-                  className={`text-[#e0e3e5] text-center drop-shadow-[0_1px_8px_rgba(0,0,0,0.85)] ${
-                    isLive ? "text-2xl sm:text-3xl" : "text-sm"
-                  }`}
+                  className="text-[#e0e3e5] text-center drop-shadow-[0_1px_8px_rgba(0,0,0,0.85)]"
+                  style={{ fontSize: 36 }}
                 >
                   {title}
                 </p>
@@ -290,18 +353,24 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
             />
           )}
         </div>
-      </ConsoleFrame>
+      </LiveCanvas>
+    );
+  }
+
+  if (isLive) {
+    return (
+      <LiveCanvas theme={theme} variant={variant}>
+        {null}
+      </LiveCanvas>
     );
   }
 
   return (
-    <ConsoleFrame theme={theme} variant={variant}>
-      {!isLive && (
-        <div className="h-full flex items-center justify-center text-[#6b7280] text-sm">
-          {t("console.unsupported")}
-        </div>
-      )}
-    </ConsoleFrame>
+    <div className="relative h-full min-h-0 overflow-hidden bg-[#0b0f10] rounded-lg border border-[rgba(69,70,77,0.25)]">
+      <div className="h-full flex items-center justify-center text-[#6b7280] text-sm">
+        {t("console.unsupported")}
+      </div>
+    </div>
   );
 }
 

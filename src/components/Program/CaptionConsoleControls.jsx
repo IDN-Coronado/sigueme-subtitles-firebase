@@ -6,9 +6,11 @@ import { t } from "../../i18n";
 import {
   MAX_TEXT_SIZE,
   MIN_TEXT_SIZE,
-  getCaptionSettings,
-  resetCaptionSettings,
-  saveCaptionSettings,
+  TEXT_SIZE_STEP,
+  getEffectiveCaptionBundle,
+  getStyleFromBundle,
+  resetProgramCaptionStyle,
+  saveProgramCaptionStyle,
   subscribeCaptionSettings,
 } from "../../utils/captionSettings";
 import {
@@ -28,14 +30,28 @@ const btnIdle =
 const btnActive =
   "border-[rgba(123,208,255,0.45)] text-[#7bd0ff] bg-[rgba(123,208,255,0.1)]";
 
-function CaptionConsoleControls() {
-  const [settings, setSettings] = useState(getCaptionSettings);
+function CaptionConsoleControls({
+  programId,
+  activeContentType = "song",
+}) {
+  const contentType = activeContentType === "bible" ? "bible" : "song";
+  const [settings, setSettings] = useState(() =>
+    getStyleFromBundle(getEffectiveCaptionBundle(programId), contentType)
+  );
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerPos, setPickerPos] = useState({ top: 0, left: 0 });
   const buttonRef = useRef(null);
   const pickerRef = useRef(null);
 
-  useEffect(() => subscribeCaptionSettings(setSettings), []);
+  useEffect(() => {
+    const sync = () => {
+      setSettings(
+        getStyleFromBundle(getEffectiveCaptionBundle(programId), contentType)
+      );
+    };
+    sync();
+    return subscribeCaptionSettings(sync);
+  }, [programId, contentType]);
 
   useLayoutEffect(() => {
     if (!pickerOpen || !buttonRef.current) return undefined;
@@ -82,29 +98,23 @@ function CaptionConsoleControls() {
   }, [pickerOpen]);
 
   const update = (partial) => {
-    setSettings(saveCaptionSettings(partial));
+    const bundle = saveProgramCaptionStyle(programId, contentType, partial);
+    setSettings(getStyleFromBundle(bundle, contentType));
   };
 
   const decrease = () => {
     if (settings.textSize <= MIN_TEXT_SIZE) return;
-    update({ textSize: settings.textSize - 1 });
+    update({ textSize: settings.textSize - TEXT_SIZE_STEP });
   };
 
   const increase = () => {
     if (settings.textSize >= MAX_TEXT_SIZE) return;
-    update({ textSize: settings.textSize + 1 });
-  };
-
-  const toggleCc = () => {
-    update({ isCC: !settings.isCC });
-  };
-
-  const setAlign = (align) => {
-    update({ align });
+    update({ textSize: settings.textSize + TEXT_SIZE_STEP });
   };
 
   const onReset = () => {
-    setSettings(resetCaptionSettings());
+    const bundle = resetProgramCaptionStyle(programId, contentType);
+    setSettings(getStyleFromBundle(bundle, contentType));
     setPickerOpen(false);
   };
 
@@ -115,7 +125,7 @@ function CaptionConsoleControls() {
   ];
 
   return (
-    <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+    <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-wrap justify-end">
       <button
         type="button"
         onClick={decrease}
@@ -171,7 +181,7 @@ function CaptionConsoleControls() {
 
       <button
         type="button"
-        onClick={toggleCc}
+        onClick={() => update({ isCC: !settings.isCC })}
         className={`${btnBase} ${settings.isCC ? btnActive : btnIdle}`}
         title={t("console.ccStyle")}
         aria-label={t("console.ccStyle")}
@@ -185,7 +195,7 @@ function CaptionConsoleControls() {
           <button
             key={id}
             type="button"
-            onClick={() => setAlign(id)}
+            onClick={() => update({ align: id })}
             className={`${btnBase} ${
               settings.align === id ? btnActive : btnIdle
             }`}
@@ -203,7 +213,7 @@ function CaptionConsoleControls() {
         onClick={onReset}
         className="h-8 px-2 inline-flex items-center rounded-sm border border-[rgba(69,70,77,0.4)] text-[#6b7280] text-[10px] tracking-[0.06em] hover:border-[#ffb4ab] hover:text-[#ffb4ab] transition-colors shrink-0"
         style={MONO}
-        title={t("console.ccReset")}
+        title={t("console.ccResetProgramHint")}
         aria-label={t("console.ccReset")}
       >
         {t("console.ccReset")}

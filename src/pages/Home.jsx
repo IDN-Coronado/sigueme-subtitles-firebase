@@ -6,15 +6,15 @@ import usePrograms from "../firebase/usePrograms";
 import useSongs from "../firebase/useSongs";
 import useThemes from "../firebase/useThemes";
 import useMedia from "../firebase/useMedia";
-import openLiveView from "../utils/openLiveView";
 
 import NewProgramModal from "../components/Program/NewProgramModal";
 import OpenProgramModal from "../components/Program/OpenProgramModal";
 import NewSongModal from "../components/Song/NewSongModal";
 import SlideUploadModal from "../components/SlideUploadModal";
 import NewThemeModal from "../components/Theme/NewThemeModal";
-import { IconPlus, IconCalendar } from "../components/Icons";
-import { t } from "../i18n";
+import GlobalSettingsModal from "../components/GlobalSettingsModal";
+import { IconGear, IconMedia } from "../components/Icons";
+import { t, formatProgramDate } from "../i18n";
 
 const MONO = { fontFamily: "JetBrains Mono, monospace" };
 
@@ -47,6 +47,12 @@ const MENU_ITEMS = [
     id: "upload-theme",
     labelKey: "home.menu.uploadTheme",
     descriptionKey: "home.menu.uploadThemeDesc",
+    shortcut: null,
+  },
+  {
+    id: "settings",
+    labelKey: "home.menu.settings",
+    descriptionKey: "home.menu.settingsDesc",
     shortcut: null,
   },
 ];
@@ -107,13 +113,16 @@ function MenuIcon({ id }) {
       </svg>
     );
   }
-  // upload-theme
-  return (
-    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
-      <rect x="2" y="4" width="18" height="14" rx="2" stroke={stroke} strokeWidth="1.5" />
-      <path d="M11 4v14" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
+  if (id === "upload-theme") {
+    return (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
+        <rect x="2" y="4" width="18" height="14" rx="2" stroke={stroke} strokeWidth="1.5" />
+        <path d="M11 4v14" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  // settings
+  return <IconGear color="currentColor" />;
 }
 
 function Home() {
@@ -123,7 +132,7 @@ function Home() {
   const { addTheme } = useThemes();
   const { uploadMedia } = useMedia();
 
-  const [modal, setModal] = useState(null); // 'new-program' | 'open-program' | 'new-song' | 'upload-file' | 'upload-theme'
+  const [modal, setModal] = useState(null); // 'new-program' | 'open-program' | 'new-song' | 'upload-file' | 'upload-theme' | 'settings'
 
   const closeModal = () => setModal(null);
 
@@ -161,6 +170,14 @@ function Home() {
   };
 
   const activeProgram = programs.find((p) => p.active);
+  const activeProgramDate = activeProgram
+    ? formatProgramDate(activeProgram.date)
+    : "";
+  const activeScheduleCount = activeProgram
+    ? Array.isArray(activeProgram.schedule)
+      ? activeProgram.schedule.filter((item) => item.type !== "theme").length
+      : (activeProgram.songs?.length || 0) + (activeProgram.slides?.length || 0)
+    : 0;
 
   return (
     <>
@@ -183,7 +200,7 @@ function Home() {
         />
 
         <header className="relative z-10 h-14 sm:h-16 border-b border-[rgba(69,70,77,0.3)] flex items-center justify-between px-5 sm:px-8 shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-baseline gap-3 min-w-0">
             <span className="text-[#e0e3e5] font-bold text-lg sm:text-xl tracking-tight truncate">
               Presenter Pro
             </span>
@@ -194,32 +211,58 @@ function Home() {
               {t("home.tagline")}
             </span>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-3 shrink-0 min-w-0">
             {activeProgram && (
               <button
                 type="button"
                 onClick={() => navigate(`/program/${activeProgram.id}`)}
-                className="hidden md:inline-flex items-center gap-2 text-[#c6c6cd] text-xs border border-[rgba(69,70,77,0.4)] px-3 py-1.5 rounded-sm hover:border-[#7bd0ff] hover:text-[#7bd0ff] transition-colors"
-                style={MONO}
+                className="inline-flex items-center gap-3 max-w-full text-left border border-[rgba(123,208,255,0.28)] bg-[rgba(123,208,255,0.06)] px-3 py-1.5 rounded-sm hover:border-[#7bd0ff] hover:bg-[rgba(123,208,255,0.1)] transition-colors group"
+                title={t("home.openActiveProgram")}
               >
-                <IconCalendar color="currentColor" />
-                {activeProgram.title || t("home.activeProgramFallback")}
+                <span className="shrink-0 w-8 h-8 rounded-sm bg-[rgba(0,166,224,0.18)] border border-[rgba(123,208,255,0.35)] flex items-center justify-center text-[#7bd0ff] group-hover:border-[#7bd0ff]">
+                  <IconMedia color="currentColor" />
+                </span>
+                <span className="min-w-0 flex flex-col gap-0.5">
+                  <span className="flex items-center gap-2 min-w-0">
+                    <span className="text-[#e0e3e5] text-sm font-semibold truncate leading-tight">
+                      {activeProgram.title || t("home.activeProgramFallback")}
+                    </span>
+                    <span
+                      className="shrink-0 inline-flex items-center gap-1.5 bg-[rgba(0,166,224,0.2)] text-[#7bd0ff] text-[10px] font-medium tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-sm"
+                      style={MONO}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#7bd0ff] animate-pulse" />
+                      {t("program.active")}
+                    </span>
+                  </span>
+                  <span
+                    className="flex items-center gap-2 text-[#6b7280] text-[10px] tracking-[0.06em] uppercase truncate"
+                    style={MONO}
+                  >
+                    {activeProgramDate && <span>{activeProgramDate}</span>}
+                    {activeProgramDate && activeScheduleCount > 0 && (
+                      <span className="text-[#45464d]">·</span>
+                    )}
+                    {activeScheduleCount > 0 && (
+                      <span>
+                        {activeScheduleCount === 1
+                          ? t("home.activeProgramItem", {
+                              count: activeScheduleCount,
+                            })
+                          : t("home.activeProgramItems", {
+                              count: activeScheduleCount,
+                            })}
+                      </span>
+                    )}
+                  </span>
+                </span>
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => openLiveView().catch(() => {})}
-              className="text-[#7bd0ff] font-medium text-sm border border-[rgba(123,208,255,0.35)] px-3 py-1.5 rounded-sm hover:bg-[rgba(123,208,255,0.08)] transition-colors"
-              style={MONO}
-              title={t("program.openLiveView")}
-            >
-              {t("home.liveView")}
-            </button>
           </div>
         </header>
 
         <main className="relative z-10 flex-1 flex items-center justify-center p-5 sm:p-8">
-          <div className="w-full max-w-xl">
+          <div className="w-full max-w-3xl">
             <div className="mb-8 sm:mb-10">
               <p
                 className="text-[#7bd0ff] text-xs tracking-[0.14em] uppercase mb-3"
@@ -230,7 +273,7 @@ function Home() {
               <h1 className="text-[#e0e3e5] font-bold text-3xl sm:text-4xl tracking-tight leading-tight">
                 Presenter Pro
               </h1>
-              <p className="text-[#c6c6cd] text-base sm:text-lg mt-2 max-w-md">
+              <p className="text-[#c6c6cd] text-base sm:text-lg mt-2 truncate">
                 {t("home.subtitle")}
               </p>
             </div>
@@ -267,9 +310,6 @@ function Home() {
                       {item.shortcut}
                     </span>
                   )}
-                  <span className="text-[#45464d] group-hover:text-[#7bd0ff] transition-colors shrink-0">
-                    <IconPlus color="currentColor" />
-                  </span>
                 </button>
               ))}
             </nav>
@@ -346,6 +386,10 @@ function Home() {
         isVisible={modal === "upload-theme"}
         onClose={closeModal}
         onSubmit={handleCreateTheme}
+      />
+      <GlobalSettingsModal
+        isOpen={modal === "settings"}
+        onClose={closeModal}
       />
     </>
   );

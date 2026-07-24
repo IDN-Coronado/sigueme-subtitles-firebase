@@ -5,14 +5,18 @@ import {
   Navigate,
 } from "react-router-dom";
 
-import './App.css';
+import "./App.css";
 
 import Home from "./pages/Home";
 import Caption from "./pages/Caption";
 import Live from "./pages/Live";
 import Program from "./pages/Program";
+import useLocale from "./hooks/useLocale";
 
 function Layout() {
+  // Re-render the app shell when language changes so `t()` updates.
+  useLocale();
+
   return (
     <div className="h-full min-h-0 flex flex-col bg-[#101415]">
       <Outlet />

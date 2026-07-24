@@ -14,6 +14,7 @@ import SlideUploadModal from "../components/SlideUploadModal";
 import NewThemeModal from "../components/Theme/NewThemeModal";
 import ConfirmationModal from "../components/Theme/ConfirmationModal";
 import Panel from "../components/Program/Panel";
+import ResizableSplit from "../components/Program/ResizableSplit";
 import ScheduleItemRow from "../components/Program/ScheduleItemRow";
 import PreviewPanel from "../components/Program/PreviewPanel";
 import PreviewConsole from "../components/Program/PreviewConsole";
@@ -23,6 +24,11 @@ import ResourceBrowser from "../components/Program/ResourceBrowser";
 import ProgramHeader from "../components/Program/ProgramHeader";
 import { RESOURCE_TABS } from "../components/Program/constants";
 import { t } from "../i18n";
+
+const LAYOUT_STORAGE = {
+  vertical: "sigueme.program.layout.vertical",
+  horizontal: "sigueme.program.layout.horizontal",
+};
 
 const CAPTION_COLLECTION = "caption";
 const CAPTION_DOC = "caption";
@@ -166,7 +172,22 @@ function Program() {
 
   const handleClear = async () => {
     if (isLogoDisplayed) return;
-    await Promise.all([setCaption(""), clearPreviewResource()]);
+
+    const themeItem = schedule.find((i) => i.type === "theme");
+    const theme = themeItem
+      ? {
+          id: themeItem.themeId,
+          title: themeItem.title,
+          backgroundUrl: themeItem.backgroundUrl,
+          themeType: themeItem.themeType,
+        }
+      : preview?.theme || null;
+
+    await setCaption("");
+    if (theme) {
+      await setPreview({ programId, theme });
+    }
+    await clearPreviewResource();
   };
 
   const handleShowLogo = async () => {
@@ -239,141 +260,143 @@ function Program() {
         clearDisabled={isLogoDisplayed}
       />
 
-      <main
-        className="min-h-0 min-w-0 p-4 sm:p-5 overflow-hidden"
-        style={{
-          flex: "1 1 0%",
-          display: "grid",
-          gridTemplateRows: "minmax(0, 1fr) minmax(0, 1fr)",
-          gap: "1rem",
-        }}
-      >
-        <div
-          className="min-h-0 min-w-0 overflow-hidden gap-4"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(12, minmax(0, 1fr))",
-          }}
+      <main className="min-h-0 min-w-0 p-4 sm:p-5 overflow-hidden flex-1">
+        <ResizableSplit
+          direction="vertical"
+          className="h-full"
+          defaultSizes={[50, 50]}
+          minSizes={[20, 20]}
+          storageKey={LAYOUT_STORAGE.vertical}
         >
-          <Panel
-            title={t("program.panels.schedule")}
-            className="min-h-0"
-            style={{ gridColumn: "span 3" }}
+          <ResizableSplit
+            direction="horizontal"
+            className="h-full"
+            defaultSizes={[25, 25, 50]}
+            minSizes={[12, 12, 25]}
+            storageKey={LAYOUT_STORAGE.horizontal}
           >
-            <div className="flex flex-col gap-2">
-              {!hydrated && (
-                <p className="text-[#6b7280] text-sm">{t("common.loading")}</p>
-              )}
-              {hydrated && schedule.length === 0 && (
-                <p className="text-[#6b7280] text-sm px-1">
-                  {t("program.scheduleEmpty")}
-                </p>
-              )}
-              {schedule.map((item, index) => {
-                const itemIndex =
-                  item.type === "theme"
-                    ? 0
-                    : schedule
-                        .slice(0, index)
-                        .filter((i) => i.type !== "theme").length;
+            <Panel title={t("program.panels.schedule")} className="h-full">
+              <div className="flex flex-col gap-2">
+                {!hydrated && (
+                  <p className="text-[#6b7280] text-sm">{t("common.loading")}</p>
+                )}
+                {hydrated && schedule.length === 0 && (
+                  <p className="text-[#6b7280] text-sm px-1">
+                    {t("program.scheduleEmpty")}
+                  </p>
+                )}
+                {schedule.map((item, index) => {
+                  const itemIndex =
+                    item.type === "theme"
+                      ? 0
+                      : schedule
+                          .slice(0, index)
+                          .filter((i) => i.type !== "theme").length;
+                  return (
+                    <ScheduleItemRow
+                      key={item.id}
+                      item={item}
+                      index={itemIndex}
+                      active={item.id === selectedId}
+                      onSelect={setSelectedId}
+                      onRemove={(id) =>
+                        setPendingDelete({ type: "schedule", item: { id } })
+                      }
+                    />
+                  );
+                })}
+              </div>
+            </Panel>
+
+            <Panel title={t("program.panels.preview")} className="h-full">
+              <PreviewPanel
+                item={selectedItem}
+                songs={songs}
+                preview={preview}
+                onSelect={handlePreviewSelect}
+              />
+            </Panel>
+
+            <Panel
+              title={t("program.panels.console")}
+              className="h-full"
+              action={
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 max-w-full overflow-x-auto">
+                  {showMediaControls ? (
+                    <MediaConsoleControls
+                      mediaRef={consoleMediaRef}
+                      mediaKey={consoleMedia.url}
+                    />
+                  ) : (
+                    <CaptionConsoleControls
+                      programId={programId}
+                      activeContentType={
+                        preview?.resource?.type === "bible" ? "bible" : "song"
+                      }
+                    />
+                  )}
+                </div>
+              }
+            >
+              <PreviewConsole preview={preview} mediaRef={consoleMediaRef} />
+            </Panel>
+          </ResizableSplit>
+
+          <section className="h-full min-h-0 min-w-0 bg-[rgba(29,32,34,0.5)] border border-[rgba(69,70,77,0.35)] rounded-lg flex flex-col overflow-hidden">
+            <div className="shrink-0 flex items-center gap-2 px-3 sm:px-4 py-3 border-b border-[rgba(69,70,77,0.25)] overflow-x-auto">
+              {RESOURCE_TABS.map((tab) => {
+                const Icon = tab.Icon;
                 return (
-                  <ScheduleItemRow
-                    key={item.id}
-                    item={item}
-                    index={itemIndex}
-                    active={item.id === selectedId}
-                    onSelect={setSelectedId}
-                    onRemove={(id) =>
-                      setPendingDelete({ type: "schedule", item: { id } })
-                    }
-                  />
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setResourceTab(tab.id)}
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-sm text-sm font-medium whitespace-nowrap transition-colors ${
+                      resourceTab === tab.id
+                        ? "bg-[#323537] text-[#e0e3e5]"
+                        : "bg-[rgba(50,53,55,0.35)] text-[#c6c6cd] hover:text-[#e0e3e5]"
+                    }`}
+                  >
+                    <Icon color="currentColor" />
+                    {t(`program.tabs.${tab.id}`)}
+                  </button>
                 );
               })}
             </div>
-          </Panel>
-
-          <Panel
-            title={t("program.panels.preview")}
-            className="min-h-0"
-            style={{ gridColumn: "span 3" }}
-          >
-            <PreviewPanel
-              item={selectedItem}
-              songs={songs}
-              preview={preview}
-              onSelect={handlePreviewSelect}
-            />
-          </Panel>
-
-          <Panel
-            title={t("program.panels.console")}
-            className="min-h-0"
-            style={{ gridColumn: "span 6" }}
-            action={
-              <div className="flex items-center gap-2 sm:gap-3 min-w-0 max-w-full overflow-x-auto">
-                {showMediaControls ? (
-                  <MediaConsoleControls
-                    mediaRef={consoleMediaRef}
-                    mediaKey={consoleMedia.url}
-                  />
-                ) : (
-                  <CaptionConsoleControls />
-                )}
-              </div>
-            }
-          >
-            <PreviewConsole preview={preview} mediaRef={consoleMediaRef} />
-          </Panel>
-        </div>
-
-        <section className="min-h-0 min-w-0 bg-[rgba(29,32,34,0.5)] border border-[rgba(69,70,77,0.35)] rounded-lg flex flex-col overflow-hidden">
-          <div className="shrink-0 flex items-center gap-2 px-3 sm:px-4 py-3 border-b border-[rgba(69,70,77,0.25)] overflow-x-auto">
-            {RESOURCE_TABS.map((tab) => {
-              const Icon = tab.Icon;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setResourceTab(tab.id)}
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-sm text-sm font-medium whitespace-nowrap transition-colors ${
-                    resourceTab === tab.id
-                      ? "bg-[#323537] text-[#e0e3e5]"
-                      : "bg-[rgba(50,53,55,0.35)] text-[#c6c6cd] hover:text-[#e0e3e5]"
-                  }`}
-                >
-                  <Icon color="currentColor" />
-                  {t(`program.tabs.${tab.id}`)}
-                </button>
-              );
-            })}
-          </div>
-          <div className="flex-1 min-h-0 overflow-hidden p-3 sm:p-4">
-            <ResourceBrowser
-              tab={resourceTab}
-              songs={songs}
-              media={media}
-              themes={themes}
-              onAddSong={addSongToSchedule}
-              onAddMedia={addMedia}
-              onAddTheme={handleAddTheme}
-              onAddBible={addBible}
-              onCreateSong={() => {
-                setEditingSong(null);
-                setCreateModal("song");
-              }}
-              onCreateMedia={() => setCreateModal("media")}
-              onCreateTheme={() => setCreateModal("theme")}
-              onEditSong={(song) => {
-                setEditingSong(song);
-                setCreateModal("song");
-              }}
-              onDeleteSong={(song) => setPendingDelete({ type: "song", item: song })}
-              onDeleteMedia={(item) => setPendingDelete({ type: "media", item })}
-              onDeleteTheme={(theme) => setPendingDelete({ type: "theme", item: theme })}
-              onSetMediaAsLogo={handleSetMediaAsLogo}
-            />
-          </div>
-        </section>
+            <div className="flex-1 min-h-0 overflow-hidden p-3 sm:p-4">
+              <ResourceBrowser
+                tab={resourceTab}
+                songs={songs}
+                media={media}
+                themes={themes}
+                onAddSong={addSongToSchedule}
+                onAddMedia={addMedia}
+                onAddTheme={handleAddTheme}
+                onAddBible={addBible}
+                onCreateSong={() => {
+                  setEditingSong(null);
+                  setCreateModal("song");
+                }}
+                onCreateMedia={() => setCreateModal("media")}
+                onCreateTheme={() => setCreateModal("theme")}
+                onEditSong={(song) => {
+                  setEditingSong(song);
+                  setCreateModal("song");
+                }}
+                onDeleteSong={(song) =>
+                  setPendingDelete({ type: "song", item: song })
+                }
+                onDeleteMedia={(item) =>
+                  setPendingDelete({ type: "media", item })
+                }
+                onDeleteTheme={(theme) =>
+                  setPendingDelete({ type: "theme", item: theme })
+                }
+                onSetMediaAsLogo={handleSetMediaAsLogo}
+              />
+            </div>
+          </section>
+        </ResizableSplit>
       </main>
 
       <NewSongModal

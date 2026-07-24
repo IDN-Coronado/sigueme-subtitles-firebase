@@ -1,7 +1,40 @@
 const LIVE_WINDOW_NAME = "sigueme-live-view";
 
+let liveWindow = null;
+let pollId = null;
+const listeners = new Set();
+
 function liveViewUrl() {
   return `${window.location.origin}/live`;
+}
+
+function notify() {
+  const open = isLiveViewOpen();
+  listeners.forEach((handler) => {
+    try {
+      handler(open);
+    } catch {
+      // ignore
+    }
+  });
+}
+
+function stopPolling() {
+  if (pollId != null) {
+    window.clearInterval(pollId);
+    pollId = null;
+  }
+}
+
+function startPolling() {
+  stopPolling();
+  pollId = window.setInterval(() => {
+    if (!liveWindow || liveWindow.closed) {
+      liveWindow = null;
+      stopPolling();
+      notify();
+    }
+  }, 500);
 }
 
 function screenFeatures(screen) {
@@ -47,6 +80,29 @@ async function resolveTargetScreen() {
   }
 }
 
+export function isLiveViewOpen() {
+  return Boolean(liveWindow && !liveWindow.closed);
+}
+
+export function closeLiveView() {
+  if (liveWindow && !liveWindow.closed) {
+    try {
+      liveWindow.close();
+    } catch {
+      // ignore
+    }
+  }
+  liveWindow = null;
+  stopPolling();
+  notify();
+}
+
+export function subscribeLiveViewOpen(handler) {
+  listeners.add(handler);
+  handler(isLiveViewOpen());
+  return () => listeners.delete(handler);
+}
+
 /**
  * Opens the Live View window on a secondary display when the
  * Window Management API is available; otherwise opens a normal popup.
@@ -70,7 +126,13 @@ export async function openLiveView() {
     placeOnScreen(win, targetScreen);
   }
 
-  win?.focus();
+  if (win) {
+    liveWindow = win;
+    startPolling();
+    notify();
+    win.focus();
+  }
+
   return win;
 }
 

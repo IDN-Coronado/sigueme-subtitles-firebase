@@ -4,6 +4,7 @@ import PreviewConsole from "../components/Program/PreviewConsole";
 import usePreview from "../firebase/usePreview";
 import { MONO } from "../components/Program/constants";
 import { t } from "../i18n";
+import { startLiveViewSizeReporter } from "../utils/liveViewSize";
 
 async function requestPageFullscreen() {
   if (document.fullscreenElement) return true;
@@ -21,6 +22,8 @@ function Live() {
   const { preview } = usePreview();
   const mediaRef = useRef(null);
   const [fullscreenHint, setFullscreenHint] = useState(true);
+
+  useEffect(() => startLiveViewSizeReporter(), []);
 
   useEffect(() => {
     let cancelled = false;

@@ -1,17 +1,33 @@
 import { useEffect, useState } from "react";
 
 import {
-  getCaptionSettings,
+  getEffectiveCaptionBundle,
+  getStyleFromBundle,
   subscribeCaptionSettings,
 } from "../utils/captionSettings";
 
 /**
- * Shared caption (CC) display settings for Console and Live View.
+ * Effective caption styles for a program (program override or global).
+ * Returns `{ song, bible }`.
  */
-export default function useCaptionSettings() {
-  const [settings, setSettings] = useState(getCaptionSettings);
+export default function useCaptionSettings(programId) {
+  const [bundle, setBundle] = useState(() =>
+    getEffectiveCaptionBundle(programId)
+  );
 
-  useEffect(() => subscribeCaptionSettings(setSettings), []);
+  useEffect(() => {
+    const sync = () => setBundle(getEffectiveCaptionBundle(programId));
+    sync();
+    return subscribeCaptionSettings(sync);
+  }, [programId]);
 
-  return settings;
+  return bundle;
+}
+
+/**
+ * Single style for a content type within a program context.
+ */
+export function useCaptionStyle(programId, contentType) {
+  const bundle = useCaptionSettings(programId);
+  return getStyleFromBundle(bundle, contentType);
 }

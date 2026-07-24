@@ -24,10 +24,16 @@ export function IconPlus({ color = "#00354a" }) {
   );
 }
 
-export function IconBroadcast() {
+export function IconBroadcast({ color = "currentColor" }) {
   return (
-    <svg width="20" height="14" viewBox="0 0 20 14" fill="none">
-      <path d="M1 7h18M7 1l-6 6 6 6M13 1l6 6-6 6" stroke="#00354a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="20" height="14" viewBox="0 0 20 14" fill="none" aria-hidden>
+      <path
+        d="M1 7h18M7 1l-6 6 6 6M13 1l6 6-6 6"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }

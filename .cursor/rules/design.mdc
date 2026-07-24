@@ -1,0 +1,49 @@
+---
+description: UI design system (Obsidian Slate) — colors, typography, layout
+globs: src/**/*.{jsx,tsx,css}
+alwaysApply: false
+---
+
+# Obsidian Slate UI constraints
+
+When editing UI, follow these constraints. Tokens and longer rationale live in `docs/Design.md` — use that as the source of truth; do not invent new colors, fonts, or radii.
+
+## Visual system
+
+- Dark-first tool UI: hierarchy via tonal surface layers and 1px borders, not heavy shadows.
+- Modals/popovers may use a soft shadow (`0 8px 24px` at ~20% black) and 8px backdrop blur; lists and cards stay flat.
+- Accent (sky blue / `secondary`) sparingly: primary actions (“Go Live”), focus rings, and active/live states only. Do not accent-flood the UI.
+- Live/selected states: subtle outer glow or left accent bar in secondary — not a filled hero card.
+
+## Typography
+
+- Inter for UI text; JetBrains Mono for labels, metadata, and technical inputs.
+- Use named roles from `docs/Design.md` (`body-md`, `body-lg`, `label-sm`, `lyric-display`, etc.). Do not freestyle font sizes.
+- Medium weight for interactive text; semi-bold for section headers.
+- Lyrics and on-stage song text use `lyric-display` with large click targets.
+
+## Shape & spacing
+
+- Inputs and buttons: `rounded-sm` (4px). Cards and resource containers: `rounded-lg` (8px).
+- No `rounded-full` pills except avatars.
+- Active list selection: sharp 2–4px vertical accent bar on the left, not a pill or chip.
+- Align to a 4px baseline grid. Prefer 16px (md) and 24px (lg) padding; gutters 24px.
+- Desktop shell: fixed-width left sidebar + flexible main workspace. On small screens, collapse the sidebar into a drawer/bottom sheet; keep the live/content area primary.
+- Presentation stage: keep ~5% margin safe zone so content is not clipped on external displays.
+
+## Components
+
+- **Buttons:** Primary = solid accent + light text. Secondary = transparent + 1px slate border. Ghost = no fill/border (toolbar utilities).
+- **Cards:** 16px padding; title `body-lg` bold; metadata `label-sm` mono. Hover: border shifts toward secondary accent.
+- **Lyric list items:** subtle alternating tints; active line gets a 4px left secondary bar.
+- **Inputs:** darker than the parent surface (“well”); 1px border; focus uses secondary glow/border. Mono for timing, hex, and other technical fields.
+- **Live indicator:** small top-right “On Air” pulse in desaturated red — present, not loud.
+
+## Do not
+
+- Wrap every block in a card, shadow, or decorative container.
+- Add purple themes, decorative gradients, or glow effects everywhere.
+- Use multiple competing primary CTAs in the same view.
+- Invent a parallel palette or type scale when tokens already exist in `docs/Design.md`.
+
+When unsure, re-read `docs/Design.md` and match existing UI patterns in `src/` before introducing a new pattern.

@@ -1,43 +1,51 @@
 import {
   createBrowserRouter,
   RouterProvider,
+  Outlet,
+  Navigate,
 } from "react-router-dom";
 
-import { ProvideSongs } from "./firebase/useSongs"; 
-
-import './App.css';
+import "./App.css";
 
 import Home from "./pages/Home";
-import Song from "./pages/Song";
 import Caption from "./pages/Caption";
-import AddSong from "./pages/AddSong";
+import Live from "./pages/Live";
+import Program from "./pages/Program";
+import useLocale from "./hooks/useLocale";
+
+function Layout() {
+  // Re-render the app shell when language changes so `t()` updates.
+  useLocale();
+
+  return (
+    <div className="h-full min-h-0 flex flex-col bg-[#101415]">
+      <Outlet />
+    </div>
+  );
+}
 
 const router = createBrowserRouter([
   {
-    path: "/",
-    element: <Home />,
+    element: <Layout />,
+    children: [
+      { path: "/", element: <Home /> },
+      { path: "/program/:programId", element: <Program /> },
+      { path: "/songs", element: <Navigate to="/" replace /> },
+      { path: "/song/:songId", element: <Navigate to="/" replace /> },
+      { path: "/add", element: <Navigate to="/" replace /> },
+      { path: "/themes", element: <Navigate to="/" replace /> },
+      { path: "/media", element: <Navigate to="/" replace /> },
+    ],
   },
-  {
-    path: "/caption",
-    element: <Caption />,
-  },
-  {
-    path: "/song/:songId",
-    element: <Song />,
-  },
-  {
-    path: "/add",
-    element: <AddSong />,
-  },
+  { path: "/caption", element: <Caption /> },
+  { path: "/live", element: <Live /> },
 ]);
 
 function App() {
   return (
-    <ProvideSongs>
-      <div className="bg-gray-100 min-h-screen">
-        <RouterProvider router={router} />
-      </div>
-    </ProvideSongs>
+    <div className="h-full min-h-0">
+      <RouterProvider router={router} />
+    </div>
   );
 }
 

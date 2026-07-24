@@ -2,7 +2,11 @@
 # https://github.com/firebase/firebase-tools
 
 name: Deploy to Firebase Hosting on PR
-on: pull_request
+on:
+  pull_request:
+    branches:
+      - main
+      - propresenter
 permissions:
   checks: write
   contents: read
@@ -34,10 +38,11 @@ jobs:
 
       - name: Install and Run
         run: npm install && npm run build
-      
+
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SIGUEMESUBTITLES }}
           projectId: siguemesubtitles
+          target: ${{ github.event.pull_request.base.ref == 'propresenter' && 'propresenter' || 'main' }}

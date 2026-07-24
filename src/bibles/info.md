@@ -1,0 +1,1 @@
+https://github.com/mrk214/bible-data-es-spa

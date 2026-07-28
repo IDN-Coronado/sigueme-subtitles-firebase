@@ -11,6 +11,7 @@ import usePreview from "../firebase/usePreview";
 import useProgramSchedule from "../hooks/useProgramSchedule";
 import NewSongModal from "../components/Song/NewSongModal";
 import SlideUploadModal from "../components/SlideUploadModal";
+import YouTubeMediaModal from "../components/YouTubeMediaModal";
 import NewThemeModal from "../components/Theme/NewThemeModal";
 import ConfirmationModal from "../components/Theme/ConfirmationModal";
 import Panel from "../components/Program/Panel";
@@ -54,11 +55,13 @@ function Program() {
   const [resourceTab, setResourceTab] = useState("songs");
   const [createModal, setCreateModal] = useState(null);
   const [editingSong, setEditingSong] = useState(null);
+  const [editingYouTube, setEditingYouTube] = useState(null);
   const [pendingDelete, setPendingDelete] = useState(null);
 
   const { songs, addSong, updateSong, removeSong } = useSongs();
   const { themes, addTheme, removeTheme } = useThemes();
-  const { media, uploadMedia, removeMedia } = useMedia();
+  const { media, uploadMedia, addYouTubeMedia, updateYouTubeMedia, removeMedia } =
+    useMedia();
   const { program, updateProgram, activateProgram } = usePrograms(programId);
   const { preview, setPreview, clearPreviewResource } = usePreview();
 
@@ -81,7 +84,10 @@ function Program() {
     updateProgram,
   });
 
-  const closeCreateModal = () => setCreateModal(null);
+  const closeCreateModal = () => {
+    setCreateModal(null);
+    setEditingYouTube(null);
+  };
 
   const closeSongModal = () => {
     setCreateModal(null);
@@ -102,6 +108,19 @@ function Program() {
       closeCreateModal();
     } catch {
       alert(t("errors.uploadFile"));
+    }
+  };
+
+  const handleCreateYouTube = async ({ id, url, title }) => {
+    try {
+      if (id) {
+        await updateYouTubeMedia({ id, url, title });
+      } else {
+        await addYouTubeMedia({ url, title });
+      }
+      closeCreateModal();
+    } catch {
+      alert(t("errors.addYouTube"));
     }
   };
 
@@ -243,7 +262,9 @@ function Program() {
     preview?.resource?.type === "media" ? preview.resource.media : null;
   const showMediaControls =
     consoleMedia &&
-    (consoleMedia.mediaType === "audio" || consoleMedia.mediaType === "video");
+    (consoleMedia.mediaType === "audio" ||
+      consoleMedia.mediaType === "video" ||
+      consoleMedia.mediaType === "youtube");
 
   return (
     <div
@@ -378,6 +399,14 @@ function Program() {
                   setCreateModal("song");
                 }}
                 onCreateMedia={() => setCreateModal("media")}
+                onCreateYouTube={() => {
+                  setEditingYouTube(null);
+                  setCreateModal("youtube");
+                }}
+                onEditYouTube={(item) => {
+                  setEditingYouTube(item);
+                  setCreateModal("youtube");
+                }}
                 onCreateTheme={() => setCreateModal("theme")}
                 onEditSong={(song) => {
                   setEditingSong(song);
@@ -409,6 +438,12 @@ function Program() {
         isOpen={createModal === "media"}
         onClose={closeCreateModal}
         onUpload={handleCreateMedia}
+      />
+      <YouTubeMediaModal
+        isOpen={createModal === "youtube"}
+        onClose={closeCreateModal}
+        onSubmit={handleCreateYouTube}
+        item={editingYouTube}
       />
       <NewThemeModal
         isVisible={createModal === "theme"}

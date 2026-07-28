@@ -2,6 +2,7 @@ import { t } from "../../i18n";
 import { MONO } from "./constants";
 import { getBibleVerses } from "../../utils/programSchedule";
 import { normalizeSong } from "../../utils/songSections";
+import { parseYouTubeStartSeconds } from "../../utils/youtube";
 
 /** Subtle dark-UI header pairs: tinted bg + readable text. */
 const SECTION_HEADER_COLORS = [
@@ -206,25 +207,45 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
     return (
       <button
         type="button"
-        onClick={() =>
+        onClick={() => {
+          const startSeconds =
+            item.startSeconds > 0
+              ? Math.floor(item.startSeconds)
+              : item.mediaType === "youtube"
+                ? parseYouTubeStartSeconds(item.url || "")
+                : 0;
           onSelect({
             type: "media",
             media: {
               title: item.title,
               name: item.name || item.title,
               url: item.url,
-              storagePath: item.storagePath,
               mediaType: item.mediaType,
+              ...(item.storagePath ? { storagePath: item.storagePath } : {}),
+              ...(item.youtubeId ? { youtubeId: item.youtubeId } : {}),
+              ...(item.thumbnailUrl ? { thumbnailUrl: item.thumbnailUrl } : {}),
+              ...(startSeconds > 0 ? { startSeconds } : {}),
             },
-          })
-        }
+          });
+        }}
         className={`w-full h-full min-h-0 rounded-lg border overflow-hidden transition-colors flex items-center justify-center bg-[#0b0f10] ${
           active
             ? "border-[rgba(123,208,255,0.45)]"
             : "border-[rgba(69,70,77,0.3)] hover:border-[rgba(123,208,255,0.3)]"
         }`}
       >
-        {item.mediaType === "video" ? (
+        {item.mediaType === "youtube" ? (
+          <img
+            src={
+              item.thumbnailUrl ||
+              (item.youtubeId
+                ? `https://i.ytimg.com/vi/${item.youtubeId}/hqdefault.jpg`
+                : item.url)
+            }
+            alt={item.title}
+            className="w-full h-full object-contain pointer-events-none"
+          />
+        ) : item.mediaType === "video" ? (
           <video
             src={item.url}
             className="w-full h-full object-contain pointer-events-none"

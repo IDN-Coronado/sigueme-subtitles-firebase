@@ -7,6 +7,7 @@ import {
   toLegacyFields,
   formatBibleGroupTitle,
 } from "../utils/programSchedule";
+import { parseYouTubeStartSeconds } from "../utils/youtube";
 
 export default function useProgramSchedule({
   programId,
@@ -68,16 +69,31 @@ export default function useProgramSchedule({
       title: song.title,
     });
 
-  const addMedia = (item) =>
-    addItem({
+  const addMedia = (item) => {
+    const startSeconds =
+      item.type === "youtube"
+        ? item.startSeconds > 0
+          ? Math.floor(item.startSeconds)
+          : parseYouTubeStartSeconds(item.url || "")
+        : 0;
+
+    return addItem({
       id: newItemId(),
       type: "media",
       title: item.name,
       name: item.name,
       url: item.url,
-      storagePath: item.fullPath,
       mediaType: item.type,
+      ...(item.fullPath ? { storagePath: item.fullPath } : {}),
+      ...(item.type === "youtube" && item.youtubeId
+        ? {
+            youtubeId: item.youtubeId,
+            ...(item.thumbnailUrl ? { thumbnailUrl: item.thumbnailUrl } : {}),
+            ...(startSeconds > 0 ? { startSeconds } : {}),
+          }
+        : {}),
     });
+  };
 
   const addTheme = (theme) => {
     const themeItem = {

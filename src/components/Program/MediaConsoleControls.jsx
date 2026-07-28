@@ -17,6 +17,23 @@ function formatTime(seconds) {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
+function waitForMediaEl(mediaRef, onReady) {
+  const existing = mediaRef?.current;
+  if (existing) {
+    onReady(existing);
+    return () => {};
+  }
+
+  const id = window.setInterval(() => {
+    const el = mediaRef?.current;
+    if (!el) return;
+    window.clearInterval(id);
+    onReady(el);
+  }, 50);
+
+  return () => window.clearInterval(id);
+}
+
 function MediaConsoleControls({ mediaRef, mediaKey }) {
   const [playing, setPlaying] = useState(false);
   const [loop, setLoop] = useState(false);
@@ -24,55 +41,59 @@ function MediaConsoleControls({ mediaRef, mediaKey }) {
   const [duration, setDuration] = useState(0);
 
   useEffect(() => {
-    const el = mediaRef?.current;
-    if (!el) {
+    let detach = () => {};
+
+    const stopWait = waitForMediaEl(mediaRef, (el) => {
+      el.muted = true;
+      el.defaultMuted = true;
+      el.volume = 0;
+
+      const syncPlayback = () => {
+        setPlaying(!el.paused && !el.ended);
+        setLoop(!!el.loop);
+      };
+
+      const syncTime = () => {
+        setCurrentTime(el.currentTime || 0);
+        const d = el.duration;
+        setDuration(Number.isFinite(d) ? d : 0);
+      };
+
+      syncPlayback();
+      syncTime();
+      el.addEventListener("play", syncPlayback);
+      el.addEventListener("pause", syncPlayback);
+      el.addEventListener("ended", syncPlayback);
+      el.addEventListener("loadeddata", syncPlayback);
+      el.addEventListener("loadedmetadata", syncTime);
+      el.addEventListener("durationchange", syncTime);
+      el.addEventListener("timeupdate", syncTime);
+
+      const unsubscribe = subscribeMediaSync((msg) => {
+        if (msg.type !== "request-state") return;
+        const state = snapshotMediaState(el, mediaKey);
+        if (state) publishMediaSync(state);
+      });
+
+      detach = () => {
+        el.removeEventListener("play", syncPlayback);
+        el.removeEventListener("pause", syncPlayback);
+        el.removeEventListener("ended", syncPlayback);
+        el.removeEventListener("loadeddata", syncPlayback);
+        el.removeEventListener("loadedmetadata", syncTime);
+        el.removeEventListener("durationchange", syncTime);
+        el.removeEventListener("timeupdate", syncTime);
+        unsubscribe();
+      };
+    });
+
+    return () => {
+      stopWait();
+      detach();
       setPlaying(false);
       setLoop(false);
       setCurrentTime(0);
       setDuration(0);
-      return undefined;
-    }
-
-    el.muted = true;
-    el.defaultMuted = true;
-    el.volume = 0;
-
-    const syncPlayback = () => {
-      setPlaying(!el.paused && !el.ended);
-      setLoop(!!el.loop);
-    };
-
-    const syncTime = () => {
-      setCurrentTime(el.currentTime || 0);
-      const d = el.duration;
-      setDuration(Number.isFinite(d) ? d : 0);
-    };
-
-    syncPlayback();
-    syncTime();
-    el.addEventListener("play", syncPlayback);
-    el.addEventListener("pause", syncPlayback);
-    el.addEventListener("ended", syncPlayback);
-    el.addEventListener("loadeddata", syncPlayback);
-    el.addEventListener("loadedmetadata", syncTime);
-    el.addEventListener("durationchange", syncTime);
-    el.addEventListener("timeupdate", syncTime);
-
-    const unsubscribe = subscribeMediaSync((msg) => {
-      if (msg.type !== "request-state") return;
-      const state = snapshotMediaState(el, mediaKey);
-      if (state) publishMediaSync(state);
-    });
-
-    return () => {
-      el.removeEventListener("play", syncPlayback);
-      el.removeEventListener("pause", syncPlayback);
-      el.removeEventListener("ended", syncPlayback);
-      el.removeEventListener("loadeddata", syncPlayback);
-      el.removeEventListener("loadedmetadata", syncTime);
-      el.removeEventListener("durationchange", syncTime);
-      el.removeEventListener("timeupdate", syncTime);
-      unsubscribe();
     };
   }, [mediaRef, mediaKey]);
 

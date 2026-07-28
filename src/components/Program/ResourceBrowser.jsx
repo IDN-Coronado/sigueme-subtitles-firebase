@@ -127,6 +127,8 @@ function MediaBrowser({
   onQueryChange,
   onAdd,
   onCreate,
+  onAddYouTube,
+  onEditYouTube,
   onDelete,
   onSetAsLogo,
 }) {
@@ -141,75 +143,101 @@ function MediaBrowser({
         placeholder={t("resource.searchMedia")}
         createLabel={t("resource.uploadFile")}
         onCreate={onCreate}
+        secondaryLabel={t("resource.addYouTube")}
+        onSecondary={onAddYouTube}
       />
       <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-1.5 overflow-auto min-h-0 flex-1 content-start">
-        {list.map((item) => (
-          <div
-            key={item.id}
-            className="relative text-left rounded-sm border border-[rgba(69,70,77,0.3)] bg-[rgba(16,20,21,0.5)] hover:border-[rgba(123,208,255,0.3)] transition-colors"
-          >
-            <button
-              type="button"
-              onClick={() => onAdd(item)}
-              className="w-full text-left"
+        {list.map((item) => {
+          const menuOptions = [
+            {
+              id: "add",
+              label: t("resourceMenu.addToSchedule"),
+              onClick: () => onAdd(item),
+            },
+          ];
+          if (item.type === "youtube") {
+            menuOptions.push({
+              id: "edit",
+              label: t("resourceMenu.edit"),
+              onClick: () => onEditYouTube?.(item),
+            });
+          } else {
+            menuOptions.push({
+              id: "setLogo",
+              label: t("resourceMenu.setAsDefaultLogo"),
+              onClick: () => onSetAsLogo(item),
+            });
+          }
+          menuOptions.push({
+            id: "delete",
+            label: t("resourceMenu.delete"),
+            danger: true,
+            onClick: () => onDelete(item),
+          });
+
+          return (
+            <div
+              key={item.id}
+              className="relative text-left rounded-sm border border-[rgba(69,70,77,0.3)] bg-[rgba(16,20,21,0.5)] hover:border-[rgba(123,208,255,0.3)] transition-colors"
             >
-              <div className="relative aspect-[4/3] bg-[#1d2022] overflow-hidden rounded-t-sm">
-                {item.type === "video" ? (
-                  <video
-                    src={item.url}
-                    className="w-full h-full object-cover"
-                    muted
-                  />
-                ) : item.type === "audio" ? (
+              <button
+                type="button"
+                onClick={() => onAdd(item)}
+                className="w-full text-left"
+              >
+                <div className="relative aspect-[4/3] bg-[#1d2022] overflow-hidden rounded-t-sm">
+                  {item.type === "youtube" ? (
+                    <img
+                      src={item.thumbnailUrl || item.url}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  ) : item.type === "video" ? (
+                    <video
+                      src={item.url}
+                      className="w-full h-full object-cover"
+                      muted
+                    />
+                  ) : item.type === "audio" ? (
+                    <div
+                      className="w-full h-full flex items-center justify-center text-[#45464d] text-[8px]"
+                      style={MONO}
+                    >
+                      {t("media.audioBadge")}
+                    </div>
+                  ) : (
+                    <img
+                      src={item.url}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  )}
                   <div
-                    className="w-full h-full flex items-center justify-center text-[#45464d] text-[8px]"
-                    style={MONO}
-                  >
-                    {t("media.audioBadge")}
-                  </div>
-                ) : (
-                  <img
-                    src={item.url}
-                    alt=""
-                    className="w-full h-full object-cover"
+                    className="pointer-events-none absolute inset-0"
+                    style={{
+                      background:
+                        "linear-gradient(to bottom left, rgba(16,20,21,0.8) 0%, rgba(16,20,21,0.35) 28%, transparent 55%)",
+                    }}
                   />
-                )}
-                <div
-                  className="pointer-events-none absolute inset-0"
-                  style={{
-                    background:
-                      "linear-gradient(to bottom left, rgba(16,20,21,0.8) 0%, rgba(16,20,21,0.35) 28%, transparent 55%)",
-                  }}
-                />
+                  {item.type === "youtube" && (
+                    <span
+                      className="pointer-events-none absolute bottom-1 left-1 text-[8px] tracking-[0.06em] text-[#ffb4ab] bg-[rgba(16,20,21,0.75)] px-1 py-0.5 rounded-sm"
+                      style={MONO}
+                    >
+                      {t("media.youtubeBadge")}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[#e0e3e5] text-[9px] sm:text-[10px] font-medium px-1 py-0.5 truncate pr-6">
+                  {item.name}
+                </p>
+              </button>
+              <div className="absolute top-1 right-1 z-10">
+                <ResourceItemMenu options={menuOptions} />
               </div>
-              <p className="text-[#e0e3e5] text-[9px] sm:text-[10px] font-medium px-1 py-0.5 truncate pr-6">
-                {item.name}
-              </p>
-            </button>
-            <div className="absolute top-1 right-1 z-10">
-              <ResourceItemMenu
-                options={[
-                  {
-                    id: "add",
-                    label: t("resourceMenu.addToSchedule"),
-                    onClick: () => onAdd(item),
-                  },
-                  {
-                    id: "setLogo",
-                    label: t("resourceMenu.setAsDefaultLogo"),
-                    onClick: () => onSetAsLogo(item),
-                  },
-                  {
-                    id: "delete",
-                    label: t("resourceMenu.delete"),
-                    danger: true,
-                    onClick: () => onDelete(item),
-                  },
-                ]}
-              />
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -311,6 +339,8 @@ function ResourceBrowser({
   onAddBible,
   onCreateSong,
   onCreateMedia,
+  onCreateYouTube,
+  onEditYouTube,
   onCreateTheme,
   onEditSong,
   onDeleteSong,
@@ -342,6 +372,8 @@ function ResourceBrowser({
         onQueryChange={setQuery}
         onAdd={onAddMedia}
         onCreate={onCreateMedia}
+        onAddYouTube={onCreateYouTube}
+        onEditYouTube={onEditYouTube}
         onDelete={onDeleteMedia}
         onSetAsLogo={onSetMediaAsLogo}
       />

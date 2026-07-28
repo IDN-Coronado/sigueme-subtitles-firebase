@@ -3,6 +3,7 @@ import {
   ref,
   listAll,
   getDownloadURL,
+  getMetadata,
   uploadBytes,
   deleteObject,
 } from "firebase/storage";
@@ -20,6 +21,7 @@ import {
 
 import db from "./firebase";
 import storage from "./storage";
+import { humanizeMediaFileName } from "../utils/mediaTitle";
 import {
   parseYouTubeId,
   parseYouTubeStartSeconds,
@@ -68,10 +70,17 @@ function useMedia() {
 
       const items = await Promise.all(
         mediaRefs.map(async (itemRef) => {
-          const url = await getDownloadURL(itemRef);
+          const [url, meta] = await Promise.all([
+            getDownloadURL(itemRef),
+            getMetadata(itemRef).catch(() => null),
+          ]);
+          const storedTitle = String(meta?.customMetadata?.title || "").trim();
+          const name =
+            storedTitle || humanizeMediaFileName(itemRef.name) || itemRef.name;
           return {
             id: itemRef.fullPath,
-            name: itemRef.name,
+            name,
+            fileName: itemRef.name,
             fullPath: itemRef.fullPath,
             url,
             type: getMediaType(itemRef.name),
@@ -147,16 +156,25 @@ function useMedia() {
 
   const uploadMedia = useCallback(
     async ({ file, title }) => {
+      const trimmedTitle = String(title || "").trim();
       const ext = file.name.includes(".")
         ? `.${file.name.split(".").pop()}`
         : "";
-      const baseName = (title || file.name.replace(/\.[^.]+$/, "") || "media").replace(
-        /[^\w.\-]+/g,
-        "_"
-      );
+      const baseName = (
+        trimmedTitle ||
+        file.name.replace(/\.[^.]+$/, "") ||
+        "media"
+      ).replace(/[^\w.\-]+/g, "_");
       const storagePath = `general/${Date.now()}_${baseName}${ext}`;
       const storageRef = ref(storage, storagePath);
-      await uploadBytes(storageRef, file);
+      await uploadBytes(storageRef, file, {
+        customMetadata: {
+          title:
+            trimmedTitle ||
+            humanizeMediaFileName(file.name) ||
+            file.name,
+        },
+      });
       await loadFileMedia();
       return storageRef.fullPath;
     },

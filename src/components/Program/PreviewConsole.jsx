@@ -20,7 +20,6 @@ import YouTubePlayer from "./YouTubePlayer";
 import {
   parseYouTubeId,
   parseYouTubeStartSeconds,
-  youtubeThumbnailUrl,
 } from "../../utils/youtube";
 
 function waitForMediaEl(mediaRef, onReady) {
@@ -166,8 +165,16 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
   };
 
   // Console master: muted local playback + broadcast state to Live View.
+  // YouTube uses the Preview-provided start offset only on this initial send.
   useEffect(() => {
     if (isLive || !isPlayable || !mediaRef) return undefined;
+
+    const initialTime =
+      media?.mediaType === "youtube"
+        ? media.startSeconds > 0
+          ? Math.floor(media.startSeconds)
+          : parseYouTubeStartSeconds(media.url || "")
+        : 0;
 
     let activeEl = null;
     const stopWait = waitForMediaEl(mediaRef, (el) => {
@@ -176,7 +183,7 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
       el.defaultMuted = true;
       el.volume = 0;
       el.loop = false;
-      el.currentTime = 0;
+      el.currentTime = initialTime;
 
       const broadcastPlay = () => {
         publishMediaSync({
@@ -200,11 +207,18 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
       if (activeEl) activeEl.pause();
       publishMediaSync({ type: "stop", mediaKey });
     };
-  }, [isLive, isPlayable, mediaKey, mediaRef]);
+  }, [isLive, isPlayable, mediaKey, mediaRef, media]);
 
   // Live follower: unmute, no independent autoplay — follow console commands.
   useEffect(() => {
     if (!isLive || !isPlayable || !mediaRef) return undefined;
+
+    const initialTime =
+      media?.mediaType === "youtube"
+        ? media.startSeconds > 0
+          ? Math.floor(media.startSeconds)
+          : parseYouTubeStartSeconds(media.url || "")
+        : 0;
 
     let activeEl = null;
     let unsubscribe = () => {};
@@ -218,7 +232,7 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
       el.loop = false;
       el.pause();
       try {
-        el.currentTime = 0;
+        el.currentTime = initialTime;
       } catch {
         // ignore
       }
@@ -244,7 +258,7 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
       if (activeEl) activeEl.pause();
       unsubscribe();
     };
-  }, [isLive, isPlayable, mediaKey, mediaRef]);
+  }, [isLive, isPlayable, mediaKey, mediaRef, media]);
 
   if (!resource) {
     // Cleared (or idle): show program theme when available.
@@ -332,11 +346,15 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
   if (resource.type === "media") {
     const { url, mediaType, title, youtubeId, thumbnailUrl, startSeconds } =
       resource.media || {};
-    const resolvedYouTubeId = youtubeId || parseYouTubeId(url);
-    const resolvedStartSeconds =
-      startSeconds > 0
+    const isYouTube = mediaType === "youtube";
+    const resolvedYouTubeId = isYouTube
+      ? youtubeId || parseYouTubeId(url)
+      : null;
+    const resolvedStartSeconds = isYouTube
+      ? startSeconds > 0
         ? Math.floor(startSeconds)
-        : parseYouTubeStartSeconds(url || "");
+        : parseYouTubeStartSeconds(url || "")
+      : 0;
     const showTheme = mediaType === "audio";
     return (
       <LiveCanvas
@@ -345,7 +363,7 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
         dimmed={showTheme}
       >
         <div className="h-full w-full min-h-0 flex items-center justify-center relative">
-          {mediaType === "youtube" && resolvedYouTubeId ? (
+          {isYouTube && resolvedYouTubeId ? (
             <YouTubePlayer
               key={`${resolvedYouTubeId}-${resolvedStartSeconds}`}
               videoId={resolvedYouTubeId}
@@ -394,12 +412,7 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
             </>
           ) : (
             <img
-              src={
-                thumbnailUrl ||
-                (resolvedYouTubeId
-                  ? youtubeThumbnailUrl(resolvedYouTubeId)
-                  : url)
-              }
+              src={url}
               alt={title || ""}
               className="w-full h-full object-contain"
             />

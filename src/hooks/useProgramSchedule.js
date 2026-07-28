@@ -7,6 +7,7 @@ import {
   toLegacyFields,
   formatBibleGroupTitle,
 } from "../utils/programSchedule";
+import { mediaDisplayTitle } from "../utils/mediaTitle";
 import { parseYouTubeStartSeconds } from "../utils/youtube";
 
 export default function useProgramSchedule({
@@ -70,6 +71,7 @@ export default function useProgramSchedule({
     });
 
   const addMedia = (item) => {
+    const title = mediaDisplayTitle(item) || item.name;
     const startSeconds =
       item.type === "youtube"
         ? item.startSeconds > 0
@@ -80,8 +82,8 @@ export default function useProgramSchedule({
     return addItem({
       id: newItemId(),
       type: "media",
-      title: item.name,
-      name: item.name,
+      title,
+      name: title,
       url: item.url,
       mediaType: item.type,
       ...(item.fullPath ? { storagePath: item.fullPath } : {}),

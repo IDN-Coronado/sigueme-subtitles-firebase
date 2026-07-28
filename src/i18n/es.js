@@ -86,6 +86,8 @@ const es = {
     logoUpdateError: "Error al actualizar el logo.",
     defaultTitle: "Servicio Dominical",
     scheduleEmpty: "Aún no hay elementos. Usa el panel de recursos abajo.",
+    collapseResources: "Colapsar recursos",
+    expandResources: "Expandir recursos",
     panels: {
       schedule: "Programa",
       preview: "Vista previa",
@@ -169,6 +171,8 @@ const es = {
   },
   schedule: {
     remove: "Quitar del programa",
+    versicleCount: "{count} versículo",
+    versicleCountPlural: "{count} versículos",
   },
   settings: {
     textConfig: "CONFIGURACIÓN DE TEXTO",

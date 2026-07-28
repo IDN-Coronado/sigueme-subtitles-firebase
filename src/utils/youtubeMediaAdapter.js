@@ -125,9 +125,7 @@ export function createYouTubeMediaAdapter(player, options = {}) {
     },
     set currentTime(value) {
       if (typeof value !== "number" || !Number.isFinite(value)) return;
-      // Stop / reset (0) returns to the URL start offset when present.
-      const target = value <= 0 ? startSeconds : value;
-      seekTo(target);
+      seekTo(Math.max(0, value));
     },
     get duration() {
       try {

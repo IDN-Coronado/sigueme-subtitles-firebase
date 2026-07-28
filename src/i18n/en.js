@@ -86,6 +86,8 @@ const en = {
     logoUpdateError: "Failed to update logo.",
     defaultTitle: "Sunday Service",
     scheduleEmpty: "No items yet. Use the resource panel below.",
+    collapseResources: "Collapse resources",
+    expandResources: "Expand resources",
     panels: {
       schedule: "Schedule",
       preview: "Preview",
@@ -169,6 +171,8 @@ const en = {
   },
   schedule: {
     remove: "Remove from schedule",
+    versicleCount: "{count} versicle",
+    versicleCountPlural: "{count} versicles",
   },
   settings: {
     textConfig: "TEXT CONFIGURATION",

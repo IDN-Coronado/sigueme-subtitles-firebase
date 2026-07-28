@@ -5,6 +5,7 @@ import ResourceToolbar from "./ResourceToolbar";
 import ResourceItemMenu from "./ResourceItemMenu";
 import BibleBrowser from "./BibleBrowser";
 import { t } from "../../i18n";
+import { mediaDisplayTitle } from "../../utils/mediaTitle";
 import { flattenSongLines } from "../../utils/songSections";
 
 function normalizeSearch(text) {
@@ -133,7 +134,11 @@ function MediaBrowser({
   onSetAsLogo,
 }) {
   const q = query.trim().toLowerCase();
-  const list = media.filter((m) => !q || m.name.toLowerCase().includes(q));
+  const list = media.filter((m) => {
+    if (!q) return true;
+    const label = mediaDisplayTitle(m).toLowerCase();
+    return label.includes(q) || m.name.toLowerCase().includes(q);
+  });
 
   return (
     <div className="flex flex-col gap-3 h-full min-h-0">
@@ -229,7 +234,7 @@ function MediaBrowser({
                   )}
                 </div>
                 <p className="text-[#e0e3e5] text-[9px] sm:text-[10px] font-medium px-1 py-0.5 truncate pr-6">
-                  {item.name}
+                  {mediaDisplayTitle(item)}
                 </p>
               </button>
               <div className="absolute top-1 right-1 z-10">

@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { deleteField, doc, onSnapshot, setDoc } from "firebase/firestore";
+import {
+  deleteField,
+  doc,
+  onSnapshot,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
 import db from "./firebase";
 
 const COLLECTION = "preview";
@@ -17,26 +23,36 @@ function usePreview() {
 
   const setPreview = async (data) => {
     const ref = doc(db, COLLECTION, DOC_ID);
-    await setDoc(
-      ref,
-      {
-        ...data,
-        updatedAt: new Date().toISOString(),
-      },
-      { merge: true }
-    );
+    const payload = {
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+
+    // setDoc({ merge: true }) deep-merges nested maps, so leftover media
+    // fields (e.g. youtubeId after selecting an image) can stick around.
+    // updateDoc replaces top-level fields like `resource` wholesale.
+    try {
+      await updateDoc(ref, payload);
+    } catch (err) {
+      if (err?.code === "not-found") {
+        await setDoc(ref, payload);
+        return;
+      }
+      throw err;
+    }
   };
 
   const clearPreviewResource = async () => {
     const ref = doc(db, COLLECTION, DOC_ID);
-    await setDoc(
-      ref,
-      {
+    try {
+      await updateDoc(ref, {
         resource: deleteField(),
         updatedAt: new Date().toISOString(),
-      },
-      { merge: true }
-    );
+      });
+    } catch (err) {
+      if (err?.code === "not-found") return;
+      throw err;
+    }
   };
 
   return { preview, setPreview, clearPreviewResource };

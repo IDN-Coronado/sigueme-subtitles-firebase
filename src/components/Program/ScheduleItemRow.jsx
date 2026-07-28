@@ -1,6 +1,21 @@
 import { t } from "../../i18n";
 import { typeLabel, getBibleVerses } from "../../utils/programSchedule";
+import { mediaDisplayTitle } from "../../utils/mediaTitle";
+import {
+  IconBible,
+  IconMedia,
+  IconSong,
+  IconTheme,
+} from "../Icons";
 import { MONO } from "./constants";
+
+function ScheduleTypeIcon({ item }) {
+  const color = "currentColor";
+  if (item.type === "song") return <IconSong color={color} />;
+  if (item.type === "bible") return <IconBible color={color} />;
+  if (item.type === "theme") return <IconTheme color={color} />;
+  return <IconMedia color={color} />;
+}
 
 function ScheduleItemRow({ item, index, active, onSelect, onRemove }) {
   const isTheme = item.type === "theme";
@@ -35,9 +50,12 @@ function ScheduleItemRow({ item, index, active, onSelect, onRemove }) {
         </div>
         <div className="min-w-0 flex-1">
           <p
-            className="text-[#7bd0ff] text-[10px] tracking-[0.1em] uppercase"
+            className="text-[#7bd0ff] text-[10px] tracking-[0.1em] uppercase inline-flex items-center gap-1.5"
             style={MONO}
           >
+            <span className="inline-flex shrink-0 opacity-80" aria-hidden>
+              <ScheduleTypeIcon item={item} />
+            </span>
             {t("types.theme")}
           </p>
           <p className="text-[#e0e3e5] text-sm font-semibold truncate leading-tight">
@@ -65,16 +83,33 @@ function ScheduleItemRow({ item, index, active, onSelect, onRemove }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2 mb-1">
             <span
-              className="text-[#7bd0ff] text-xs tracking-[0.05em]"
+              className="text-[#7bd0ff] text-xs tracking-[0.05em] inline-flex items-center gap-1.5 min-w-0"
               style={MONO}
             >
-              {String(index + 1).padStart(2, "0")}. {typeLabel(item)}
-              {bibleCount > 1 ? ` · ${bibleCount}` : ""}
+              <span className="inline-flex shrink-0 opacity-80" aria-hidden>
+                <ScheduleTypeIcon item={item} />
+              </span>
+              <span className="truncate">
+                {String(index + 1).padStart(2, "0")}. {typeLabel(item)}
+              </span>
             </span>
           </div>
           <p className="text-[#e0e3e5] text-sm font-semibold truncate">
-            {item.title}
+            {item.type === "media" ? mediaDisplayTitle(item) : item.title}
           </p>
+          {item.type === "bible" && bibleCount > 0 ? (
+            <p
+              className="text-[#6b7280] text-[11px] tracking-[0.04em] mt-0.5"
+              style={MONO}
+            >
+              {t(
+                bibleCount === 1
+                  ? "schedule.versicleCount"
+                  : "schedule.versicleCountPlural",
+                { count: bibleCount },
+              )}
+            </p>
+          ) : null}
         </div>
         <span
           role="button"

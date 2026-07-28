@@ -28,6 +28,7 @@ const en = {
   errors: {
     uploadFile: "Failed to upload the file.",
     uploadTheme: "Failed to upload the file or save the theme.",
+    addYouTube: "Failed to add the YouTube video.",
     deleteResource: "Failed to delete the resource.",
     deleteTheme: "Failed to delete the theme or file.",
   },
@@ -85,6 +86,8 @@ const en = {
     logoUpdateError: "Failed to update logo.",
     defaultTitle: "Sunday Service",
     scheduleEmpty: "No items yet. Use the resource panel below.",
+    collapseResources: "Collapse resources",
+    expandResources: "Expand resources",
     panels: {
       schedule: "Schedule",
       preview: "Preview",
@@ -122,6 +125,7 @@ const en = {
     noSongs: "No songs.",
     searchMedia: "Search media…",
     uploadFile: "Upload file",
+    addYouTube: "YouTube",
     searchThemes: "Search themes…",
     newTheme: "New theme",
   },
@@ -158,6 +162,7 @@ const en = {
   },
   media: {
     audioBadge: "AUDIO",
+    youtubeBadge: "YOUTUBE",
     progressAria: "Playback progress",
     play: "Play",
     pause: "Pause",
@@ -166,6 +171,8 @@ const en = {
   },
   schedule: {
     remove: "Remove from schedule",
+    versicleCount: "{count} versicle",
+    versicleCountPlural: "{count} versicles",
   },
   settings: {
     textConfig: "TEXT CONFIGURATION",
@@ -188,6 +195,16 @@ const en = {
     title: "Upload file",
     titleLabel: "File title",
     fileLabel: "File",
+  },
+  youtubeModal: {
+    eyebrow: "Media",
+    title: "Add YouTube video",
+    editTitle: "Edit YouTube video",
+    urlLabel: "YouTube URL",
+    urlPlaceholder: "https://www.youtube.com/watch?v=…",
+    titleLabel: "Title (optional)",
+    titlePlaceholder: "Leave blank to use the video id",
+    invalidUrl: "Enter a valid YouTube video URL.",
   },
   themeModal: {
     eyebrow: "Themes",

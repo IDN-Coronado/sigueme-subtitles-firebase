@@ -1,4 +1,5 @@
 import { t } from "../i18n";
+import { parseYouTubeStartSeconds } from "./youtube";
 
 export function newItemId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -39,14 +40,25 @@ export function buildScheduleFromLegacy(program, songs, themes) {
   }
 
   for (const slide of program?.slides || []) {
+    const mediaType =
+      slide.type || guessMediaType(slide.name || slide.title || "");
+    const startSeconds =
+      slide.startSeconds > 0
+        ? Math.floor(slide.startSeconds)
+        : mediaType === "youtube"
+          ? parseYouTubeStartSeconds(slide.url || "")
+          : 0;
     items.push({
       id: `media-${slide.storagePath || slide.url || slide.name || items.length}`,
       type: "media",
       title: slide.title || slide.name || t("types.media"),
       name: slide.name || slide.title,
       url: slide.url,
-      storagePath: slide.storagePath,
-      mediaType: slide.type || guessMediaType(slide.name || slide.title || ""),
+      mediaType,
+      ...(slide.storagePath ? { storagePath: slide.storagePath } : {}),
+      ...(slide.youtubeId ? { youtubeId: slide.youtubeId } : {}),
+      ...(slide.thumbnailUrl ? { thumbnailUrl: slide.thumbnailUrl } : {}),
+      ...(startSeconds > 0 ? { startSeconds } : {}),
     });
   }
 
@@ -66,12 +78,20 @@ export function toLegacyFields(schedule) {
         ...(i.url ? { url: i.url } : {}),
         ...(i.storagePath ? { storagePath: i.storagePath } : {}),
         ...(i.mediaType ? { type: i.mediaType } : {}),
+        ...(i.youtubeId ? { youtubeId: i.youtubeId } : {}),
+        ...(i.thumbnailUrl ? { thumbnailUrl: i.thumbnailUrl } : {}),
+        ...(i.startSeconds > 0
+          ? { startSeconds: Math.floor(i.startSeconds) }
+          : {}),
       })),
   };
 }
 
 export function typeLabel(item) {
-  if (item.type === "media") return (item.mediaType || "image").toUpperCase();
+  if (item.type === "media") {
+    if (item.mediaType === "youtube") return "YOUTUBE";
+    return (item.mediaType || "image").toUpperCase();
+  }
   if (item.type === "song") return t("types.song").toUpperCase();
   if (item.type === "theme") return t("types.theme").toUpperCase();
   if (item.type === "bible") return t("types.bible").toUpperCase();

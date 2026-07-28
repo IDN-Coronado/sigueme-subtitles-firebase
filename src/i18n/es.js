@@ -28,6 +28,7 @@ const es = {
   errors: {
     uploadFile: "Error al subir el archivo.",
     uploadTheme: "Error al subir el archivo o guardar el tema.",
+    addYouTube: "Error al agregar el video de YouTube.",
     deleteResource: "Error al eliminar el recurso.",
     deleteTheme: "Error al eliminar el tema o archivo.",
   },
@@ -85,6 +86,8 @@ const es = {
     logoUpdateError: "Error al actualizar el logo.",
     defaultTitle: "Servicio Dominical",
     scheduleEmpty: "Aún no hay elementos. Usa el panel de recursos abajo.",
+    collapseResources: "Colapsar recursos",
+    expandResources: "Expandir recursos",
     panels: {
       schedule: "Programa",
       preview: "Vista previa",
@@ -122,6 +125,7 @@ const es = {
     noSongs: "No hay canciones.",
     searchMedia: "Buscar media…",
     uploadFile: "Subir archivo",
+    addYouTube: "YouTube",
     searchThemes: "Buscar temas…",
     newTheme: "Nuevo tema",
   },
@@ -158,6 +162,7 @@ const es = {
   },
   media: {
     audioBadge: "AUDIO",
+    youtubeBadge: "YOUTUBE",
     progressAria: "Progreso de reproducción",
     play: "Play",
     pause: "Pausa",
@@ -166,6 +171,8 @@ const es = {
   },
   schedule: {
     remove: "Quitar del programa",
+    versicleCount: "{count} versículo",
+    versicleCountPlural: "{count} versículos",
   },
   settings: {
     textConfig: "CONFIGURACIÓN DE TEXTO",
@@ -188,6 +195,16 @@ const es = {
     title: "Subir archivo",
     titleLabel: "Título del archivo",
     fileLabel: "Archivo",
+  },
+  youtubeModal: {
+    eyebrow: "Media",
+    title: "Agregar video de YouTube",
+    editTitle: "Editar video de YouTube",
+    urlLabel: "URL de YouTube",
+    urlPlaceholder: "https://www.youtube.com/watch?v=…",
+    titleLabel: "Título (opcional)",
+    titlePlaceholder: "Déjalo vacío para usar el id del video",
+    invalidUrl: "Ingresa una URL de YouTube válida.",
   },
   themeModal: {
     eyebrow: "Temas",

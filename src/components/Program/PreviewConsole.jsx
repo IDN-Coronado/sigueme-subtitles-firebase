@@ -16,6 +16,28 @@ import {
 } from "../../utils/mediaSync";
 import { MONO } from "./constants";
 import ScaledLiveStage from "./ScaledLiveStage";
+import YouTubePlayer from "./YouTubePlayer";
+import {
+  parseYouTubeId,
+  parseYouTubeStartSeconds,
+} from "../../utils/youtube";
+
+function waitForMediaEl(mediaRef, onReady) {
+  const existing = mediaRef?.current;
+  if (existing) {
+    onReady(existing);
+    return () => {};
+  }
+
+  const id = window.setInterval(() => {
+    const el = mediaRef?.current;
+    if (!el) return;
+    window.clearInterval(id);
+    onReady(el);
+  }, 50);
+
+  return () => window.clearInterval(id);
+}
 
 function ThemeBackground({ theme }) {
   if (!theme?.backgroundUrl) return null;
@@ -104,7 +126,10 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
   const theme = preview?.theme;
   const media = resource?.type === "media" ? resource.media : null;
   const isPlayable =
-    media && (media.mediaType === "audio" || media.mediaType === "video");
+    media &&
+    (media.mediaType === "audio" ||
+      media.mediaType === "video" ||
+      media.mediaType === "youtube");
   const mediaKey = isPlayable ? media.url : null;
   const contentType = resource?.type === "bible" ? "bible" : "song";
   const caption = getStyleFromBundle(styles, contentType);
@@ -140,79 +165,100 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
   };
 
   // Console master: muted local playback + broadcast state to Live View.
+  // YouTube uses the Preview-provided start offset only on this initial send.
   useEffect(() => {
     if (isLive || !isPlayable || !mediaRef) return undefined;
 
-    const el = mediaRef.current;
-    if (!el) return undefined;
+    const initialTime =
+      media?.mediaType === "youtube"
+        ? media.startSeconds > 0
+          ? Math.floor(media.startSeconds)
+          : parseYouTubeStartSeconds(media.url || "")
+        : 0;
 
-    el.muted = true;
-    el.defaultMuted = true;
-    el.volume = 0;
-    el.loop = false;
-    el.currentTime = 0;
+    let activeEl = null;
+    const stopWait = waitForMediaEl(mediaRef, (el) => {
+      activeEl = el;
+      el.muted = true;
+      el.defaultMuted = true;
+      el.volume = 0;
+      el.loop = false;
+      el.currentTime = initialTime;
 
-    const broadcastPlay = () => {
-      publishMediaSync({
-        type: "play",
-        mediaKey,
-        currentTime: el.currentTime || 0,
-        loop: !!el.loop,
-      });
-    };
+      const broadcastPlay = () => {
+        publishMediaSync({
+          type: "play",
+          mediaKey,
+          currentTime: el.currentTime || 0,
+          loop: !!el.loop,
+        });
+      };
 
-    const playPromise = el.play();
-    if (playPromise?.then) {
-      playPromise.then(broadcastPlay).catch(() => {});
-    } else {
-      broadcastPlay();
-    }
+      const playPromise = el.play();
+      if (playPromise?.then) {
+        playPromise.then(broadcastPlay).catch(() => {});
+      } else {
+        broadcastPlay();
+      }
+    });
 
     return () => {
-      el.pause();
+      stopWait();
+      if (activeEl) activeEl.pause();
       publishMediaSync({ type: "stop", mediaKey });
     };
-  }, [isLive, isPlayable, mediaKey, mediaRef]);
+  }, [isLive, isPlayable, mediaKey, mediaRef, media]);
 
   // Live follower: unmute, no independent autoplay — follow console commands.
   useEffect(() => {
     if (!isLive || !isPlayable || !mediaRef) return undefined;
 
-    const el = mediaRef.current;
-    if (!el) return undefined;
+    const initialTime =
+      media?.mediaType === "youtube"
+        ? media.startSeconds > 0
+          ? Math.floor(media.startSeconds)
+          : parseYouTubeStartSeconds(media.url || "")
+        : 0;
 
-    el.muted = false;
-    el.defaultMuted = false;
-    el.volume = 1;
-    el.loop = false;
-    el.pause();
-    try {
-      el.currentTime = 0;
-    } catch {
-      // ignore
-    }
+    let activeEl = null;
+    let unsubscribe = () => {};
+    let retryId = null;
 
-    const onReady = () => {
-      publishMediaSync({ type: "request-state" });
-    };
+    const stopWait = waitForMediaEl(mediaRef, (el) => {
+      activeEl = el;
+      el.muted = false;
+      el.defaultMuted = false;
+      el.volume = 1;
+      el.loop = false;
+      el.pause();
+      try {
+        el.currentTime = initialTime;
+      } catch {
+        // ignore
+      }
 
-    if (el.readyState >= 1) onReady();
-    else el.addEventListener("loadedmetadata", onReady, { once: true });
+      const onReady = () => {
+        publishMediaSync({ type: "request-state" });
+      };
 
-    // Retry in case the console master wasn't listening yet.
-    const retryId = window.setTimeout(onReady, 250);
+      if (el.readyState >= 1) onReady();
+      else el.addEventListener("loadedmetadata", onReady, { once: true });
 
-    const unsubscribe = subscribeMediaSync((msg) => {
-      if (msg.type === "request-state") return;
-      applyMediaSyncCommand(el, msg, mediaKey);
+      retryId = window.setTimeout(onReady, 250);
+
+      unsubscribe = subscribeMediaSync((msg) => {
+        if (msg.type === "request-state") return;
+        applyMediaSyncCommand(el, msg, mediaKey);
+      });
     });
 
     return () => {
-      window.clearTimeout(retryId);
-      el.pause();
+      stopWait();
+      if (retryId != null) window.clearTimeout(retryId);
+      if (activeEl) activeEl.pause();
       unsubscribe();
     };
-  }, [isLive, isPlayable, mediaKey, mediaRef]);
+  }, [isLive, isPlayable, mediaKey, mediaRef, media]);
 
   if (!resource) {
     // Cleared (or idle): show program theme when available.
@@ -298,7 +344,17 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
   }
 
   if (resource.type === "media") {
-    const { url, mediaType, title } = resource.media || {};
+    const { url, mediaType, title, youtubeId, thumbnailUrl, startSeconds } =
+      resource.media || {};
+    const isYouTube = mediaType === "youtube";
+    const resolvedYouTubeId = isYouTube
+      ? youtubeId || parseYouTubeId(url)
+      : null;
+    const resolvedStartSeconds = isYouTube
+      ? startSeconds > 0
+        ? Math.floor(startSeconds)
+        : parseYouTubeStartSeconds(url || "")
+      : 0;
     const showTheme = mediaType === "audio";
     return (
       <LiveCanvas
@@ -307,12 +363,21 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
         dimmed={showTheme}
       >
         <div className="h-full w-full min-h-0 flex items-center justify-center relative">
-          {mediaType === "video" ? (
+          {isYouTube && resolvedYouTubeId ? (
+            <YouTubePlayer
+              key={`${resolvedYouTubeId}-${resolvedStartSeconds}`}
+              videoId={resolvedYouTubeId}
+              startSeconds={resolvedStartSeconds}
+              mediaRef={mediaRef}
+              muted={!isLive}
+              className="w-full h-full pointer-events-none"
+            />
+          ) : mediaType === "video" ? (
             <video
               key={url}
               ref={mediaRef}
               src={url}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain pointer-events-none"
               playsInline
               preload="auto"
               muted={!isLive}

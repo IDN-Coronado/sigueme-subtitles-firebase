@@ -1,11 +1,41 @@
 import { useState, useEffect, useCallback } from "react";
-import { ref, listAll, getDownloadURL, uploadBytes, deleteObject } from "firebase/storage";
+import {
+  ref,
+  listAll,
+  getDownloadURL,
+  getMetadata,
+  uploadBytes,
+  deleteObject,
+} from "firebase/storage";
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  addDoc,
+  doc,
+  deleteDoc,
+  updateDoc,
+  deleteField,
+} from "firebase/firestore";
+
+import db from "./firebase";
 import storage from "./storage";
+import { humanizeMediaFileName } from "../utils/mediaTitle";
+import {
+  parseYouTubeId,
+  parseYouTubeStartSeconds,
+  youtubeThumbnailUrl,
+  youtubeWatchUrl,
+} from "../utils/youtube";
 
 const IMAGE_EXT = /\.(jpe?g|png|gif|webp|svg|bmp|avif)$/i;
 const VIDEO_EXT = /\.(mp4|webm|mov|m4v|ogv)$/i;
 const AUDIO_EXT = /\.(mp3|wav|m4a|aac|flac|oga|ogg|opus|wma)$/i;
-const MEDIA_EXT = /\.(jpe?g|png|gif|webp|svg|bmp|avif|mp4|webm|mov|m4v|ogv|mp3|wav|m4a|aac|flac|oga|ogg|opus|wma)$/i;
+const MEDIA_EXT =
+  /\.(jpe?g|png|gif|webp|svg|bmp|avif|mp4|webm|mov|m4v|ogv|mp3|wav|m4a|aac|flac|oga|ogg|opus|wma)$/i;
+
+const YOUTUBE_COLLECTION = "media";
 
 function getMediaType(name) {
   if (VIDEO_EXT.test(name)) return "video";
@@ -14,12 +44,23 @@ function getMediaType(name) {
   return null;
 }
 
+function mergeMediaLists(files, youtubeDocs) {
+  const combined = [...files, ...youtubeDocs];
+  combined.sort((a, b) =>
+    a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+  );
+  return combined;
+}
+
 function useMedia() {
-  const [media, setMedia] = useState([]);
+  const [fileMedia, setFileMedia] = useState([]);
+  const [youtubeMedia, setYoutubeMedia] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const loadMedia = useCallback(async () => {
+  const media = mergeMediaLists(fileMedia, youtubeMedia);
+
+  const loadFileMedia = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -29,31 +70,80 @@ function useMedia() {
 
       const items = await Promise.all(
         mediaRefs.map(async (itemRef) => {
-          const url = await getDownloadURL(itemRef);
+          const [url, meta] = await Promise.all([
+            getDownloadURL(itemRef),
+            getMetadata(itemRef).catch(() => null),
+          ]);
+          const storedTitle = String(meta?.customMetadata?.title || "").trim();
+          const name =
+            storedTitle || humanizeMediaFileName(itemRef.name) || itemRef.name;
           return {
             id: itemRef.fullPath,
-            name: itemRef.name,
+            name,
+            fileName: itemRef.name,
             fullPath: itemRef.fullPath,
             url,
             type: getMediaType(itemRef.name),
+            source: "storage",
           };
         })
       );
 
-      items.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
-      setMedia(items);
+      items.sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+      );
+      setFileMedia(items);
     } catch (err) {
       console.error("Failed to load media from Storage general/", err);
       setError(err);
-      setMedia([]);
+      setFileMedia([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    loadMedia();
-  }, [loadMedia]);
+    loadFileMedia();
+  }, [loadFileMedia]);
+
+  useEffect(() => {
+    const collectionRef = collection(db, YOUTUBE_COLLECTION);
+    const q = query(collectionRef, orderBy("name"));
+    const unsubscribe = onSnapshot(
+      q,
+      (snap) => {
+        const items = snap.docs
+          .map((docSnap) => {
+            const data = docSnap.data() || {};
+            if (data.type !== "youtube" || !data.youtubeId) return null;
+            const startSeconds =
+              Number.isFinite(data.startSeconds) && data.startSeconds > 0
+                ? Math.floor(data.startSeconds)
+                : parseYouTubeStartSeconds(data.url || "");
+            return {
+              id: docSnap.id,
+              name: data.name || data.title || data.youtubeId,
+              url:
+                data.url ||
+                youtubeWatchUrl(data.youtubeId, startSeconds),
+              youtubeId: data.youtubeId,
+              thumbnailUrl:
+                data.thumbnailUrl || youtubeThumbnailUrl(data.youtubeId),
+              type: "youtube",
+              source: "youtube",
+              ...(startSeconds > 0 ? { startSeconds } : {}),
+            };
+          })
+          .filter(Boolean);
+        setYoutubeMedia(items);
+      },
+      (err) => {
+        console.error("Failed to load YouTube media from Firestore", err);
+        setYoutubeMedia([]);
+      }
+    );
+    return () => unsubscribe();
+  }, []);
 
   const filterByValue = useCallback(
     (value) => {
@@ -66,26 +156,87 @@ function useMedia() {
 
   const uploadMedia = useCallback(
     async ({ file, title }) => {
-      const ext = file.name.includes(".") ? `.${file.name.split(".").pop()}` : "";
-      const baseName = (title || file.name.replace(/\.[^.]+$/, "") || "media")
-        .replace(/[^\w.\-]+/g, "_");
+      const trimmedTitle = String(title || "").trim();
+      const ext = file.name.includes(".")
+        ? `.${file.name.split(".").pop()}`
+        : "";
+      const baseName = (
+        trimmedTitle ||
+        file.name.replace(/\.[^.]+$/, "") ||
+        "media"
+      ).replace(/[^\w.\-]+/g, "_");
       const storagePath = `general/${Date.now()}_${baseName}${ext}`;
       const storageRef = ref(storage, storagePath);
-      await uploadBytes(storageRef, file);
-      await loadMedia();
+      await uploadBytes(storageRef, file, {
+        customMetadata: {
+          title:
+            trimmedTitle ||
+            humanizeMediaFileName(file.name) ||
+            file.name,
+        },
+      });
+      await loadFileMedia();
       return storageRef.fullPath;
     },
-    [loadMedia]
+    [loadFileMedia]
   );
+
+  const addYouTubeMedia = useCallback(async ({ url, title }) => {
+    const youtubeId = parseYouTubeId(url);
+    if (!youtubeId) throw new Error("Invalid YouTube URL");
+
+    const startSeconds = parseYouTubeStartSeconds(url);
+    const name =
+      (title || "").trim() || `YouTube ${youtubeId}`;
+    const payload = {
+      type: "youtube",
+      name,
+      title: name,
+      youtubeId,
+      url: youtubeWatchUrl(youtubeId, startSeconds),
+      thumbnailUrl: youtubeThumbnailUrl(youtubeId),
+      createdAt: new Date().toISOString(),
+      ...(startSeconds > 0 ? { startSeconds } : {}),
+    };
+    const docRef = await addDoc(collection(db, YOUTUBE_COLLECTION), payload);
+    return docRef.id;
+  }, []);
+
+  const updateYouTubeMedia = useCallback(async ({ id, url, title }) => {
+    if (!id) throw new Error("Missing YouTube media id");
+    const youtubeId = parseYouTubeId(url);
+    if (!youtubeId) throw new Error("Invalid YouTube URL");
+
+    const startSeconds = parseYouTubeStartSeconds(url);
+    const name = (title || "").trim() || `YouTube ${youtubeId}`;
+    await updateDoc(doc(db, YOUTUBE_COLLECTION, id), {
+      type: "youtube",
+      name,
+      title: name,
+      youtubeId,
+      url: youtubeWatchUrl(youtubeId, startSeconds),
+      thumbnailUrl: youtubeThumbnailUrl(youtubeId),
+      updatedAt: new Date().toISOString(),
+      startSeconds: startSeconds > 0 ? startSeconds : deleteField(),
+    });
+    return id;
+  }, []);
 
   const removeMedia = useCallback(
     async (item) => {
+      if (item?.type === "youtube" || item?.source === "youtube") {
+        const id = item.id;
+        if (!id) throw new Error("Missing YouTube media id");
+        await deleteDoc(doc(db, YOUTUBE_COLLECTION, id));
+        return;
+      }
+
       const path = item?.fullPath || item?.id;
       if (!path) throw new Error("Missing media path");
       await deleteObject(ref(storage, path));
-      await loadMedia();
+      await loadFileMedia();
     },
-    [loadMedia]
+    [loadFileMedia]
   );
 
   return {
@@ -93,8 +244,10 @@ function useMedia() {
     loading,
     error,
     filterByValue,
-    reload: loadMedia,
+    reload: loadFileMedia,
     uploadMedia,
+    addYouTubeMedia,
+    updateYouTubeMedia,
     removeMedia,
   };
 }

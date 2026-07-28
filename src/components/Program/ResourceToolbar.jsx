@@ -17,12 +17,32 @@ function SearchField({ value, onChange, placeholder }) {
   );
 }
 
+function ToolbarButton({ label, onClick, variant = "primary" }) {
+  const styles =
+    variant === "secondary"
+      ? "bg-[rgba(50,53,55,0.45)] border border-[rgba(69,70,77,0.45)] text-[#c6c6cd] hover:border-[rgba(123,208,255,0.35)] hover:text-[#7bd0ff]"
+      : "bg-[rgba(123,208,255,0.1)] border border-[rgba(123,208,255,0.3)] text-[#7bd0ff] hover:bg-[rgba(123,208,255,0.18)]";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`shrink-0 inline-flex items-center gap-1.5 text-sm font-medium px-3 py-2.5 rounded-sm transition-colors ${styles}`}
+    >
+      <IconPlus color="currentColor" />
+      <span className="hidden sm:inline">{label}</span>
+    </button>
+  );
+}
+
 function ResourceToolbar({
   query,
   onQueryChange,
   placeholder,
   createLabel,
   onCreate,
+  secondaryLabel,
+  onSecondary,
 }) {
   return (
     <div className="flex items-center gap-2 sm:gap-3 shrink-0">
@@ -31,14 +51,16 @@ function ResourceToolbar({
         onChange={onQueryChange}
         placeholder={placeholder}
       />
-      <button
-        type="button"
-        onClick={onCreate}
-        className="shrink-0 inline-flex items-center gap-1.5 bg-[rgba(123,208,255,0.1)] border border-[rgba(123,208,255,0.3)] text-[#7bd0ff] text-sm font-medium px-3 py-2.5 rounded-sm hover:bg-[rgba(123,208,255,0.18)] transition-colors"
-      >
-        <IconPlus color="currentColor" />
-        <span className="hidden sm:inline">{createLabel}</span>
-      </button>
+      {createLabel && onCreate && (
+        <ToolbarButton label={createLabel} onClick={onCreate} />
+      )}
+      {secondaryLabel && onSecondary && (
+        <ToolbarButton
+          label={secondaryLabel}
+          onClick={onSecondary}
+          variant="secondary"
+        />
+      )}
     </div>
   );
 }

@@ -11,6 +11,7 @@ import usePreview from "../firebase/usePreview";
 import useProgramSchedule from "../hooks/useProgramSchedule";
 import NewSongModal from "../components/Song/NewSongModal";
 import SlideUploadModal from "../components/SlideUploadModal";
+import YouTubeMediaModal from "../components/YouTubeMediaModal";
 import NewThemeModal from "../components/Theme/NewThemeModal";
 import ConfirmationModal from "../components/Theme/ConfirmationModal";
 import Panel from "../components/Program/Panel";
@@ -23,12 +24,22 @@ import CaptionConsoleControls from "../components/Program/CaptionConsoleControls
 import ResourceBrowser from "../components/Program/ResourceBrowser";
 import ProgramHeader from "../components/Program/ProgramHeader";
 import { RESOURCE_TABS } from "../components/Program/constants";
+import { IconChevron } from "../components/Icons";
 import { t } from "../i18n";
 
 const LAYOUT_STORAGE = {
   vertical: "sigueme.program.layout.vertical",
   horizontal: "sigueme.program.layout.horizontal",
+  resourcesCollapsed: "sigueme.program.layout.resourcesCollapsed",
 };
+
+function loadResourcesCollapsed() {
+  try {
+    return localStorage.getItem(LAYOUT_STORAGE.resourcesCollapsed) === "1";
+  } catch {
+    return false;
+  }
+}
 
 const CAPTION_COLLECTION = "caption";
 const CAPTION_DOC = "caption";
@@ -52,13 +63,16 @@ function Program() {
   const { programId } = useParams();
   const consoleMediaRef = useRef(null);
   const [resourceTab, setResourceTab] = useState("songs");
+  const [resourcesCollapsed, setResourcesCollapsed] = useState(loadResourcesCollapsed);
   const [createModal, setCreateModal] = useState(null);
   const [editingSong, setEditingSong] = useState(null);
+  const [editingYouTube, setEditingYouTube] = useState(null);
   const [pendingDelete, setPendingDelete] = useState(null);
 
   const { songs, addSong, updateSong, removeSong } = useSongs();
   const { themes, addTheme, removeTheme } = useThemes();
-  const { media, uploadMedia, removeMedia } = useMedia();
+  const { media, uploadMedia, addYouTubeMedia, updateYouTubeMedia, removeMedia } =
+    useMedia();
   const { program, updateProgram, activateProgram } = usePrograms(programId);
   const { preview, setPreview, clearPreviewResource } = usePreview();
 
@@ -81,7 +95,10 @@ function Program() {
     updateProgram,
   });
 
-  const closeCreateModal = () => setCreateModal(null);
+  const closeCreateModal = () => {
+    setCreateModal(null);
+    setEditingYouTube(null);
+  };
 
   const closeSongModal = () => {
     setCreateModal(null);
@@ -102,6 +119,19 @@ function Program() {
       closeCreateModal();
     } catch {
       alert(t("errors.uploadFile"));
+    }
+  };
+
+  const handleCreateYouTube = async ({ id, url, title }) => {
+    try {
+      if (id) {
+        await updateYouTubeMedia({ id, url, title });
+      } else {
+        await addYouTubeMedia({ url, title });
+      }
+      closeCreateModal();
+    } catch {
+      alert(t("errors.addYouTube"));
     }
   };
 
@@ -239,11 +269,211 @@ function Program() {
     }
   };
 
+  const toggleResourcesCollapsed = () => {
+    setResourcesCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(
+          LAYOUT_STORAGE.resourcesCollapsed,
+          next ? "1" : "0"
+        );
+      } catch {
+        // ignore quota / private mode
+      }
+      return next;
+    });
+  };
+
   const consoleMedia =
     preview?.resource?.type === "media" ? preview.resource.media : null;
   const showMediaControls =
     consoleMedia &&
-    (consoleMedia.mediaType === "audio" || consoleMedia.mediaType === "video");
+    (consoleMedia.mediaType === "audio" ||
+      consoleMedia.mediaType === "video" ||
+      consoleMedia.mediaType === "youtube");
+
+  const topPanels = (
+    <ResizableSplit
+      direction="horizontal"
+      className="h-full"
+      defaultSizes={[25, 25, 50]}
+      minSizes={[12, 12, 25]}
+      storageKey={LAYOUT_STORAGE.horizontal}
+    >
+      <Panel title={t("program.panels.schedule")} className="h-full">
+        <div className="flex flex-col gap-2">
+          {!hydrated && (
+            <p className="text-[#6b7280] text-sm">{t("common.loading")}</p>
+          )}
+          {hydrated && schedule.length === 0 && (
+            <p className="text-[#6b7280] text-sm px-1">
+              {t("program.scheduleEmpty")}
+            </p>
+          )}
+          {schedule.map((item, index) => {
+            const itemIndex =
+              item.type === "theme"
+                ? 0
+                : schedule
+                    .slice(0, index)
+                    .filter((i) => i.type !== "theme").length;
+            return (
+              <ScheduleItemRow
+                key={item.id}
+                item={item}
+                index={itemIndex}
+                active={item.id === selectedId}
+                onSelect={setSelectedId}
+                onRemove={(id) =>
+                  setPendingDelete({ type: "schedule", item: { id } })
+                }
+              />
+            );
+          })}
+        </div>
+      </Panel>
+
+      <Panel title={t("program.panels.preview")} className="h-full">
+        <PreviewPanel
+          item={selectedItem}
+          songs={songs}
+          preview={preview}
+          onSelect={handlePreviewSelect}
+        />
+      </Panel>
+
+      <Panel
+        title={t("program.panels.console")}
+        className="h-full"
+        action={
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 max-w-full overflow-x-auto">
+            {showMediaControls ? (
+              <MediaConsoleControls
+                mediaRef={consoleMediaRef}
+                mediaKey={consoleMedia.url}
+              />
+            ) : (
+              <CaptionConsoleControls
+                programId={programId}
+                activeContentType={
+                  preview?.resource?.type === "bible" ? "bible" : "song"
+                }
+              />
+            )}
+          </div>
+        }
+      >
+        <PreviewConsole preview={preview} mediaRef={consoleMediaRef} />
+      </Panel>
+    </ResizableSplit>
+  );
+
+  const resourceSection = (
+    <section
+      className={`${
+        resourcesCollapsed ? "shrink-0" : "h-full"
+      } min-h-0 min-w-0 w-full bg-[rgba(29,32,34,0.5)] border border-[rgba(69,70,77,0.35)] rounded-lg flex flex-col overflow-hidden`}
+    >
+      <div
+        className={`shrink-0 flex items-center gap-2 ${
+          resourcesCollapsed
+            ? "px-2 py-2"
+            : "px-3 sm:px-4 py-3 border-b border-[rgba(69,70,77,0.25)]"
+        }`}
+      >
+        {!resourcesCollapsed && (
+          <div className="flex items-center gap-2 min-w-0 flex-1 overflow-x-auto">
+            {RESOURCE_TABS.map((tab) => {
+              const Icon = tab.Icon;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setResourceTab(tab.id)}
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-sm text-sm font-medium whitespace-nowrap transition-colors ${
+                    resourceTab === tab.id
+                      ? "bg-[#323537] text-[#e0e3e5]"
+                      : "bg-[rgba(50,53,55,0.35)] text-[#c6c6cd] hover:text-[#e0e3e5]"
+                  }`}
+                >
+                  <Icon color="currentColor" />
+                  {t(`program.tabs.${tab.id}`)}
+                </button>
+              );
+            })}
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={toggleResourcesCollapsed}
+          title={
+            resourcesCollapsed
+              ? t("program.expandResources")
+              : t("program.collapseResources")
+          }
+          aria-label={
+            resourcesCollapsed
+              ? t("program.expandResources")
+              : t("program.collapseResources")
+          }
+          aria-expanded={!resourcesCollapsed}
+          className={`shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-sm text-[#c6c6cd] border border-[rgba(69,70,77,0.4)] hover:border-[#7bd0ff] hover:text-[#7bd0ff] transition-colors ${
+            resourcesCollapsed ? "ml-auto" : ""
+          }`}
+        >
+          <span
+            className={`inline-flex transition-transform duration-200 ${
+              resourcesCollapsed ? "rotate-90" : "-rotate-90"
+            }`}
+          >
+            <IconChevron collapsed={false} />
+          </span>
+        </button>
+      </div>
+      {!resourcesCollapsed && (
+        <div className="flex-1 min-h-0 overflow-hidden p-3 sm:p-4">
+          <ResourceBrowser
+            tab={resourceTab}
+            songs={songs}
+            media={media}
+            themes={themes}
+            onAddSong={addSongToSchedule}
+            onAddMedia={addMedia}
+            onAddTheme={handleAddTheme}
+            onAddBible={addBible}
+            onCreateSong={() => {
+              setEditingSong(null);
+              setCreateModal("song");
+            }}
+            onCreateMedia={() => setCreateModal("media")}
+            onCreateYouTube={() => {
+              setEditingYouTube(null);
+              setCreateModal("youtube");
+            }}
+            onEditYouTube={(item) => {
+              setEditingYouTube(item);
+              setCreateModal("youtube");
+            }}
+            onCreateTheme={() => setCreateModal("theme")}
+            onEditSong={(song) => {
+              setEditingSong(song);
+              setCreateModal("song");
+            }}
+            onDeleteSong={(song) =>
+              setPendingDelete({ type: "song", item: song })
+            }
+            onDeleteMedia={(item) =>
+              setPendingDelete({ type: "media", item })
+            }
+            onDeleteTheme={(theme) =>
+              setPendingDelete({ type: "theme", item: theme })
+            }
+            onSetMediaAsLogo={handleSetMediaAsLogo}
+          />
+        </div>
+      )}
+    </section>
+  );
 
   return (
     <div
@@ -261,142 +491,23 @@ function Program() {
       />
 
       <main className="min-h-0 min-w-0 p-4 sm:p-5 overflow-hidden flex-1">
-        <ResizableSplit
-          direction="vertical"
-          className="h-full"
-          defaultSizes={[50, 50]}
-          minSizes={[20, 20]}
-          storageKey={LAYOUT_STORAGE.vertical}
-        >
+        {resourcesCollapsed ? (
+          <div className="h-full min-h-0 flex flex-col gap-3">
+            <div className="flex-1 min-h-0 overflow-hidden">{topPanels}</div>
+            {resourceSection}
+          </div>
+        ) : (
           <ResizableSplit
-            direction="horizontal"
+            direction="vertical"
             className="h-full"
-            defaultSizes={[25, 25, 50]}
-            minSizes={[12, 12, 25]}
-            storageKey={LAYOUT_STORAGE.horizontal}
+            defaultSizes={[50, 50]}
+            minSizes={[20, 20]}
+            storageKey={LAYOUT_STORAGE.vertical}
           >
-            <Panel title={t("program.panels.schedule")} className="h-full">
-              <div className="flex flex-col gap-2">
-                {!hydrated && (
-                  <p className="text-[#6b7280] text-sm">{t("common.loading")}</p>
-                )}
-                {hydrated && schedule.length === 0 && (
-                  <p className="text-[#6b7280] text-sm px-1">
-                    {t("program.scheduleEmpty")}
-                  </p>
-                )}
-                {schedule.map((item, index) => {
-                  const itemIndex =
-                    item.type === "theme"
-                      ? 0
-                      : schedule
-                          .slice(0, index)
-                          .filter((i) => i.type !== "theme").length;
-                  return (
-                    <ScheduleItemRow
-                      key={item.id}
-                      item={item}
-                      index={itemIndex}
-                      active={item.id === selectedId}
-                      onSelect={setSelectedId}
-                      onRemove={(id) =>
-                        setPendingDelete({ type: "schedule", item: { id } })
-                      }
-                    />
-                  );
-                })}
-              </div>
-            </Panel>
-
-            <Panel title={t("program.panels.preview")} className="h-full">
-              <PreviewPanel
-                item={selectedItem}
-                songs={songs}
-                preview={preview}
-                onSelect={handlePreviewSelect}
-              />
-            </Panel>
-
-            <Panel
-              title={t("program.panels.console")}
-              className="h-full"
-              action={
-                <div className="flex items-center gap-2 sm:gap-3 min-w-0 max-w-full overflow-x-auto">
-                  {showMediaControls ? (
-                    <MediaConsoleControls
-                      mediaRef={consoleMediaRef}
-                      mediaKey={consoleMedia.url}
-                    />
-                  ) : (
-                    <CaptionConsoleControls
-                      programId={programId}
-                      activeContentType={
-                        preview?.resource?.type === "bible" ? "bible" : "song"
-                      }
-                    />
-                  )}
-                </div>
-              }
-            >
-              <PreviewConsole preview={preview} mediaRef={consoleMediaRef} />
-            </Panel>
+            {topPanels}
+            {resourceSection}
           </ResizableSplit>
-
-          <section className="h-full min-h-0 min-w-0 bg-[rgba(29,32,34,0.5)] border border-[rgba(69,70,77,0.35)] rounded-lg flex flex-col overflow-hidden">
-            <div className="shrink-0 flex items-center gap-2 px-3 sm:px-4 py-3 border-b border-[rgba(69,70,77,0.25)] overflow-x-auto">
-              {RESOURCE_TABS.map((tab) => {
-                const Icon = tab.Icon;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setResourceTab(tab.id)}
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-sm text-sm font-medium whitespace-nowrap transition-colors ${
-                      resourceTab === tab.id
-                        ? "bg-[#323537] text-[#e0e3e5]"
-                        : "bg-[rgba(50,53,55,0.35)] text-[#c6c6cd] hover:text-[#e0e3e5]"
-                    }`}
-                  >
-                    <Icon color="currentColor" />
-                    {t(`program.tabs.${tab.id}`)}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="flex-1 min-h-0 overflow-hidden p-3 sm:p-4">
-              <ResourceBrowser
-                tab={resourceTab}
-                songs={songs}
-                media={media}
-                themes={themes}
-                onAddSong={addSongToSchedule}
-                onAddMedia={addMedia}
-                onAddTheme={handleAddTheme}
-                onAddBible={addBible}
-                onCreateSong={() => {
-                  setEditingSong(null);
-                  setCreateModal("song");
-                }}
-                onCreateMedia={() => setCreateModal("media")}
-                onCreateTheme={() => setCreateModal("theme")}
-                onEditSong={(song) => {
-                  setEditingSong(song);
-                  setCreateModal("song");
-                }}
-                onDeleteSong={(song) =>
-                  setPendingDelete({ type: "song", item: song })
-                }
-                onDeleteMedia={(item) =>
-                  setPendingDelete({ type: "media", item })
-                }
-                onDeleteTheme={(theme) =>
-                  setPendingDelete({ type: "theme", item: theme })
-                }
-                onSetMediaAsLogo={handleSetMediaAsLogo}
-              />
-            </div>
-          </section>
-        </ResizableSplit>
+        )}
       </main>
 
       <NewSongModal
@@ -409,6 +520,12 @@ function Program() {
         isOpen={createModal === "media"}
         onClose={closeCreateModal}
         onUpload={handleCreateMedia}
+      />
+      <YouTubeMediaModal
+        isOpen={createModal === "youtube"}
+        onClose={closeCreateModal}
+        onSubmit={handleCreateYouTube}
+        item={editingYouTube}
       />
       <NewThemeModal
         isVisible={createModal === "theme"}

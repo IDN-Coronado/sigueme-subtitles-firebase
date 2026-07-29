@@ -1,0 +1,32 @@
+[
+  {
+    "origin": [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "http://127.0.0.1:5173",
+      "https://siguemesubtitles.web.app",
+      "https://siguemesubtitles.firebaseapp.com"
+    ],
+    "method": ["GET", "HEAD", "OPTIONS"],
+    "responseHeader": [
+      "Content-Type",
+      "Authorization",
+      "Content-Length",
+      "User-Agent",
+      "x-goog-resumable",
+      "x-firebase-storage-version",
+      "x-goog-meta-*",
+      "x-goog-content-length-range",
+      "x-goog-hash",
+      "x-goog-generation",
+      "x-goog-metageneration",
+      "x-goog-stored-content-encoding",
+      "x-goog-stored-content-length",
+      "x-goog-storage-class",
+      "Range",
+      "Accept-Ranges",
+      "Content-Range"
+    ],
+    "maxAgeSeconds": 3600
+  }
+]

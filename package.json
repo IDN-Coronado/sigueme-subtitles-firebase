@@ -9,6 +9,8 @@
     "dompurify": "^3.2.6",
     "firebase": "^9.17.2",
     "firebase-cli": "^1.2.0",
+    "jszip": "^3.10.1",
+    "pptxviewjs": "^1.1.9",
     "react": "^19.0.0",
     "react-color": "^2.19.3",
     "react-dom": "^19.0.0",

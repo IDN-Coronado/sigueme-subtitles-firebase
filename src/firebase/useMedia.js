@@ -32,12 +32,14 @@ import {
 const IMAGE_EXT = /\.(jpe?g|png|gif|webp|svg|bmp|avif)$/i;
 const VIDEO_EXT = /\.(mp4|webm|mov|m4v|ogv)$/i;
 const AUDIO_EXT = /\.(mp3|wav|m4a|aac|flac|oga|ogg|opus|wma)$/i;
+const PPTX_EXT = /\.pptx$/i;
 const MEDIA_EXT =
-  /\.(jpe?g|png|gif|webp|svg|bmp|avif|mp4|webm|mov|m4v|ogv|mp3|wav|m4a|aac|flac|oga|ogg|opus|wma)$/i;
+  /\.(jpe?g|png|gif|webp|svg|bmp|avif|mp4|webm|mov|m4v|ogv|mp3|wav|m4a|aac|flac|oga|ogg|opus|wma|pptx)$/i;
 
 const YOUTUBE_COLLECTION = "media";
 
 function getMediaType(name) {
+  if (PPTX_EXT.test(name)) return "pptx";
   if (VIDEO_EXT.test(name)) return "video";
   if (AUDIO_EXT.test(name)) return "audio";
   if (IMAGE_EXT.test(name)) return "image";
@@ -167,7 +169,14 @@ function useMedia() {
       ).replace(/[^\w.\-]+/g, "_");
       const storagePath = `general/${Date.now()}_${baseName}${ext}`;
       const storageRef = ref(storage, storagePath);
+      const isPptx = PPTX_EXT.test(file.name) || PPTX_EXT.test(ext);
       await uploadBytes(storageRef, file, {
+        ...(isPptx
+          ? {
+              contentType:
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            }
+          : {}),
         customMetadata: {
           title:
             trimmedTitle ||

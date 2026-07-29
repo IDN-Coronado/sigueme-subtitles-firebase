@@ -155,6 +155,64 @@ export function IconLoop({ color = "currentColor" }) {
   );
 }
 
+export function IconSlideFirst({ color = "currentColor" }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+      <path d="M3.5 3.5v9" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+      <path
+        d="M12.5 3.5 7 8l5.5 4.5"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function IconSlidePrev({ color = "currentColor" }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+      <path
+        d="M10.5 3.5 5.5 8l5 4.5"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function IconSlideNext({ color = "currentColor" }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+      <path
+        d="M5.5 3.5 10.5 8l-5 4.5"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function IconSlideLast({ color = "currentColor" }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+      <path d="M12.5 3.5v9" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+      <path
+        d="M3.5 3.5 9 8l-5.5 4.5"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function IconSong({ color = "currentColor" }) {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>

@@ -5,7 +5,9 @@
       "http://localhost:3000",
       "http://127.0.0.1:5173",
       "https://siguemesubtitles.web.app",
-      "https://siguemesubtitles.firebaseapp.com"
+      "https://siguemesubtitles.firebaseapp.com",
+      "https://propresenter.web.app",
+      "https://propresenter.firebaseapp.com"
     ],
     "method": ["GET", "HEAD", "OPTIONS"],
     "responseHeader": [

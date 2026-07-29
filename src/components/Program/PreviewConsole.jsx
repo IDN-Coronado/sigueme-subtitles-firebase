@@ -15,6 +15,7 @@ import {
   subscribeMediaSync,
 } from "../../utils/mediaSync";
 import { MONO } from "./constants";
+import PptxStage from "./PptxStage";
 import ScaledLiveStage from "./ScaledLiveStage";
 import YouTubePlayer from "./YouTubePlayer";
 import {
@@ -119,8 +120,14 @@ function LiveCanvas({ theme, variant, children, dimmed = true }) {
   );
 }
 
-function PreviewConsole({ preview, mediaRef, variant = "console" }) {
+function PreviewConsole({
+  preview,
+  mediaRef,
+  variant = "console",
+  onPptxLoaded,
+}) {
   const isLive = variant === "live";
+  const liveSize = useLiveViewSize();
   const styles = useCaptionSettings(preview?.programId);
   const resource = preview?.resource;
   const theme = preview?.theme;
@@ -344,8 +351,15 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
   }
 
   if (resource.type === "media") {
-    const { url, mediaType, title, youtubeId, thumbnailUrl, startSeconds } =
-      resource.media || {};
+    const {
+      url,
+      mediaType,
+      title,
+      youtubeId,
+      startSeconds,
+      slideIndex,
+      storagePath,
+    } = resource.media || {};
     const isYouTube = mediaType === "youtube";
     const resolvedYouTubeId = isYouTube
       ? youtubeId || parseYouTubeId(url)
@@ -356,6 +370,9 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
         : parseYouTubeStartSeconds(url || "")
       : 0;
     const showTheme = mediaType === "audio";
+    const pptxSlideIndex = Number.isFinite(slideIndex)
+      ? Math.max(0, Math.floor(slideIndex))
+      : 0;
     return (
       <LiveCanvas
         theme={showTheme ? theme : null}
@@ -410,6 +427,16 @@ function PreviewConsole({ preview, mediaRef, variant = "console" }) {
                 </p>
               </div>
             </>
+          ) : mediaType === "pptx" ? (
+            <PptxStage
+              key={storagePath || url}
+              url={url}
+              storagePath={storagePath}
+              slideIndex={pptxSlideIndex}
+              stageWidth={liveSize.width}
+              stageHeight={liveSize.height}
+              onLoaded={!isLive ? onPptxLoaded : undefined}
+            />
           ) : (
             <img
               src={url}

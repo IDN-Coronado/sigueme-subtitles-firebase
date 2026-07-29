@@ -4,6 +4,7 @@ import { MONO } from "./constants";
 import ResourceToolbar from "./ResourceToolbar";
 import ResourceItemMenu from "./ResourceItemMenu";
 import BibleBrowser from "./BibleBrowser";
+import PptxThumbnail from "./PptxThumbnail";
 import { t } from "../../i18n";
 import { mediaDisplayTitle } from "../../utils/mediaTitle";
 import { flattenSongLines } from "../../utils/songSections";
@@ -166,7 +167,7 @@ function MediaBrowser({
               label: t("resourceMenu.edit"),
               onClick: () => onEditYouTube?.(item),
             });
-          } else {
+          } else if (item.type !== "pptx") {
             menuOptions.push({
               id: "setLogo",
               label: t("resourceMenu.setAsDefaultLogo"),
@@ -210,6 +211,11 @@ function MediaBrowser({
                     >
                       {t("media.audioBadge")}
                     </div>
+                  ) : item.type === "pptx" ? (
+                    <PptxThumbnail
+                      url={item.url}
+                      storagePath={item.fullPath || item.storagePath}
+                    />
                   ) : (
                     <img
                       src={item.url}
@@ -230,6 +236,14 @@ function MediaBrowser({
                       style={MONO}
                     >
                       {t("media.youtubeBadge")}
+                    </span>
+                  )}
+                  {item.type === "pptx" && (
+                    <span
+                      className="pointer-events-none absolute bottom-1 left-1 text-[8px] tracking-[0.06em] text-[#7bd0ff] bg-[rgba(16,20,21,0.75)] px-1 py-0.5 rounded-sm"
+                      style={MONO}
+                    >
+                      {t("media.pptxBadge")}
                     </span>
                   )}
                 </div>

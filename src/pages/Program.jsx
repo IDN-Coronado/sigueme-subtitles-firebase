@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { doc, setDoc } from "firebase/firestore";
 
@@ -21,6 +21,7 @@ import PreviewPanel from "../components/Program/PreviewPanel";
 import PreviewConsole from "../components/Program/PreviewConsole";
 import MediaConsoleControls from "../components/Program/MediaConsoleControls";
 import CaptionConsoleControls from "../components/Program/CaptionConsoleControls";
+import PptxConsoleControls from "../components/Program/PptxConsoleControls";
 import ResourceBrowser from "../components/Program/ResourceBrowser";
 import ProgramHeader from "../components/Program/ProgramHeader";
 import { RESOURCE_TABS } from "../components/Program/constants";
@@ -62,12 +63,14 @@ async function setCaption(caption) {
 function Program() {
   const { programId } = useParams();
   const consoleMediaRef = useRef(null);
+  const previewRef = useRef(null);
   const [resourceTab, setResourceTab] = useState("songs");
   const [resourcesCollapsed, setResourcesCollapsed] = useState(loadResourcesCollapsed);
   const [createModal, setCreateModal] = useState(null);
   const [editingSong, setEditingSong] = useState(null);
   const [editingYouTube, setEditingYouTube] = useState(null);
   const [pendingDelete, setPendingDelete] = useState(null);
+  const [pptxSlideCount, setPptxSlideCount] = useState(0);
 
   const { songs, addSong, updateSong, removeSong } = useSongs();
   const { themes, addTheme, removeTheme } = useThemes();
@@ -75,6 +78,7 @@ function Program() {
     useMedia();
   const { program, updateProgram, activateProgram } = usePrograms(programId);
   const { preview, setPreview, clearPreviewResource } = usePreview();
+  previewRef.current = preview;
 
   const {
     schedule,
@@ -253,7 +257,7 @@ function Program() {
   };
 
   const handleSetMediaAsLogo = async (item) => {
-    if (!item?.url || !programId) return;
+    if (!item?.url || !programId || item.type === "pptx") return;
     try {
       await updateProgram(programId, {
         mainLogo: {
@@ -267,6 +271,39 @@ function Program() {
     } catch {
       alert(t("program.logoUpdateError"));
     }
+  };
+
+  const handlePptxLoaded = async ({ slideCount }) => {
+    const count = Math.max(0, Math.floor(Number(slideCount) || 0));
+    if (count > 0) setPptxSlideCount(count);
+
+    const current = previewRef.current;
+    const media = current?.resource?.media;
+    if (
+      current?.resource?.type !== "media" ||
+      media?.mediaType !== "pptx" ||
+      count <= 0
+    ) {
+      return;
+    }
+    if (media.slideCount === count) return;
+
+    const slideIndex = Number.isFinite(media.slideIndex)
+      ? Math.max(0, Math.min(count - 1, Math.floor(media.slideIndex)))
+      : 0;
+
+    await setPreview({
+      programId,
+      theme: current.theme ?? null,
+      resource: {
+        type: "media",
+        media: {
+          ...media,
+          slideIndex,
+          slideCount: count,
+        },
+      },
+    });
   };
 
   const toggleResourcesCollapsed = () => {
@@ -286,11 +323,34 @@ function Program() {
 
   const consoleMedia =
     preview?.resource?.type === "media" ? preview.resource.media : null;
+  const showPptxControls = consoleMedia?.mediaType === "pptx";
   const showMediaControls =
     consoleMedia &&
     (consoleMedia.mediaType === "audio" ||
       consoleMedia.mediaType === "video" ||
       consoleMedia.mediaType === "youtube");
+
+  useEffect(() => {
+    if (consoleMedia?.mediaType !== "pptx") {
+      setPptxSlideCount(0);
+      return;
+    }
+    if (Number.isFinite(consoleMedia.slideCount) && consoleMedia.slideCount > 0) {
+      setPptxSlideCount(Math.floor(consoleMedia.slideCount));
+    }
+  }, [
+    consoleMedia?.mediaType,
+    consoleMedia?.url,
+    consoleMedia?.storagePath,
+    consoleMedia?.slideCount,
+  ]);
+
+  const effectivePptxSlideCount = Math.max(
+    pptxSlideCount,
+    Number.isFinite(consoleMedia?.slideCount)
+      ? Math.floor(consoleMedia.slideCount)
+      : 0
+  );
 
   const topPanels = (
     <ResizableSplit
@@ -347,7 +407,13 @@ function Program() {
         className="h-full"
         action={
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 max-w-full overflow-x-auto">
-            {showMediaControls ? (
+            {showPptxControls ? (
+              <PptxConsoleControls
+                preview={preview}
+                setPreview={setPreview}
+                slideCount={effectivePptxSlideCount}
+              />
+            ) : showMediaControls ? (
               <MediaConsoleControls
                 mediaRef={consoleMediaRef}
                 mediaKey={consoleMedia.url}
@@ -363,7 +429,11 @@ function Program() {
           </div>
         }
       >
-        <PreviewConsole preview={preview} mediaRef={consoleMediaRef} />
+        <PreviewConsole
+          preview={preview}
+          mediaRef={consoleMediaRef}
+          onPptxLoaded={handlePptxLoaded}
+        />
       </Panel>
     </ResizableSplit>
   );

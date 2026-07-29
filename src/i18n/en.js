@@ -163,11 +163,18 @@ const en = {
   media: {
     audioBadge: "AUDIO",
     youtubeBadge: "YOUTUBE",
+    pptxBadge: "PPTX",
     progressAria: "Playback progress",
     play: "Play",
     pause: "Pause",
     stop: "Stop",
     loop: "Loop",
+    pptxFirst: "First slide",
+    pptxPrev: "Previous slide",
+    pptxNext: "Next slide",
+    pptxLast: "Last slide",
+    pptxCounter: "{current} / {total}",
+    pptxCounterAria: "Slide {current} of {total}",
   },
   schedule: {
     remove: "Remove from schedule",

@@ -105,24 +105,28 @@ function Program() {
     updateProgram,
   });
 
-  // Reconciles the media cache with the active program's current schedule.
-  // This is the single trigger for precaching — not a direct call from
-  // handleActivate — so it also covers cases that a one-shot "activate"
-  // action can't: reopening or refreshing an already-active program (e.g.
-  // after its cache was evicted, or the browser dropped it under storage
-  // pressure), and assets added to the schedule after activation. Runs
-  // whenever the program is active, hydrated, and the set of Storage URLs
-  // the schedule actually references (order-independent) changes;
-  // precacheSchedule's own caches.match() check keeps a same-signature
-  // re-run cheap (no re-fetching already-cached assets).
-  const precacheSignature = collectPrecacheTargets(schedule)
+  // Reconciles the media cache with the active program's current schedule
+  // *and* its mainLogo (a separate program-level asset shown via the Logo
+  // button below — not part of the schedule array, so it must be passed
+  // through explicitly or "ready offline" would be a false promise the
+  // moment an operator hits Logo). This is the single trigger for
+  // precaching — not a direct call from handleActivate — so it also
+  // covers cases that a one-shot "activate" action can't: reopening or
+  // refreshing an already-active program (e.g. after its cache was
+  // evicted, or the browser dropped it under storage pressure), and
+  // assets added to the schedule (or a changed logo) after activation.
+  // Runs whenever the program is active, hydrated, and the set of Storage
+  // URLs actually referenced (order-independent) changes; precacheSchedule's
+  // own caches.match() check keeps a same-signature re-run cheap (no
+  // re-fetching already-cached assets).
+  const precacheSignature = collectPrecacheTargets(schedule, program?.mainLogo)
     .map((target) => target.url)
     .sort()
     .join("|");
 
   useEffect(() => {
     if (!hydrated || !program?.active || !precacheSignature) return;
-    runPrecache(schedule);
+    runPrecache(schedule, program?.mainLogo);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, program?.active, precacheSignature]);
 
@@ -243,8 +247,11 @@ function Program() {
 
     await activateProgram(programId);
 
-    if (previouslyActive?.schedule) {
-      const staleTargets = collectPrecacheTargets(previouslyActive.schedule);
+    if (previouslyActive) {
+      const staleTargets = collectPrecacheTargets(
+        previouslyActive.schedule,
+        previouslyActive.mainLogo
+      );
       await Promise.all(staleTargets.map((t) => evictCachedMedia(t.url)));
     }
 

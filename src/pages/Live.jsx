@@ -77,7 +77,7 @@ function Live() {
           className="absolute bottom-4 left-4 z-20 text-[#c6c6cd]/80 text-xs border border-[rgba(69,70,77,0.5)] bg-[rgba(11,15,16,0.75)] px-3 py-1.5 rounded-sm"
           style={MONO}
         >
-          {t("program.preparingOffline", {
+          {t("program.preparingMedia", {
             done: cacheProgress.completed,
             total: cacheProgress.total,
           })}

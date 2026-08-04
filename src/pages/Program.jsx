@@ -381,16 +381,32 @@ function Program() {
   const precacheEntries = Object.values(precacheProgress);
   const precacheTotal = precacheEntries[0]?.total ?? 0;
   const precacheDone = precacheEntries.filter(
-    (e) => e.status === "cached" || e.status === "error"
+    (e) =>
+      e.status === "cached" || e.status === "error" || e.status === "unavailable"
   ).length;
+  // precacheStatus mirrors precacheSchedule's verified outcome, not just
+  // "the run finished" — only "success" means every target was actually
+  // confirmed written to the cache. See usePrecacheProgram/precacheSchedule.
   const precacheAction =
     precacheStatus === "running" && precacheTotal > 0 ? (
       <span className="text-[#6b7280] text-[10px] tracking-[0.05em]" style={MONO}>
         {t("program.preparingOffline", { done: precacheDone, total: precacheTotal })}
       </span>
-    ) : precacheStatus === "done" && precacheTotal > 0 ? (
+    ) : precacheStatus === "success" && precacheTotal > 0 ? (
       <span className="text-emerald-400 text-[10px] tracking-[0.05em]" style={MONO}>
         {t("program.offlineReady")}
+      </span>
+    ) : precacheStatus === "partial" ? (
+      <span className="text-amber-400 text-[10px] tracking-[0.05em]" style={MONO}>
+        {t("program.offlinePartial", { done: precacheDone, total: precacheTotal })}
+      </span>
+    ) : precacheStatus === "error" ? (
+      <span className="text-red-400 text-[10px] tracking-[0.05em]" style={MONO}>
+        {t("program.offlineError")}
+      </span>
+    ) : precacheStatus === "unavailable" ? (
+      <span className="text-[#6b7280] text-[10px] tracking-[0.05em]" style={MONO}>
+        {t("program.offlineUnavailable")}
       </span>
     ) : null;
 

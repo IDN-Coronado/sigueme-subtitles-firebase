@@ -21,12 +21,14 @@ const CACHE_STATUS_COLOR = {
   cached: "bg-emerald-400",
   loading: "bg-amber-400 animate-pulse",
   error: "bg-red-400",
+  unavailable: "bg-[#6b7280]",
 };
 
 const CACHE_STATUS_LABEL_KEY = {
   cached: "schedule.cacheStatusCached",
   loading: "schedule.cacheStatusLoading",
   error: "schedule.cacheStatusError",
+  unavailable: "schedule.cacheStatusUnavailable",
 };
 
 function CacheStatusDot({ status }) {

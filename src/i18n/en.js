@@ -90,6 +90,9 @@ const en = {
     expandResources: "Expand resources",
     preparingOffline: "Preparing offline… {done}/{total}",
     offlineReady: "Ready offline",
+    offlinePartial: "Offline caching incomplete ({done}/{total})",
+    offlineError: "Offline caching failed",
+    offlineUnavailable: "Offline caching unavailable",
     panels: {
       schedule: "Schedule",
       preview: "Preview",
@@ -185,6 +188,7 @@ const en = {
     cacheStatusCached: "Cached for offline use",
     cacheStatusLoading: "Caching…",
     cacheStatusError: "Failed to cache",
+    cacheStatusUnavailable: "Offline caching unavailable",
   },
   settings: {
     textConfig: "TEXT CONFIGURATION",

@@ -90,6 +90,9 @@ const es = {
     expandResources: "Expandir recursos",
     preparingOffline: "Preparando sin conexión… {done}/{total}",
     offlineReady: "Listo sin conexión",
+    offlinePartial: "Caché sin conexión incompleto ({done}/{total})",
+    offlineError: "Error al preparar sin conexión",
+    offlineUnavailable: "Caché sin conexión no disponible",
     panels: {
       schedule: "Programa",
       preview: "Vista previa",
@@ -185,6 +188,7 @@ const es = {
     cacheStatusCached: "En caché para uso sin conexión",
     cacheStatusLoading: "Guardando en caché…",
     cacheStatusError: "Error al guardar en caché",
+    cacheStatusUnavailable: "Caché sin conexión no disponible",
   },
   settings: {
     textConfig: "CONFIGURACIÓN DE TEXTO",

@@ -108,7 +108,7 @@ function Program() {
   // Reconciles the media cache with the active program's current schedule
   // *and* its mainLogo (a separate program-level asset shown via the Logo
   // button below — not part of the schedule array, so it must be passed
-  // through explicitly or "ready offline" would be a false promise the
+  // through explicitly or the "media ready" status would be wrong the
   // moment an operator hits Logo). This is the single trigger for
   // precaching — not a direct call from handleActivate — so it also
   // covers cases that a one-shot "activate" action can't: reopening or
@@ -422,23 +422,23 @@ function Program() {
   const precacheAction =
     precacheStatus === "running" && precacheTotal > 0 ? (
       <span className="text-[#6b7280] text-[10px] tracking-[0.05em]" style={MONO}>
-        {t("program.preparingOffline", { done: precacheDone, total: precacheTotal })}
+        {t("program.preparingMedia", { done: precacheDone, total: precacheTotal })}
       </span>
     ) : precacheStatus === "success" && precacheTotal > 0 ? (
       <span className="text-emerald-400 text-[10px] tracking-[0.05em]" style={MONO}>
-        {t("program.offlineReady")}
+        {t("program.mediaReady")}
       </span>
     ) : precacheStatus === "partial" ? (
       <span className="text-amber-400 text-[10px] tracking-[0.05em]" style={MONO}>
-        {t("program.offlinePartial", { done: precacheDone, total: precacheTotal })}
+        {t("program.mediaPartial", { done: precacheDone, total: precacheTotal })}
       </span>
     ) : precacheStatus === "error" ? (
       <span className="text-red-400 text-[10px] tracking-[0.05em]" style={MONO}>
-        {t("program.offlineError")}
+        {t("program.mediaError")}
       </span>
     ) : precacheStatus === "unavailable" ? (
       <span className="text-[#6b7280] text-[10px] tracking-[0.05em]" style={MONO}>
-        {t("program.offlineUnavailable")}
+        {t("program.mediaUnavailable")}
       </span>
     ) : null;
 

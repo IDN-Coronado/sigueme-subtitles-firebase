@@ -1,13 +1,31 @@
-import { precacheAndRoute } from "workbox-precaching";
-import { registerRoute } from "workbox-routing";
+import {
+  precacheAndRoute,
+  cleanupOutdatedCaches,
+  createHandlerBoundToURL,
+} from "workbox-precaching";
+import { registerRoute, NavigationRoute } from "workbox-routing";
 import { CacheFirst } from "workbox-strategies";
 import { CacheableResponsePlugin } from "workbox-cacheable-response";
 import { RangeRequestsPlugin } from "workbox-range-requests";
 
-// App-shell files are intentionally not precached (globPatterns: [] in
-// vite.config.js) — this worker only ever caches Firebase Storage media.
-// self.__WB_MANIFEST is required by workbox-precaching even when empty.
+// Precache the app shell (index.html + main JS/CSS bundle — see
+// vite.config.js's globPatterns for what's included and, importantly, what
+// isn't) so a reload/reopen without connectivity can still boot the app,
+// not just play already-cached media. cleanupOutdatedCaches() removes the
+// *previous* build's precached entries once a new one activates, so
+// content-hashed chunks from old deploys don't accumulate forever.
 precacheAndRoute(self.__WB_MANIFEST);
+cleanupOutdatedCaches();
+
+// This is a client-side-routed SPA (react-router's createBrowserRouter) —
+// a reload/direct navigation to e.g. /live or /program/abc123 isn't a real
+// file; Firebase Hosting's rewrite ("source": "**" -> "/index.html", see
+// firebase.json) handles that server-side when online. Offline, there's no
+// server to do the rewrite, so the service worker must: any same-origin
+// navigation request is answered with the precached index.html, letting
+// the already-loaded (or now-booting) client-side router take it from
+// there.
+registerRoute(new NavigationRoute(createHandlerBoundToURL("index.html")));
 
 // Every upload gets a unique, timestamped Storage path (see
 // src/firebase/useMedia.js / useThemes.js), so a cached URL's bytes never
@@ -54,7 +72,18 @@ registerRoute(
   })
 );
 
-self.skipWaiting();
+// No self.skipWaiting() here — deliberately. Now that the app shell itself
+// is precached and version-tied to a specific build, letting a newly
+// installed worker immediately take over would risk serving a mismatched
+// mix of old-version page code and new-version cached assets to a tab
+// that's already open (the classic SPA-update version-skew problem). A
+// live service can run for hours in an already-open tab; a deploy landing
+// mid-service must not be able to disturb it. Default Workbox/SW lifecycle
+// already handles this safely: a new worker installs and waits until every
+// tab running the previous version has closed, then activates and takes
+// over on the next open — no explicit prompt/logic needed. This only
+// affects *updates*; a first-ever install has no previous worker to wait
+// on, so it activates immediately either way.
 self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
 });

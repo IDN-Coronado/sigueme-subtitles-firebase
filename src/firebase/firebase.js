@@ -1,5 +1,9 @@
 import { initializeApp } from 'firebase/app'
-import { getFirestore } from "firebase/firestore"
+import {
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from "firebase/firestore"
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_API_KEY,
@@ -12,6 +16,19 @@ const firebaseConfig = {
 };
 
 export const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+
+// IndexedDB-backed local cache so already-fetched program/song/theme data
+// is still readable (and offline-editable, syncing once reconnected) after
+// a reload without connectivity — the app shell alone can't show anything
+// useful without this. persistentMultipleTabManager is required, not the
+// default single-tab manager: this app runs the console and Live view in
+// two separate tabs/windows at the same time by design, and single-tab
+// persistence would make the second tab fail to open a persistent
+// connection at all.
+const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager(),
+  }),
+});
 
 export default db;

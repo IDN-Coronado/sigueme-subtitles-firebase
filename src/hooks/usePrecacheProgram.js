@@ -16,13 +16,14 @@ function usePrecacheProgram() {
   const [progress, setProgress] = useState({}); // { [itemId]: { status, url, ... } }
   const runToken = useRef(0);
 
-  const run = useCallback(async (schedule) => {
+  const run = useCallback(async (schedule, mainLogo) => {
     const token = ++runToken.current;
     setStatus("running");
     setProgress({});
 
     try {
       const result = await precacheSchedule(schedule, {
+        mainLogo,
         onProgress: (update) => {
           if (runToken.current !== token) return;
           setProgress((prev) => ({ ...prev, [update.id]: update }));

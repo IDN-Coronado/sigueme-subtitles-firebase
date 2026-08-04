@@ -105,6 +105,27 @@ function Program() {
     updateProgram,
   });
 
+  // Reconciles the media cache with the active program's current schedule.
+  // This is the single trigger for precaching — not a direct call from
+  // handleActivate — so it also covers cases that a one-shot "activate"
+  // action can't: reopening or refreshing an already-active program (e.g.
+  // after its cache was evicted, or the browser dropped it under storage
+  // pressure), and assets added to the schedule after activation. Runs
+  // whenever the program is active, hydrated, and the set of Storage URLs
+  // the schedule actually references (order-independent) changes;
+  // precacheSchedule's own caches.match() check keeps a same-signature
+  // re-run cheap (no re-fetching already-cached assets).
+  const precacheSignature = collectPrecacheTargets(schedule)
+    .map((target) => target.url)
+    .sort()
+    .join("|");
+
+  useEffect(() => {
+    if (!hydrated || !program?.active || !precacheSignature) return;
+    runPrecache(schedule);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, program?.active, precacheSignature]);
+
   const closeCreateModal = () => {
     setCreateModal(null);
     setEditingYouTube(null);
@@ -227,7 +248,11 @@ function Program() {
       await Promise.all(staleTargets.map((t) => evictCachedMedia(t.url)));
     }
 
-    runPrecache(schedule);
+    // Precaching itself is triggered by the reconciliation effect below,
+    // once `program.active` reflects this activation (via Firestore's
+    // onSnapshot echo) — not called directly here — so the same single
+    // code path also covers reopening/refreshing an already-active
+    // program and schedule changes made after activation.
   };
 
   const handleClear = async () => {

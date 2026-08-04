@@ -88,6 +88,8 @@ const es = {
     scheduleEmpty: "Aún no hay elementos. Usa el panel de recursos abajo.",
     collapseResources: "Colapsar recursos",
     expandResources: "Expandir recursos",
+    preparingOffline: "Preparando sin conexión… {done}/{total}",
+    offlineReady: "Listo sin conexión",
     panels: {
       schedule: "Programa",
       preview: "Vista previa",
@@ -180,6 +182,9 @@ const es = {
     remove: "Quitar del programa",
     versicleCount: "{count} versículo",
     versicleCountPlural: "{count} versículos",
+    cacheStatusCached: "En caché para uso sin conexión",
+    cacheStatusLoading: "Guardando en caché…",
+    cacheStatusError: "Error al guardar en caché",
   },
   settings: {
     textConfig: "CONFIGURACIÓN DE TEXTO",

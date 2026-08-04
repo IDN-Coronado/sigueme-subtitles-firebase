@@ -88,6 +88,8 @@ const en = {
     scheduleEmpty: "No items yet. Use the resource panel below.",
     collapseResources: "Collapse resources",
     expandResources: "Expand resources",
+    preparingOffline: "Preparing offline… {done}/{total}",
+    offlineReady: "Ready offline",
     panels: {
       schedule: "Schedule",
       preview: "Preview",
@@ -180,6 +182,9 @@ const en = {
     remove: "Remove from schedule",
     versicleCount: "{count} versicle",
     versicleCountPlural: "{count} versicles",
+    cacheStatusCached: "Cached for offline use",
+    cacheStatusLoading: "Caching…",
+    cacheStatusError: "Failed to cache",
   },
   settings: {
     textConfig: "TEXT CONFIGURATION",

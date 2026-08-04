@@ -17,7 +17,32 @@ function ScheduleTypeIcon({ item }) {
   return <IconMedia color={color} />;
 }
 
-function ScheduleItemRow({ item, index, active, onSelect, onRemove }) {
+const CACHE_STATUS_COLOR = {
+  cached: "bg-emerald-400",
+  loading: "bg-amber-400 animate-pulse",
+  error: "bg-red-400",
+};
+
+const CACHE_STATUS_LABEL_KEY = {
+  cached: "schedule.cacheStatusCached",
+  loading: "schedule.cacheStatusLoading",
+  error: "schedule.cacheStatusError",
+};
+
+function CacheStatusDot({ status }) {
+  const color = CACHE_STATUS_COLOR[status];
+  if (!color) return null;
+  const label = t(CACHE_STATUS_LABEL_KEY[status]);
+  return (
+    <span
+      className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${color}`}
+      title={label}
+      aria-label={label}
+    />
+  );
+}
+
+function ScheduleItemRow({ item, index, active, onSelect, onRemove, cacheStatus }) {
   const isTheme = item.type === "theme";
 
   if (isTheme) {
@@ -59,6 +84,7 @@ function ScheduleItemRow({ item, index, active, onSelect, onRemove }) {
               <ScheduleTypeIcon item={item} />
             </span>
             {t("types.theme")}
+            <CacheStatusDot status={cacheStatus} />
           </p>
           <p className="text-[#e0e3e5] text-sm font-semibold truncate leading-tight">
             {item.title}
@@ -94,6 +120,7 @@ function ScheduleItemRow({ item, index, active, onSelect, onRemove }) {
               <span className="truncate">
                 {String(index + 1).padStart(2, "0")}. {typeLabel(item)}
               </span>
+              <CacheStatusDot status={cacheStatus} />
             </span>
           </div>
           <p className="text-[#e0e3e5] text-sm font-semibold truncate">

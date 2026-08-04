@@ -1,5 +1,7 @@
-// Must stay in sync with MEDIA_CACHE_NAME in src/sw.js — duplicated rather
-// than imported because the service worker is bundled as a separate entry.
+// Shared by all page-context modules (this file, precacheSchedule.js). Must
+// stay in sync with the separate MEDIA_CACHE_NAME literal in src/sw.js —
+// duplicated there rather than imported because the service worker is
+// bundled as a separate entry.
 export const MEDIA_CACHE_NAME = "sigueme-media-v1";
 
 // Evicts a single cached media response by its exact download URL. Safe to

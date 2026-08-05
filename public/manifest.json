@@ -1,15 +1,21 @@
 {
-  "short_name": "Sigueme Subtitles",
-  "name": "Sigueme Subtitles",
+  "short_name": "Apostello",
+  "name": "Apostello Church Presentation",
+  "description": "Plan church services and present Scripture, worship lyrics, and media on every screen.",
+  "id": "/",
+  "lang": "en",
+  "categories": ["productivity", "utilities"],
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ],
   "start_url": ".",
+  "scope": "/",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#101415",
+  "background_color": "#101415"
 }

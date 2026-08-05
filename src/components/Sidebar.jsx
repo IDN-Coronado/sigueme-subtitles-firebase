@@ -18,7 +18,7 @@ function Sidebar({ activeItem = "programs", collapsed = false, onToggle }) {
           {!c && (
             <div>
               <h1 className="text-[#e0e3e5] font-bold text-2xl tracking-tight leading-8">
-                <Link to="/">Presenter Pro</Link>
+                <Link to="/">Apostello</Link>
               </h1>
               <p
                 className="text-[#c6c6cd] text-xs font-medium tracking-[0.1em] uppercase opacity-60 leading-4 mt-1"

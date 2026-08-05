@@ -210,7 +210,7 @@ function Home() {
         <header className="relative z-10 h-14 sm:h-16 border-b border-[rgba(69,70,77,0.3)] flex items-center justify-between px-5 sm:px-8 shrink-0">
           <div className="flex items-baseline gap-3 min-w-0">
             <span className="text-[#e0e3e5] font-bold text-lg sm:text-xl tracking-tight truncate">
-              Presenter Pro
+              Apostello
             </span>
             <span
               className="hidden sm:inline text-[#6b7280] text-[10px] tracking-[0.12em] uppercase"
@@ -279,7 +279,7 @@ function Home() {
                 {t("home.fileMenu")}
               </p>
               <h1 className="text-[#e0e3e5] font-bold text-3xl sm:text-4xl tracking-tight leading-tight">
-                Presenter Pro
+                Apostello
               </h1>
               <p className="text-[#c6c6cd] text-base sm:text-lg mt-2 truncate">
                 {t("home.subtitle")}

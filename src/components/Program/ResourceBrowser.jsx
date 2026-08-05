@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { MONO } from "./constants";
 import ResourceToolbar from "./ResourceToolbar";
@@ -30,6 +30,7 @@ function SongsBrowser({
   onDelete,
 }) {
   const q = normalizeSearch(query);
+  const [selected, setSelected] = useState({});
 
   const list = useMemo(
     () =>
@@ -41,6 +42,26 @@ function SongsBrowser({
         ),
     [songs, q]
   );
+
+  const selectedCount = Object.keys(selected).length;
+  const selectedList = useMemo(() => Object.values(selected), [selected]);
+
+  const toggleSong = (song) => {
+    setSelected((prev) => {
+      if (prev[song.id]) {
+        const next = { ...prev };
+        delete next[song.id];
+        return next;
+      }
+      return { ...prev, [song.id]: song };
+    });
+  };
+
+  const handleAddSelected = async () => {
+    if (selectedCount === 0) return;
+    await onAdd(selectedCount === 1 ? selectedList[0] : selectedList);
+    setSelected({});
+  };
 
   return (
     <div className="flex flex-col gap-2 h-full min-h-0">
@@ -68,17 +89,27 @@ function SongsBrowser({
           <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 content-start">
             {list.map((song) => {
               const preview = songPreviewLines(song, 2);
+              const isSelected = !!selected[song.id];
               return (
                 <li key={song.id} className="min-w-0">
-                  <div className="relative h-full rounded-lg border border-[rgba(69,70,77,0.3)] bg-[rgba(16,20,21,0.5)] hover:border-[rgba(123,208,255,0.35)] hover:bg-[rgba(123,208,255,0.08)] transition-colors">
+                  <div
+                    className={`relative h-full rounded-lg border transition-colors ${
+                      isSelected
+                        ? "border-[rgba(123,208,255,0.45)] bg-[rgba(123,208,255,0.12)]"
+                        : "border-[rgba(69,70,77,0.3)] bg-[rgba(16,20,21,0.5)] hover:border-[rgba(123,208,255,0.35)] hover:bg-[rgba(123,208,255,0.08)]"
+                    }`}
+                  >
                     <button
                       type="button"
-                      onClick={() => onAdd(song)}
+                      onClick={() => toggleSong(song)}
                       title={song.title}
                       className="w-full h-full text-left px-3 py-2.5 pr-9"
                     >
-                      <span className="block text-[#e0e3e5] text-xs sm:text-sm font-medium leading-snug line-clamp-2">
-                        {song.title}
+                      <span className="flex items-center gap-1.5 text-[#e0e3e5] text-xs sm:text-sm font-medium leading-snug">
+                        <span className="line-clamp-2">{song.title}</span>
+                        {isSelected && (
+                          <span className="shrink-0 text-[#7bd0ff]">✓</span>
+                        )}
                       </span>
                       {preview.length > 0 && (
                         <span className="mt-1.5 block text-[#6b7280] text-[10px] sm:text-[11px] leading-snug">
@@ -119,6 +150,32 @@ function SongsBrowser({
           </ul>
         )}
       </div>
+      <div className="shrink-0 flex items-center justify-between gap-3 border-t border-[rgba(69,70,77,0.25)] pt-3">
+        <p className="text-[#6b7280] text-xs" style={MONO}>
+          {selectedCount === 0
+            ? t("resource.selectHint")
+            : t("resource.selectedCount", { count: selectedCount })}
+        </p>
+        <div className="flex items-center gap-2">
+          {selectedCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setSelected({})}
+              className="px-3 py-2 text-sm text-[#c6c6cd] border border-[rgba(69,70,77,0.4)] rounded-sm hover:border-[#7bd0ff] hover:text-[#7bd0ff] transition-colors"
+            >
+              {t("common.clear")}
+            </button>
+          )}
+          <button
+            type="button"
+            disabled={selectedCount === 0}
+            onClick={handleAddSelected}
+            className="px-4 py-2 bg-[#7bd0ff] text-[#00354a] text-sm font-bold rounded-sm hover:bg-[#5bc0ef] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {t("resourceMenu.addToSchedule")}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -135,11 +192,32 @@ function MediaBrowser({
   onSetAsLogo,
 }) {
   const q = query.trim().toLowerCase();
+  const [selected, setSelected] = useState({});
   const list = media.filter((m) => {
     if (!q) return true;
     const label = mediaDisplayTitle(m).toLowerCase();
     return label.includes(q) || m.name.toLowerCase().includes(q);
   });
+
+  const selectedCount = Object.keys(selected).length;
+  const selectedList = useMemo(() => Object.values(selected), [selected]);
+
+  const toggleItem = (item) => {
+    setSelected((prev) => {
+      if (prev[item.id]) {
+        const next = { ...prev };
+        delete next[item.id];
+        return next;
+      }
+      return { ...prev, [item.id]: item };
+    });
+  };
+
+  const handleAddSelected = async () => {
+    if (selectedCount === 0) return;
+    await onAdd(selectedCount === 1 ? selectedList[0] : selectedList);
+    setSelected({});
+  };
 
   return (
     <div className="flex flex-col gap-3 h-full min-h-0">
@@ -154,6 +232,7 @@ function MediaBrowser({
       />
       <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-1.5 overflow-auto min-h-0 flex-1 content-start">
         {list.map((item) => {
+          const isSelected = !!selected[item.id];
           const menuOptions = [
             {
               id: "add",
@@ -184,11 +263,15 @@ function MediaBrowser({
           return (
             <div
               key={item.id}
-              className="relative text-left rounded-sm border border-[rgba(69,70,77,0.3)] bg-[rgba(16,20,21,0.5)] hover:border-[rgba(123,208,255,0.3)] transition-colors"
+              className={`relative text-left rounded-sm border transition-colors ${
+                isSelected
+                  ? "border-[rgba(123,208,255,0.45)] bg-[rgba(123,208,255,0.12)]"
+                  : "border-[rgba(69,70,77,0.3)] bg-[rgba(16,20,21,0.5)] hover:border-[rgba(123,208,255,0.3)]"
+              }`}
             >
               <button
                 type="button"
-                onClick={() => onAdd(item)}
+                onClick={() => toggleItem(item)}
                 className="w-full text-left"
               >
                 <div className="relative aspect-[4/3] bg-[#1d2022] overflow-hidden rounded-t-sm">
@@ -246,6 +329,11 @@ function MediaBrowser({
                       {t("media.pptxBadge")}
                     </span>
                   )}
+                  {isSelected && (
+                    <span className="pointer-events-none absolute top-1 left-1 w-4 h-4 rounded-full bg-[#7bd0ff] text-[#00354a] text-[10px] font-bold flex items-center justify-center">
+                      ✓
+                    </span>
+                  )}
                 </div>
                 <p className="text-[#e0e3e5] text-[9px] sm:text-[10px] font-medium px-1 py-0.5 truncate pr-6">
                   {mediaDisplayTitle(item)}
@@ -257,6 +345,32 @@ function MediaBrowser({
             </div>
           );
         })}
+      </div>
+      <div className="shrink-0 flex items-center justify-between gap-3 border-t border-[rgba(69,70,77,0.25)] pt-3">
+        <p className="text-[#6b7280] text-xs" style={MONO}>
+          {selectedCount === 0
+            ? t("resource.selectHint")
+            : t("resource.selectedCount", { count: selectedCount })}
+        </p>
+        <div className="flex items-center gap-2">
+          {selectedCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setSelected({})}
+              className="px-3 py-2 text-sm text-[#c6c6cd] border border-[rgba(69,70,77,0.4)] rounded-sm hover:border-[#7bd0ff] hover:text-[#7bd0ff] transition-colors"
+            >
+              {t("common.clear")}
+            </button>
+          )}
+          <button
+            type="button"
+            disabled={selectedCount === 0}
+            onClick={handleAddSelected}
+            className="px-4 py-2 bg-[#7bd0ff] text-[#00354a] text-sm font-bold rounded-sm hover:bg-[#5bc0ef] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {t("resourceMenu.addToSchedule")}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -368,6 +482,10 @@ function ResourceBrowser({
   onSetMediaAsLogo,
 }) {
   const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    setQuery("");
+  }, [tab]);
 
   if (tab === "songs") {
     return (

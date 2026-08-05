@@ -163,6 +163,7 @@ function Program() {
   };
 
   const handlePreviewSelect = async (resource) => {
+    const previousType = previewRef.current?.resource?.type;
     const themeItem = schedule.find((i) => i.type === "theme");
     const theme =
       themeItem
@@ -182,6 +183,8 @@ function Program() {
 
     if (resource.type === "song") {
       await setCaption(resource.song?.line || "");
+    } else if (previousType === "song") {
+      await setCaption("");
     }
   };
 

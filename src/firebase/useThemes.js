@@ -4,6 +4,7 @@ import { collection, query, orderBy, onSnapshot, addDoc, doc, deleteDoc } from "
 
 import db from "./firebase";
 import storage from "../firebase/storage";
+import { evictCachedMedia } from "../utils/mediaCache";
 
 const COLLECTION_NAME = 'themes';
 
@@ -34,6 +35,7 @@ function useThemes () {
     if (theme.storagePath) {
       await deleteObject(ref(storage, theme.storagePath));
     }
+    await evictCachedMedia(theme.backgroundUrl);
     const themeRef = doc(db, COLLECTION_NAME, theme.id);
     await deleteDoc(themeRef);
   };

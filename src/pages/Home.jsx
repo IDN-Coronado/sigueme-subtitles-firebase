@@ -26,7 +26,7 @@ const MENU_ITEMS = [
     shortcut: "Ctrl+N",
   },
   {
-    id: "open-program",
+    id: "manage-programs",
     labelKey: "home.menu.openProgram",
     descriptionKey: "home.menu.openProgramDesc",
     shortcut: "Ctrl+O",
@@ -67,7 +67,7 @@ function MenuIcon({ id }) {
       </svg>
     );
   }
-  if (id === "open-program") {
+  if (id === "manage-programs") {
     return (
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
         <path
@@ -127,12 +127,12 @@ function MenuIcon({ id }) {
 
 function Home() {
   const navigate = useNavigate();
-  const { programs, addProgram } = usePrograms();
+  const { programs, addProgram, removeProgram } = usePrograms();
   const { addSong } = useSongs();
   const { addTheme } = useThemes();
   const { uploadMedia } = useMedia();
 
-  const [modal, setModal] = useState(null); // 'new-program' | 'open-program' | 'new-song' | 'upload-file' | 'upload-theme' | 'settings'
+  const [modal, setModal] = useState(null); // 'new-program' | 'manage-programs' | 'new-song' | 'upload-file' | 'upload-theme' | 'settings'
 
   const closeModal = () => setModal(null);
 
@@ -146,6 +146,14 @@ function Home() {
   const handleOpenProgram = (program) => {
     closeModal();
     navigate(`/program/${program.id}`);
+  };
+
+  const handleDeleteProgram = async (program) => {
+    try {
+      await removeProgram(program.id);
+    } catch {
+      alert(t("errors.deleteResource"));
+    }
   };
 
   const handleCreateSong = async ({ title, sections }) => {
@@ -367,10 +375,11 @@ function Home() {
         onSubmit={handleCreateProgram}
       />
       <OpenProgramModal
-        isOpen={modal === "open-program"}
+        isOpen={modal === "manage-programs"}
         onClose={closeModal}
         programs={programs}
         onSelect={handleOpenProgram}
+        onDelete={handleDeleteProgram}
       />
       <NewSongModal
         isOpen={modal === "new-song"}

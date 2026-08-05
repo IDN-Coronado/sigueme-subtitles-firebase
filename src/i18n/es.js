@@ -60,8 +60,8 @@ const es = {
     menu: {
       newProgram: "Crear nuevo programa",
       newProgramDesc: "Comienza un schedule de servicio nuevo",
-      openProgram: "Abrir programa",
-      openProgramDesc: "Continúa con un programa guardado",
+      openProgram: "Administrar programas",
+      openProgramDesc: "Abre o elimina un programa guardado",
       newSong: "Crear nueva canción",
       newSongDesc: "Agrega letras a tu biblioteca",
       uploadFile: "Subir un archivo",
@@ -109,7 +109,7 @@ const es = {
   },
   openProgram: {
     eyebrow: "Programas",
-    title: "Abrir programa",
+    title: "Administrar programas",
     empty: "No hay programas guardados.",
   },
   programDelete: {

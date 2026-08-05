@@ -30,7 +30,7 @@ function ProgramHeader({
           className="shrink-0 text-[#e0e3e5] font-bold text-lg sm:text-xl tracking-tight hover:text-[#7bd0ff] transition-colors"
           title={t("program.home")}
         >
-          Presenter Pro
+          Apostello
         </Link>
         <div className="min-w-0 max-w-full border-l border-[rgba(69,70,77,0.4)] pl-3 flex items-center gap-2">
           <div className="inline-flex flex-col items-end max-w-full align-middle min-w-0">

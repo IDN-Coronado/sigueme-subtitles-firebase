@@ -20,7 +20,7 @@
       ]
     },
     {
-      "target": "propresenter",
+      "target": "apostello",
       "public": "dist",
       "ignore": [
         "firebase.json",

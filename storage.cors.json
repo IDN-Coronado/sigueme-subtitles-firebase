@@ -6,8 +6,8 @@
       "http://127.0.0.1:5173",
       "https://siguemesubtitles.web.app",
       "https://siguemesubtitles.firebaseapp.com",
-      "https://propresenter.web.app",
-      "https://propresenter.firebaseapp.com"
+      "https://apostello.web.app",
+      "https://apostello.firebaseapp.com"
     ],
     "method": ["GET", "HEAD", "OPTIONS"],
     "responseHeader": [

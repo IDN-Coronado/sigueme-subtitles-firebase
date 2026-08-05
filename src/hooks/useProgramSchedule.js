@@ -48,9 +48,11 @@ export default function useProgramSchedule({
     });
   };
 
-  const addItem = async (item) => {
-    const next = [...schedule, item];
-    setSelectedId(item.id);
+  const addItem = async (itemOrItems) => {
+    const items = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
+    if (items.length === 0) return;
+    const next = [...schedule, ...items];
+    setSelectedId(items[items.length - 1].id);
     await persistSchedule(next);
   };
 
@@ -62,15 +64,19 @@ export default function useProgramSchedule({
     await persistSchedule(next);
   };
 
-  const addSong = (song) =>
-    addItem({
-      id: newItemId(),
-      type: "song",
-      songId: song.id,
-      title: song.title,
-    });
+  const addSong = (songOrSongs) => {
+    const list = Array.isArray(songOrSongs) ? songOrSongs : [songOrSongs];
+    return addItem(
+      list.map((song) => ({
+        id: newItemId(),
+        type: "song",
+        songId: song.id,
+        title: song.title,
+      }))
+    );
+  };
 
-  const addMedia = (item) => {
+  const buildMediaItem = (item) => {
     const title = mediaDisplayTitle(item) || item.name;
     const startSeconds =
       item.type === "youtube"
@@ -79,7 +85,7 @@ export default function useProgramSchedule({
           : parseYouTubeStartSeconds(item.url || "")
         : 0;
 
-    return addItem({
+    return {
       id: newItemId(),
       type: "media",
       title,
@@ -94,7 +100,12 @@ export default function useProgramSchedule({
             ...(startSeconds > 0 ? { startSeconds } : {}),
           }
         : {}),
-    });
+    };
+  };
+
+  const addMedia = (itemOrItems) => {
+    const list = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
+    return addItem(list.map(buildMediaItem));
   };
 
   const addTheme = (theme) => {

@@ -128,6 +128,8 @@ const en = {
     addYouTube: "YouTube",
     searchThemes: "Search themes…",
     newTheme: "New theme",
+    selectHint: "Select one or more items",
+    selectedCount: "{count} selected",
   },
   bible: {
     searchBook: "Search book…",

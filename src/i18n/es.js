@@ -88,6 +88,11 @@ const es = {
     scheduleEmpty: "Aún no hay elementos. Usa el panel de recursos abajo.",
     collapseResources: "Colapsar recursos",
     expandResources: "Expandir recursos",
+    preparingMedia: "Preparando caché de medios… {done}/{total}",
+    mediaReady: "Medios en caché",
+    mediaPartial: "Caché de medios incompleto ({done}/{total})",
+    mediaError: "Error al cachear medios",
+    mediaUnavailable: "Caché de medios no disponible",
     panels: {
       schedule: "Programa",
       preview: "Vista previa",
@@ -182,6 +187,10 @@ const es = {
     remove: "Quitar del programa",
     versicleCount: "{count} versículo",
     versicleCountPlural: "{count} versículos",
+    cacheStatusCached: "En caché para reproducción",
+    cacheStatusLoading: "Guardando en caché…",
+    cacheStatusError: "Error al guardar en caché",
+    cacheStatusUnavailable: "Caché de medios no disponible",
   },
   settings: {
     textConfig: "CONFIGURACIÓN DE TEXTO",

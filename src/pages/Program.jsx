@@ -9,6 +9,9 @@ import usePrograms from "../firebase/usePrograms";
 import useMedia from "../firebase/useMedia";
 import usePreview from "../firebase/usePreview";
 import useProgramSchedule from "../hooks/useProgramSchedule";
+import usePrecacheProgram from "../hooks/usePrecacheProgram";
+import { collectPrecacheTargets } from "../utils/precacheSchedule";
+import { evictCachedMedia } from "../utils/mediaCache";
 import NewSongModal from "../components/Song/NewSongModal";
 import SlideUploadModal from "../components/SlideUploadModal";
 import YouTubeMediaModal from "../components/YouTubeMediaModal";
@@ -24,7 +27,7 @@ import CaptionConsoleControls from "../components/Program/CaptionConsoleControls
 import PptxConsoleControls from "../components/Program/PptxConsoleControls";
 import ResourceBrowser from "../components/Program/ResourceBrowser";
 import ProgramHeader from "../components/Program/ProgramHeader";
-import { RESOURCE_TABS } from "../components/Program/constants";
+import { RESOURCE_TABS, MONO } from "../components/Program/constants";
 import { IconChevron } from "../components/Icons";
 import { t } from "../i18n";
 
@@ -76,9 +79,12 @@ function Program() {
   const { themes, addTheme, removeTheme } = useThemes();
   const { media, uploadMedia, addYouTubeMedia, updateYouTubeMedia, removeMedia } =
     useMedia();
-  const { program, updateProgram, activateProgram } = usePrograms(programId);
+  const { programs, program, updateProgram, activateProgram } =
+    usePrograms(programId);
   const { preview, setPreview, clearPreviewResource } = usePreview();
   previewRef.current = preview;
+  const { status: precacheStatus, progress: precacheProgress, run: runPrecache } =
+    usePrecacheProgram();
 
   const {
     schedule,
@@ -98,6 +104,31 @@ function Program() {
     themes,
     updateProgram,
   });
+
+  // Reconciles the media cache with the active program's current schedule
+  // *and* its mainLogo (a separate program-level asset shown via the Logo
+  // button below — not part of the schedule array, so it must be passed
+  // through explicitly or the "media ready" status would be wrong the
+  // moment an operator hits Logo). This is the single trigger for
+  // precaching — not a direct call from handleActivate — so it also
+  // covers cases that a one-shot "activate" action can't: reopening or
+  // refreshing an already-active program (e.g. after its cache was
+  // evicted, or the browser dropped it under storage pressure), and
+  // assets added to the schedule (or a changed logo) after activation.
+  // Runs whenever the program is active, hydrated, and the set of Storage
+  // URLs actually referenced (order-independent) changes; precacheSchedule's
+  // own caches.match() check keeps a same-signature re-run cheap (no
+  // re-fetching already-cached assets).
+  const precacheSignature = collectPrecacheTargets(schedule, program?.mainLogo)
+    .map((target) => target.url)
+    .sort()
+    .join("|");
+
+  useEffect(() => {
+    if (!hydrated || !program?.active || !precacheSignature) return;
+    runPrecache(schedule, program?.mainLogo);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, program?.active, precacheSignature]);
 
   const closeCreateModal = () => {
     setCreateModal(null);
@@ -206,6 +237,33 @@ function Program() {
     Boolean(program?.mainLogo?.url) &&
     (preview.resource.media?.storagePath === program.mainLogo.storagePath ||
       preview.resource.media?.url === program.mainLogo.url);
+
+  const handleActivate = async () => {
+    // Only one program is ever active (activateProgram flips every other
+    // program's `active` flag off in the same batch), so there's at most
+    // one previously-active program whose cached assets are no longer
+    // needed — evict them so the media cache stays scoped to the current
+    // active program rather than growing with every program ever run.
+    const previouslyActive = programs.find(
+      (p) => p.active && p.id !== programId
+    );
+
+    await activateProgram(programId);
+
+    if (previouslyActive) {
+      const staleTargets = collectPrecacheTargets(
+        previouslyActive.schedule,
+        previouslyActive.mainLogo
+      );
+      await Promise.all(staleTargets.map((t) => evictCachedMedia(t.url)));
+    }
+
+    // Precaching itself is triggered by the reconciliation effect below,
+    // once `program.active` reflects this activation (via Firestore's
+    // onSnapshot echo) — not called directly here — so the same single
+    // code path also covers reopening/refreshing an already-active
+    // program and schedule changes made after activation.
+  };
 
   const handleClear = async () => {
     if (isLogoDisplayed) return;
@@ -355,6 +413,38 @@ function Program() {
       : 0
   );
 
+  const precacheEntries = Object.values(precacheProgress);
+  const precacheTotal = precacheEntries[0]?.total ?? 0;
+  const precacheDone = precacheEntries.filter(
+    (e) =>
+      e.status === "cached" || e.status === "error" || e.status === "unavailable"
+  ).length;
+  // precacheStatus mirrors precacheSchedule's verified outcome, not just
+  // "the run finished" — only "success" means every target was actually
+  // confirmed written to the cache. See usePrecacheProgram/precacheSchedule.
+  const precacheAction =
+    precacheStatus === "running" && precacheTotal > 0 ? (
+      <span className="text-[#6b7280] text-[10px] tracking-[0.05em]" style={MONO}>
+        {t("program.preparingMedia", { done: precacheDone, total: precacheTotal })}
+      </span>
+    ) : precacheStatus === "success" && precacheTotal > 0 ? (
+      <span className="text-emerald-400 text-[10px] tracking-[0.05em]" style={MONO}>
+        {t("program.mediaReady")}
+      </span>
+    ) : precacheStatus === "partial" ? (
+      <span className="text-amber-400 text-[10px] tracking-[0.05em]" style={MONO}>
+        {t("program.mediaPartial", { done: precacheDone, total: precacheTotal })}
+      </span>
+    ) : precacheStatus === "error" ? (
+      <span className="text-red-400 text-[10px] tracking-[0.05em]" style={MONO}>
+        {t("program.mediaError")}
+      </span>
+    ) : precacheStatus === "unavailable" ? (
+      <span className="text-[#6b7280] text-[10px] tracking-[0.05em]" style={MONO}>
+        {t("program.mediaUnavailable")}
+      </span>
+    ) : null;
+
   const topPanels = (
     <ResizableSplit
       direction="horizontal"
@@ -363,7 +453,11 @@ function Program() {
       minSizes={[12, 12, 25]}
       storageKey={LAYOUT_STORAGE.horizontal}
     >
-      <Panel title={t("program.panels.schedule")} className="h-full">
+      <Panel
+        title={t("program.panels.schedule")}
+        className="h-full"
+        action={precacheAction}
+      >
         <div className="flex flex-col gap-2">
           {!hydrated && (
             <p className="text-[#6b7280] text-sm">{t("common.loading")}</p>
@@ -390,6 +484,7 @@ function Program() {
                 onRemove={(id) =>
                   setPendingDelete({ type: "schedule", item: { id } })
                 }
+                cacheStatus={precacheProgress[item.id]?.status}
               />
             );
           })}
@@ -557,7 +652,7 @@ function Program() {
         title={program?.title}
         date={program?.date}
         isActive={!!program?.active}
-        onActivate={() => activateProgram(programId)}
+        onActivate={handleActivate}
         onClear={handleClear}
         onShowLogo={handleShowLogo}
         clearDisabled={isLogoDisplayed}

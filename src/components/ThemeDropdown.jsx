@@ -37,6 +37,7 @@ function ThemeDropdown({ themes, value, onSelect }) {
               <span>
                 <img
                   src={themes.find(theme => theme.id === value)?.backgroundUrl}
+                  crossOrigin="anonymous"
                   alt=""
                   className="w-8 h-5 object-cover rounded"
                 />
@@ -58,6 +59,7 @@ function ThemeDropdown({ themes, value, onSelect }) {
             >
               <img
                 src={theme.backgroundUrl}
+                crossOrigin="anonymous"
                 alt=""
                 className="w-8 h-5 object-cover rounded"
               />

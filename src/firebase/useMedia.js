@@ -22,6 +22,7 @@ import {
 import db from "./firebase";
 import storage from "./storage";
 import { humanizeMediaFileName } from "../utils/mediaTitle";
+import { evictCachedMedia } from "../utils/mediaCache";
 import {
   parseYouTubeId,
   parseYouTubeStartSeconds,
@@ -243,6 +244,7 @@ function useMedia() {
       const path = item?.fullPath || item?.id;
       if (!path) throw new Error("Missing media path");
       await deleteObject(ref(storage, path));
+      await evictCachedMedia(item?.url);
       await loadFileMedia();
     },
     [loadFileMedia]

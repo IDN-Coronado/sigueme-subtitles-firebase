@@ -284,6 +284,7 @@ function MediaBrowser({
                   ) : item.type === "video" ? (
                     <video
                       src={item.url}
+                      crossOrigin="anonymous"
                       className="w-full h-full object-cover"
                       muted
                     />
@@ -302,6 +303,7 @@ function MediaBrowser({
                   ) : (
                     <img
                       src={item.url}
+                      crossOrigin="anonymous"
                       alt=""
                       className="w-full h-full object-cover"
                     />
@@ -414,12 +416,14 @@ function ThemesBrowser({
                   theme.type === "video" ? (
                     <video
                       src={theme.backgroundUrl}
+                      crossOrigin="anonymous"
                       className="w-full h-full object-cover"
                       muted
                     />
                   ) : (
                     <img
                       src={theme.backgroundUrl}
+                      crossOrigin="anonymous"
                       alt=""
                       className="w-full h-full object-cover"
                     />

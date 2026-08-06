@@ -88,6 +88,11 @@ const en = {
     scheduleEmpty: "No items yet. Use the resource panel below.",
     collapseResources: "Collapse resources",
     expandResources: "Expand resources",
+    preparingMedia: "Preparing media… {done}/{total}",
+    mediaReady: "Media ready",
+    mediaPartial: "Media caching incomplete ({done}/{total})",
+    mediaError: "Media caching failed",
+    mediaUnavailable: "Media caching unavailable",
     panels: {
       schedule: "Schedule",
       preview: "Preview",
@@ -182,6 +187,10 @@ const en = {
     remove: "Remove from schedule",
     versicleCount: "{count} versicle",
     versicleCountPlural: "{count} versicles",
+    cacheStatusCached: "Cached for playback",
+    cacheStatusLoading: "Caching…",
+    cacheStatusError: "Failed to cache",
+    cacheStatusUnavailable: "Media caching unavailable",
   },
   settings: {
     textConfig: "TEXT CONFIGURATION",

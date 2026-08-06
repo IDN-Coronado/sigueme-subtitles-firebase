@@ -212,6 +212,9 @@ const es = {
     captionDefaults: "Estilos de subtítulos",
     captionDefaultsHint:
       "Estos estilos se aplican a programas nuevos. Cada programa puede sobrescribirlos desde la consola.",
+    account: "Cuenta",
+    signedInAs: "Sesión iniciada como {email}",
+    signOut: "Cerrar sesión",
   },
   mediaModal: {
     eyebrow: "Media",

@@ -212,6 +212,9 @@ const en = {
     captionDefaults: "Caption defaults",
     captionDefaultsHint:
       "These styles apply to new programs. Each program can still override them from the console.",
+    account: "Account",
+    signedInAs: "Signed in as {email}",
+    signOut: "Sign out",
   },
   mediaModal: {
     eyebrow: "Media",

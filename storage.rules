@@ -1,0 +1,29 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isOperator() {
+      // ponytail: Storage rules can't read Firestore, so this list is a
+      // manual mirror of approved operators/{uid} docs (firestore.rules).
+      // Keep it in sync by hand when approving/revoking someone in the
+      // Firebase console. Upgrade to custom claims (Admin SDK) if
+      // operators change often enough that this becomes a chore.
+      return request.auth != null && request.auth.token.email in [
+        'jrgherrera@gmail.com',
+      ];
+    }
+
+    // Media library uploads + the default program logo. Read is public —
+    // the unauthenticated /live route plays this back directly from
+    // Storage (getBytes/getDownloadURL, no Firestore involved).
+    match /general/{fileName} {
+      allow read: if true;
+      allow write: if isOperator();
+    }
+
+    // Theme backgrounds (image/video), same public-read requirement.
+    match /themes/{fileName} {
+      allow read: if true;
+      allow write: if isOperator();
+    }
+  }
+}

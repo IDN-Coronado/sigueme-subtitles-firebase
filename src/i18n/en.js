@@ -1,4 +1,9 @@
 const en = {
+  auth: {
+    signInSubtitle: "Sign in to manage this Sunday's service.",
+    signInButton: "Sign in with Google",
+    signInError: "Sign-in failed. Please try again.",
+  },
   common: {
     cancel: "Cancel",
     close: "Close",

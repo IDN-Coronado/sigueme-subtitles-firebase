@@ -1,4 +1,5 @@
 import { initializeApp } from 'firebase/app'
+import { getAuth } from "firebase/auth"
 import {
   initializeFirestore,
   persistentLocalCache,
@@ -16,6 +17,7 @@ const firebaseConfig = {
 };
 
 export const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
 
 // IndexedDB-backed local cache so already-fetched program/song/theme data
 // is still readable (and offline-editable, syncing once reconnected) after

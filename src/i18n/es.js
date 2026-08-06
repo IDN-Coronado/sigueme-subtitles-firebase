@@ -1,4 +1,9 @@
 const es = {
+  auth: {
+    signInSubtitle: "Inicia sesión para gestionar el servicio de hoy.",
+    signInButton: "Iniciar sesión con Google",
+    signInError: "Error al iniciar sesión. Inténtalo de nuevo.",
+  },
   common: {
     cancel: "Cancelar",
     close: "Cerrar",

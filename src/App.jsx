@@ -12,6 +12,7 @@ import Caption from "./pages/Caption";
 import Live from "./pages/Live";
 import Program from "./pages/Program";
 import useLocale from "./hooks/useLocale";
+import AuthGate from "./components/AuthGate";
 
 function Layout() {
   // Re-render the app shell when language changes so `t()` updates.
@@ -19,7 +20,9 @@ function Layout() {
 
   return (
     <div className="h-full min-h-0 flex flex-col bg-[#101415]">
-      <Outlet />
+      <AuthGate>
+        <Outlet />
+      </AuthGate>
     </div>
   );
 }

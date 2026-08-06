@@ -1,7 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChromePicker } from "react-color";
+import { signOut } from "firebase/auth";
 
+import { auth } from "../firebase/firebase";
+import useAuthUser from "../hooks/useAuthUser";
 import { t, setLocale, getLocale } from "../i18n";
 import { LOCALES } from "../i18n/locale";
 import {
@@ -39,6 +42,7 @@ const chipActive =
   "border-[rgba(123,208,255,0.45)] text-[#7bd0ff] bg-[rgba(123,208,255,0.1)]";
 
 function GlobalSettingsModal({ isOpen, onClose }) {
+  const user = useAuthUser();
   const [contentType, setContentType] = useState("song");
   const [settings, setSettings] = useState(() =>
     getStyleFromBundle(getGlobalCaptionBundle(), "song")
@@ -315,6 +319,29 @@ function GlobalSettingsModal({ isOpen, onClose }) {
               </button>
             </div>
           </section>
+
+          {user && (
+            <section className="flex flex-col gap-3">
+              <h3
+                className="text-[#c6c6cd] text-[10px] tracking-[0.1em] uppercase"
+                style={MONO}
+              >
+                {t("settingsModal.account")}
+              </h3>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[#c6c6cd] text-xs truncate">
+                  {t("settingsModal.signedInAs", { email: user.email })}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => signOut(auth)}
+                  className="h-8 px-3 inline-flex items-center rounded-sm border border-[rgba(69,70,77,0.4)] text-[#c6c6cd] text-xs hover:border-[#ffb4ab] hover:text-[#ffb4ab] transition-colors shrink-0"
+                >
+                  {t("settingsModal.signOut")}
+                </button>
+              </div>
+            </section>
+          )}
         </div>
 
         <div className="flex justify-end px-5 sm:px-6 py-4 border-t border-[rgba(69,70,77,0.3)]">

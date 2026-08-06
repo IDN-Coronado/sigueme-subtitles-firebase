@@ -1,4 +1,9 @@
 const en = {
+  auth: {
+    signInSubtitle: "Sign in to manage this Sunday's service.",
+    signInButton: "Sign in with Google",
+    signInError: "Sign-in failed. Please try again.",
+  },
   common: {
     cancel: "Cancel",
     close: "Close",
@@ -207,6 +212,9 @@ const en = {
     captionDefaults: "Caption defaults",
     captionDefaultsHint:
       "These styles apply to new programs. Each program can still override them from the console.",
+    account: "Account",
+    signedInAs: "Signed in as {email}",
+    signOut: "Sign out",
   },
   mediaModal: {
     eyebrow: "Media",

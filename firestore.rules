@@ -1,9 +1,37 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if
-          request.time < timestamp.date(2023, 4, 7);
+    function isOperator() {
+      return request.auth != null
+        && get(/databases/$(database)/documents/operators/$(request.auth.uid)).data.approved == true;
     }
+
+    // Operator directory. `approved` is only ever set by an admin from the
+    // Firebase console (allow update, delete: if false below) — a signed-in
+    // user can register a pending request for themselves but can never
+    // approve themselves or anyone else.
+    match /operators/{uid} {
+      allow read: if request.auth.uid == uid || isOperator();
+      allow create: if request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['email', 'name', 'requestedAt']);
+      allow update, delete: if false;
+    }
+
+    // Broadcast targets for the public /live and /caption routes: readable
+    // by anyone, writable only by approved operators.
+    match /caption/caption {
+      allow read: if true;
+      allow write: if isOperator();
+    }
+    match /preview/preview {
+      allow read: if true;
+      allow write: if isOperator();
+    }
+
+    // Operator-only data.
+    match /programs/{id} { allow read, write: if isOperator(); }
+    match /songs/{id} { allow read, write: if isOperator(); }
+    match /themes/{id} { allow read, write: if isOperator(); }
+    match /media/{id} { allow read, write: if isOperator(); }
   }
 }

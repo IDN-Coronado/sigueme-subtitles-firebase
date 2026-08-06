@@ -3,6 +3,8 @@ const en = {
     signInSubtitle: "Sign in to manage this Sunday's service.",
     signInButton: "Sign in with Google",
     signInError: "Sign-in failed. Please try again.",
+    pendingSubtitle: "Your account ({email}) is waiting for approval from an administrator.",
+    signOut: "Sign out",
   },
   common: {
     cancel: "Cancel",

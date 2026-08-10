@@ -9,6 +9,7 @@ service firebase.storage {
       // operators change often enough that this becomes a chore.
       return request.auth != null && request.auth.token.email in [
         'jrgherrera@gmail.com',
+        'danieleiton05@gmail.com'
       ];
     }
 

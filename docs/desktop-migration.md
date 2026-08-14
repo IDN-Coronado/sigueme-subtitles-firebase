@@ -349,10 +349,15 @@ are stored as ISO strings and normalized on read by `toProgramDate`
 `.toDate()` — one of them unguarded, which would have thrown — and all three now
 go through that helper.
 
-### 3.6 Backup
+### 3.6 Backup — deferred past step 4
 
-`data.json` is now the only copy. Add one menu item that copies it somewhere the
-user picks. One `fs.copyFile`.
+`data.json` is now the only copy of the song library. A menu item that copies
+it somewhere the user picks (one `fs.copyFile`) is **not built** — deliberately
+deferred until after step 4, so the asset move lands first and the backup can
+cover the media folder in the same pass.
+
+Until then the file is at `%APPDATA%/Apostello/data.json`, with the previous
+save alongside it as `data.json.bak`. Copy it by hand before anything risky.
 
 ### 3.7 Done when
 
@@ -459,4 +464,4 @@ program opens with all its assets resolving through `storagePath`.
 
 Operator push-to-repository · SQLite · media sync between machines ·
 content-hash asset IDs · auto-update · a migration framework · repository
-song-update propagation.
+song-update propagation · **backup/export of `data.json` (after step 4)**.

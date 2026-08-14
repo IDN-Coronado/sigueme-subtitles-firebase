@@ -4,6 +4,7 @@ const path = require("node:path");
 const { startAppServer } = require("./server");
 const { signInWithGoogle } = require("./oauth");
 const live = require("./liveWindow");
+const store = require("./store");
 
 let consoleWindow = null;
 
@@ -64,6 +65,8 @@ async function start() {
   ipcMain.handle("liveView:open", () => live.open(appUrl));
   ipcMain.handle("liveView:close", () => live.close());
   ipcMain.handle("liveView:isOpen", () => live.isOpen());
+  ipcMain.handle("store:load", () => store.load());
+  ipcMain.handle("store:save", (_event, data) => store.save(data));
 
   live.subscribe((open) => {
     if (consoleWindow && !consoleWindow.isDestroyed()) {

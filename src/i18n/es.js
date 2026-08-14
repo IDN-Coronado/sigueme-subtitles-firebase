@@ -284,6 +284,7 @@ const es = {
   },
   live: {
     fullscreenHint: "Clic para pantalla completa · Esc para salir",
+    escapeHint: "Presiona Esc para cerrar",
   },
   caption: {
     ccStyle: "Estilo CC",

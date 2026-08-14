@@ -13,18 +13,19 @@ service firebase.storage {
       ];
     }
 
-    // Media library uploads + the default program logo. Read is public —
-    // the unauthenticated /live route plays this back directly from
-    // Storage (getBytes/getDownloadURL, no Firestore involved).
+    // Assets live on disk now (electron/media.js). The only code left that
+    // touches this bucket is the one-time import in src/local/migrateMedia.js,
+    // which lists and downloads — so writes are gone and reads are limited to
+    // operators, no longer public. Once every machine has run the import, this
+    // file, storage.cors.json and the bucket itself can go.
     match /general/{fileName} {
-      allow read: if true;
-      allow write: if isOperator();
+      allow read: if isOperator();
+      allow write: if false;
     }
 
-    // Theme backgrounds (image/video), same public-read requirement.
     match /themes/{fileName} {
-      allow read: if true;
-      allow write: if isOperator();
+      allow read: if isOperator();
+      allow write: if false;
     }
   }
 }

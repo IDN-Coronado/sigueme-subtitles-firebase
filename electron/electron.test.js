@@ -11,7 +11,7 @@ process.env.APOSTELLO_DATA_FILE = path.join(
   `apostello-test-${process.pid}.json`
 );
 
-const { resolveRequestPath } = require("./server");
+const { resolveRequestPath, resolveWithin, parseRange } = require("./server");
 const { pkce } = require("./oauth");
 const { pickDisplay } = require("./liveWindow");
 const store = require("./store");
@@ -41,6 +41,58 @@ test("live view targets a secondary display, never the primary", () => {
   // Primary is not always first in the list.
   assert.deepEqual(pickDisplay([{ id: 2 }, { id: 1 }], 1), { id: 2 });
   assert.equal(pickDisplay([], 1), null, "no displays reported");
+});
+
+test("media paths cannot escape the media root", () => {
+  const root = path.join(os.tmpdir(), "apostello-media");
+
+  assert.equal(
+    resolveWithin(root, "/general/song.mp4"),
+    path.join(root, "general", "song.mp4")
+  );
+
+  // The invariant is containment, not rejection: a leading ".." on an absolute
+  // path is collapsed by normalize, so these land harmlessly inside the root
+  // rather than returning null. Either outcome is safe; escaping is not.
+  for (const attempt of [
+    "/../data.json",
+    "/../../.env",
+    "/general/../../../data.json",
+    "/%2e%2e/data.json",
+    "/general/%2e%2e/%2e%2e/.env",
+  ]) {
+    const resolved = resolveWithin(root, attempt);
+    if (resolved === null) continue;
+    const relative = path.relative(root, resolved);
+    assert.ok(
+      !relative.startsWith("..") && !path.isAbsolute(relative),
+      `${attempt} escaped to ${resolved}`
+    );
+  }
+
+  // A genuinely absolute path is rejected outright.
+  assert.equal(resolveWithin(root, "/C:/Windows/system.ini"), null);
+});
+
+test("range parsing covers what a <video> actually sends", () => {
+  const size = 1000;
+
+  assert.equal(parseRange(undefined, size), null, "no header = full response");
+  assert.equal(parseRange("bytes=0-", size).end, 999, "open-ended probe");
+  assert.deepEqual(parseRange("bytes=100-199", size), { start: 100, end: 199 });
+  // Seeking past the middle: end beyond EOF is clamped, not rejected.
+  assert.deepEqual(parseRange("bytes=900-5000", size), { start: 900, end: 999 });
+  // bytes=-N is the trailing N bytes — how players find a moov atom at EOF.
+  assert.deepEqual(parseRange("bytes=-100", size), { start: 900, end: 999 });
+
+  // Must 416 rather than silently returning the whole file.
+  assert.equal(parseRange("bytes=1000-", size), "unsatisfiable", "start at EOF");
+  assert.equal(parseRange("bytes=5000-6000", size), "unsatisfiable");
+  assert.equal(parseRange("bytes=-0", size), "unsatisfiable");
+
+  // Multi-range is not supported; treat as no range rather than mis-slicing.
+  assert.equal(parseRange("bytes=0-99,200-299", size), null);
+  assert.equal(parseRange("items=0-99", size), null);
 });
 
 test("store: missing file reads as empty, corrupt file throws", async (t) => {

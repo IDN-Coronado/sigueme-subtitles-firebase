@@ -14,6 +14,7 @@ import SongRepositoryModal from "../components/Song/SongRepositoryModal";
 import SlideUploadModal from "../components/SlideUploadModal";
 import NewThemeModal from "../components/Theme/NewThemeModal";
 import GlobalSettingsModal from "../components/GlobalSettingsModal";
+import MediaImportModal from "../components/MediaImportModal";
 import { IconGear, IconMedia } from "../components/Icons";
 import { t, formatProgramDate } from "../i18n";
 import { toProgramDate } from "../i18n/formatProgramDate";
@@ -55,6 +56,12 @@ const MENU_ITEMS = [
     id: "upload-theme",
     labelKey: "home.menu.uploadTheme",
     descriptionKey: "home.menu.uploadThemeDesc",
+    shortcut: null,
+  },
+  {
+    id: "media-import",
+    labelKey: "home.menu.mediaImport",
+    descriptionKey: "home.menu.mediaImportDesc",
     shortcut: null,
   },
   {
@@ -407,6 +414,10 @@ function Home() {
         isVisible={modal === "upload-theme"}
         onClose={closeModal}
         onSubmit={handleCreateTheme}
+      />
+      <MediaImportModal
+        isOpen={modal === "media-import"}
+        onClose={closeModal}
       />
       <GlobalSettingsModal
         isOpen={modal === "settings"}

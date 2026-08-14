@@ -38,9 +38,3 @@ root.render(
   </React.StrictMode>
 );
 
-// Skipped under Electron: the media cache and app-shell precache exist to make
-// a browser survive offline, which a desktop app with local files does not need
-// (and both are removed once assets go local).
-if (import.meta.env.PROD && !window.desktop && 'serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js');
-}

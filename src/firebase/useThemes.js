@@ -1,24 +1,16 @@
-import {
-  ref,
-  deleteObject,
-  uploadBytes,
-  getDownloadURL,
-} from "firebase/storage";
-
-import storage from "./storage";
 import useDataStore, { newId, byTitle } from "../local/data";
-import { evictCachedMedia } from "../utils/mediaCache";
+import { mediaUrl, newStoragePath } from "../local/mediaPath";
 
-// The theme record is local; its background asset still lives in Firebase
-// Storage until step 4 moves assets to a local media folder.
+// Theme records and their background assets are both local now. backgroundUrl
+// is derived from storagePath on write rather than persisted as an absolute
+// URL, so moving the media folder cannot strand a theme.
 function useThemes() {
   const themes = useDataStore((s) => s.data.themes);
   const write = useDataStore((s) => s.write);
 
-  const addTheme = async ({ title, storagePath, file }) => {
-    const storageRef = ref(storage, storagePath);
-    await uploadBytes(storageRef, file);
-    const url = await getDownloadURL(storageRef);
+  const addTheme = async ({ title, file }) => {
+    const storagePath = newStoragePath("themes", file.name, title);
+    await window.desktop.media.save(storagePath, await file.arrayBuffer());
 
     const assetType = file.type.startsWith("image/")
       ? "image"
@@ -29,8 +21,8 @@ function useThemes() {
     const theme = {
       id: newId(),
       title: title.trim(),
-      backgroundUrl: url,
-      storagePath: storageRef.fullPath,
+      storagePath,
+      backgroundUrl: mediaUrl(storagePath),
       type: assetType,
     };
 
@@ -40,9 +32,8 @@ function useThemes() {
 
   const removeTheme = async (theme) => {
     if (theme.storagePath) {
-      await deleteObject(ref(storage, theme.storagePath));
+      await window.desktop.media.remove(theme.storagePath);
     }
-    await evictCachedMedia(theme.backgroundUrl);
     await write({ themes: themes.filter((t) => t.id !== theme.id) });
   };
 

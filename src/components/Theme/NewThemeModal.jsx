@@ -1,5 +1,4 @@
 import { useState, useRef } from "react";
-import dayjs from "dayjs";
 import DOMPurify from "dompurify";
 
 import { t } from "../../i18n";
@@ -53,10 +52,8 @@ function NewThemeModal({ isVisible, onClose, onSubmit }) {
     e.preventDefault();
     if (!title.trim() || !file) return;
     setUploading(true);
-    const ext = file.name.split(".").pop();
     await onSubmit({
       title: title.trim(),
-      storagePath: `themes/${dayjs().valueOf()}_${title}.${ext}`,
       file,
     });
     setUploading(false);

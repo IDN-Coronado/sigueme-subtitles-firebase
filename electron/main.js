@@ -5,6 +5,7 @@ const { startAppServer } = require("./server");
 const { signInWithGoogle } = require("./oauth");
 const live = require("./liveWindow");
 const store = require("./store");
+const media = require("./media");
 
 let consoleWindow = null;
 
@@ -60,13 +61,20 @@ function createWindow() {
 }
 
 async function start() {
-  if (!isDev) await startAppServer(path.join(ROOT, "dist"), PORT);
+  // Started in dev too: the renderer loads from vite there, but media still
+  // comes from here, proxied by vite's /media rule so asset URLs stay relative
+  // in both modes.
+  await startAppServer(path.join(ROOT, "dist"), PORT, media.mediaRoot());
   ipcMain.handle("auth:signIn", () => signInWithGoogle());
   ipcMain.handle("liveView:open", () => live.open(appUrl));
   ipcMain.handle("liveView:close", () => live.close());
   ipcMain.handle("liveView:isOpen", () => live.isOpen());
   ipcMain.handle("store:load", () => store.load());
   ipcMain.handle("store:save", (_event, data) => store.save(data));
+  ipcMain.handle("media:list", () => media.list());
+  ipcMain.handle("media:save", (_event, p, bytes) => media.save(p, bytes));
+  ipcMain.handle("media:remove", (_event, p) => media.remove(p));
+  ipcMain.handle("media:exists", (_event, p) => media.exists(p));
 
   live.subscribe((open) => {
     if (consoleWindow && !consoleWindow.isDestroyed()) {

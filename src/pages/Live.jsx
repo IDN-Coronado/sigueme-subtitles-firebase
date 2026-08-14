@@ -5,7 +5,6 @@ import usePreview from "../firebase/usePreview";
 import { MONO } from "../components/Program/constants";
 import { t } from "../i18n";
 import { startLiveViewSizeReporter } from "../utils/liveViewSize";
-import { subscribeCacheProgress } from "../utils/cacheProgressSync";
 
 async function requestPageFullscreen() {
   if (document.fullscreenElement) return true;
@@ -28,18 +27,8 @@ function Live() {
   const { preview } = usePreview();
   const mediaRef = useRef(null);
   const [fullscreenHint, setFullscreenHint] = useState(!isDesktop);
-  const [cacheProgress, setCacheProgress] = useState(null);
 
   useEffect(() => startLiveViewSizeReporter(), []);
-
-  useEffect(
-    () =>
-      subscribeCacheProgress((msg) => {
-        if (msg.status === "running") setCacheProgress(msg);
-        else setCacheProgress(null); // done/error — clear the indicator
-      }),
-    []
-  );
 
   useEffect(() => {
     if (isDesktop) return;
@@ -77,18 +66,6 @@ function Live() {
       onDoubleClick={enterFullscreen}
     >
       <PreviewConsole preview={preview} mediaRef={mediaRef} variant="live" />
-
-      {cacheProgress?.total > 0 && (
-        <div
-          className="absolute bottom-4 left-4 z-20 text-[#c6c6cd]/80 text-xs border border-[rgba(69,70,77,0.5)] bg-[rgba(11,15,16,0.75)] px-3 py-1.5 rounded-sm"
-          style={MONO}
-        >
-          {t("program.preparingMedia", {
-            done: cacheProgress.completed,
-            total: cacheProgress.total,
-          })}
-        </div>
-      )}
 
       {fullscreenHint && (
         <button

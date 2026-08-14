@@ -8,6 +8,13 @@ contextBridge.exposeInMainWorld("desktop", {
     load: () => ipcRenderer.invoke("store:load"),
     save: (data) => ipcRenderer.invoke("store:save", data),
   },
+  media: {
+    list: () => ipcRenderer.invoke("media:list"),
+    save: (storagePath, bytes) =>
+      ipcRenderer.invoke("media:save", storagePath, bytes),
+    remove: (storagePath) => ipcRenderer.invoke("media:remove", storagePath),
+    exists: (storagePath) => ipcRenderer.invoke("media:exists", storagePath),
+  },
   liveView: {
     open: () => ipcRenderer.invoke("liveView:open"),
     close: () => ipcRenderer.invoke("liveView:close"),

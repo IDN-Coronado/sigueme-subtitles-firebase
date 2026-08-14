@@ -1,17 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
-import {
-  ref,
-  listAll,
-  getDownloadURL,
-  getMetadata,
-  uploadBytes,
-  deleteObject,
-} from "firebase/storage";
 
-import storage from "./storage";
 import useDataStore, { newId } from "../local/data";
+import { mediaUrl, newStoragePath } from "../local/mediaPath";
 import { humanizeMediaFileName } from "../utils/mediaTitle";
-import { evictCachedMedia } from "../utils/mediaCache";
 import {
   parseYouTubeId,
   parseYouTubeStartSeconds,
@@ -23,8 +14,6 @@ const IMAGE_EXT = /\.(jpe?g|png|gif|webp|svg|bmp|avif)$/i;
 const VIDEO_EXT = /\.(mp4|webm|mov|m4v|ogv)$/i;
 const AUDIO_EXT = /\.(mp3|wav|m4a|aac|flac|oga|ogg|opus|wma)$/i;
 const PPTX_EXT = /\.pptx$/i;
-const MEDIA_EXT =
-  /\.(jpe?g|png|gif|webp|svg|bmp|avif|mp4|webm|mov|m4v|ogv|mp3|wav|m4a|aac|flac|oga|ogg|opus|wma|pptx)$/i;
 
 function getMediaType(name) {
   if (PPTX_EXT.test(name)) return "pptx";
@@ -66,9 +55,8 @@ export function buildYouTubeMedia({ id, url, title }) {
   };
 }
 
-// File media still comes from Firebase Storage; step 4 moves it to a local
-// folder. YouTube entries are local already — they were never more than a row
-// of metadata.
+// Files come from the local media folder via the preload bridge; titles live
+// in data.json under mediaTitles, replacing Storage's customMetadata.
 function useMedia() {
   const [fileMedia, setFileMedia] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -83,37 +71,28 @@ function useMedia() {
     setLoading(true);
     setError(null);
     try {
-      const folderRef = ref(storage, "general");
-      const result = await listAll(folderRef);
-      const mediaRefs = result.items.filter((item) => MEDIA_EXT.test(item.name));
+      const files = await window.desktop.media.list();
+      const titles = useDataStore.getState().data.mediaTitles || {};
 
-      const items = await Promise.all(
-        mediaRefs.map(async (itemRef) => {
-          const [url, meta] = await Promise.all([
-            getDownloadURL(itemRef),
-            getMetadata(itemRef).catch(() => null),
-          ]);
-          const storedTitle = String(meta?.customMetadata?.title || "").trim();
-          const name =
-            storedTitle || humanizeMediaFileName(itemRef.name) || itemRef.name;
-          return {
-            id: itemRef.fullPath,
-            name,
-            fileName: itemRef.name,
-            fullPath: itemRef.fullPath,
-            url,
-            type: getMediaType(itemRef.name),
-            source: "storage",
-          };
-        })
-      );
+      const items = files.map((file) => ({
+        id: file.storagePath,
+        name:
+          titles[file.storagePath] ||
+          humanizeMediaFileName(file.fileName) ||
+          file.fileName,
+        fileName: file.fileName,
+        fullPath: file.storagePath,
+        url: mediaUrl(file.storagePath),
+        type: getMediaType(file.fileName),
+        source: "local",
+      }));
 
       items.sort((a, b) =>
         a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
       );
       setFileMedia(items);
     } catch (err) {
-      console.error("Failed to load media from Storage general/", err);
+      console.error("Failed to read the local media folder", err);
       setError(err);
       setFileMedia([]);
     } finally {
@@ -121,39 +100,31 @@ function useMedia() {
     }
   }, []);
 
+  // Only on mount: upload and remove call loadFileMedia themselves, and it
+  // reads titles through getState(), so it always sees the fresh map.
   useEffect(() => {
     loadFileMedia();
   }, [loadFileMedia]);
 
   const uploadMedia = useCallback(
     async ({ file, title }) => {
-      const trimmedTitle = String(title || "").trim();
-      const ext = file.name.includes(".")
-        ? `.${file.name.split(".").pop()}`
-        : "";
-      const baseName = (
-        trimmedTitle ||
-        file.name.replace(/\.[^.]+$/, "") ||
-        "media"
-      ).replace(/[^\w.\-]+/g, "_");
-      const storagePath = `general/${Date.now()}_${baseName}${ext}`;
-      const storageRef = ref(storage, storagePath);
-      const isPptx = PPTX_EXT.test(file.name) || PPTX_EXT.test(ext);
-      await uploadBytes(storageRef, file, {
-        ...(isPptx
-          ? {
-              contentType:
-                "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-            }
-          : {}),
-        customMetadata: {
-          title: trimmedTitle || humanizeMediaFileName(file.name) || file.name,
+      const storagePath = newStoragePath("general", file.name, title);
+      await window.desktop.media.save(storagePath, await file.arrayBuffer());
+
+      const trimmed = String(title || "").trim();
+      const { data } = useDataStore.getState();
+      await write({
+        mediaTitles: {
+          ...(data.mediaTitles || {}),
+          [storagePath]:
+            trimmed || humanizeMediaFileName(file.name) || file.name,
         },
       });
+
       await loadFileMedia();
-      return storageRef.fullPath;
+      return storagePath;
     },
-    [loadFileMedia]
+    [loadFileMedia, write]
   );
 
   const addYouTubeMedia = async ({ url, title }) => {
@@ -177,10 +148,15 @@ function useMedia() {
         return;
       }
 
-      const path = item?.fullPath || item?.id;
-      if (!path) throw new Error("Missing media path");
-      await deleteObject(ref(storage, path));
-      await evictCachedMedia(item?.url);
+      const storagePath = item?.fullPath || item?.id;
+      if (!storagePath) throw new Error("Missing media path");
+      await window.desktop.media.remove(storagePath);
+
+      const { data } = useDataStore.getState();
+      const titles = { ...(data.mediaTitles || {}) };
+      delete titles[storagePath];
+      await write({ mediaTitles: titles });
+
       await loadFileMedia();
     },
     [loadFileMedia, write, youtubeMedia]

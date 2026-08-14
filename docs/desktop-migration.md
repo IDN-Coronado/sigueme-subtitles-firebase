@@ -416,31 +416,46 @@ root-relative paths are stored. Move the folder, change one setting.
 | [pptx.js:47](../src/utils/pptx.js#L47) | `getBytes(storageRef)` → the existing `fetch(url)` branch, pointed at the local URL |
 | [defaultMainLogo.js](../src/firebase/defaultMainLogo.js) | hardcoded Storage path → local path; becomes synchronous |
 
-### 4.4 Deletions
+### 4.4 Deletions — what actually went
 
-This is the payoff for doing desktop first:
+The payoff for doing desktop first:
 
-- [src/sw.js](../src/sw.js) — whole file
-- `VitePWA` block in [vite.config.js](../vite.config.js) + the five `workbox-*`
-  devDeps
-- [src/utils/precacheSchedule.js](../src/utils/precacheSchedule.js) (129 lines)
-- [src/utils/mediaCache.js](../src/utils/mediaCache.js) + every
-  `evictCachedMedia` call
-- [src/utils/cacheProgressSync.js](../src/utils/cacheProgressSync.js) and
-  [src/hooks/usePrecacheProgram.js](../src/hooks/usePrecacheProgram.js)
-- the cache-progress indicator in [Live.jsx](../src/pages/Live.jsx)
-- all 33 `crossOrigin="anonymous"` attributes
-- [storage.cors.json](../storage.cors.json), and
-  [storage.rules](../storage.rules) if the bucket is decommissioned
+- `src/sw.js` — whole file
+- `VitePWA` block in [vite.config.js](../vite.config.js) and all five
+  `workbox-*` devDeps, plus `vite-plugin-pwa`
+- `src/utils/precacheSchedule.js` (129 lines)
+- `src/utils/mediaCache.js` and every `evictCachedMedia` call
+- `src/utils/cacheProgressSync.js` and `src/hooks/usePrecacheProgram.js`
+- the cache-progress indicator in [Live.jsx](../src/pages/Live.jsx) and the
+  whole precache reconciliation block in [Program.jsx](../src/pages/Program.jsx)
+- **24** `crossOrigin="anonymous"` attributes (this plan said 33 — that number
+  came from a grep that also counted `caches.` and `MEDIA_CACHE_NAME` hits)
+- the service worker registration in [index.jsx](../src/index.jsx)
+- the browser half of [openLiveView.js](../src/utils/openLiveView.js), deferred
+  from step 2 — 139 lines down to 44
+
+**Not deleted, deliberately:** [storage.rules](../storage.rules) and
+[storage.cors.json](../storage.cors.json). The one-time media import still
+reads the bucket from the renderer, so both are needed until every machine has
+run it. Rules are now operator-read-only with writes denied — public read is
+gone, since nothing unauthenticated plays from Storage any more.
 
 ### 4.5 Migration
 
-One-time copy of the bucket into the media root, preserving the `general/`
-prefix:
+Not `gsutil` — that assumed a gcloud install. **Home → "Copy media from
+Firebase"** ([MediaImportModal](../src/components/MediaImportModal.jsx)) lists
+both folders, downloads each file into the media root, and skips anything
+already on disk, so an interrupted run just resumes.
 
-```bash
-gsutil -m cp -r gs://<your-bucket>/general ./media/general
-```
+It also **re-points existing records at local paths**, which the original plan
+missed: theme `backgroundUrl`, program `mainLogo.url`, and every schedule item
+`url`. Theme schedule items carry no `storagePath`, so their path is resolved
+through `themeId`. Without this pass, migrated programs would keep absolute
+Storage URLs and stay bound to the bucket.
+
+`src/local/migrateMedia.js` is the last code in the app touching Firebase
+Storage. Delete it, both Storage configs, and the bucket once every machine has
+migrated.
 
 ### 4.6 Done when
 

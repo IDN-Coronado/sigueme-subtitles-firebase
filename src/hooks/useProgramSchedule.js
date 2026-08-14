@@ -8,6 +8,7 @@ import {
   formatBibleGroupTitle,
 } from "../utils/programSchedule";
 import { mediaDisplayTitle } from "../utils/mediaTitle";
+import { localizeScheduleItem } from "../local/mediaPath";
 import { parseYouTubeStartSeconds } from "../utils/youtube";
 
 export default function useProgramSchedule({
@@ -23,7 +24,13 @@ export default function useProgramSchedule({
 
   useEffect(() => {
     if (!program?.id) return;
-    const next = buildScheduleFromLegacy(program, songs, themes);
+    // Re-point every asset at the local media folder on the way in. Programs
+    // written before the move persisted absolute Storage URLs; storagePath is
+    // the identifier, so the stored url is ignored wherever one exists.
+    const themeById = new Map((themes || []).map((theme) => [theme.id, theme]));
+    const next = buildScheduleFromLegacy(program, songs, themes).map((item) =>
+      localizeScheduleItem(item, themeById)
+    );
     setSchedule(next);
     setSelectedId((prev) => {
       const selectable = next.filter((i) => i.type !== "theme");

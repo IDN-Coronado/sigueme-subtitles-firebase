@@ -62,9 +62,11 @@ export default async function importMediaFromStorage(onProgress) {
 
   const { data, write } = useDataStore.getState();
 
-  // Everything written before this step holds an absolute Storage download URL.
-  // Re-point all of it at the local path so nothing still depends on the bucket
-  // — and so moving the media folder later cannot strand an asset.
+  // Records written before this step hold an absolute Storage download URL.
+  // Rewriting them is cleanup, not correctness: readers derive from
+  // storagePath and ignore the stored url (src/local/mediaPath.js), so assets
+  // resolve locally whether or not this ever runs. This just stops stale
+  // Firebase URLs sitting in the file confusing whoever reads it next.
   const themes = (data.themes || []).map((theme) =>
     theme.storagePath
       ? { ...theme, backgroundUrl: mediaUrl(theme.storagePath) }

@@ -2,6 +2,7 @@ import { useMemo } from "react";
 
 import useDataStore, { newId } from "../local/data";
 import { toProgramDate } from "../i18n/formatProgramDate";
+import { localUrl } from "../local/mediaPath";
 import { buildDefaultMainLogo } from "./defaultMainLogo";
 
 // Firestore capped the list at 8 to limit reads. Kept so OpenProgramModal and
@@ -27,7 +28,19 @@ function usePrograms(id) {
   const getById = (programId) =>
     allPrograms.find((p) => p.id === programId) || {};
 
-  const program = getById(id);
+  const found = getById(id);
+
+  // mainLogo is shown via the Logo button and is not part of the schedule, so
+  // it misses useProgramSchedule's localisation pass — re-point it here.
+  const program = found.mainLogo?.storagePath
+    ? {
+        ...found,
+        mainLogo: {
+          ...found.mainLogo,
+          url: localUrl(found.mainLogo.storagePath, found.mainLogo.url),
+        },
+      }
+    : found;
 
   const addProgram = async (fields) => {
     const mainLogo = fields.mainLogo || (await buildDefaultMainLogo());

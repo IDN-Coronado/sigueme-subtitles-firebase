@@ -1,12 +1,25 @@
+import { useMemo } from "react";
+
 import useDataStore, { newId, byTitle } from "../local/data";
-import { mediaUrl, newStoragePath } from "../local/mediaPath";
+import { localUrl, mediaUrl, newStoragePath } from "../local/mediaPath";
 
 // Theme records and their background assets are both local now. backgroundUrl
 // is derived from storagePath on write rather than persisted as an absolute
 // URL, so moving the media folder cannot strand a theme.
 function useThemes() {
-  const themes = useDataStore((s) => s.data.themes);
+  const stored = useDataStore((s) => s.data.themes);
   const write = useDataStore((s) => s.write);
+
+  // Derived on read, so a theme imported with an absolute Storage URL still
+  // renders from disk without waiting on the media import to rewrite it.
+  const themes = useMemo(
+    () =>
+      stored.map((theme) => ({
+        ...theme,
+        backgroundUrl: localUrl(theme.storagePath, theme.backgroundUrl),
+      })),
+    [stored]
+  );
 
   const addTheme = async ({ title, file }) => {
     const storagePath = newStoragePath("themes", file.name, title);
@@ -26,7 +39,9 @@ function useThemes() {
       type: assetType,
     };
 
-    await write({ themes: [...themes, theme].sort(byTitle) });
+    // Written from `stored`, not the derived list, so the computed
+    // backgroundUrl never gets persisted back into the file.
+    await write({ themes: [...stored, theme].sort(byTitle) });
     return theme;
   };
 
@@ -34,7 +49,7 @@ function useThemes() {
     if (theme.storagePath) {
       await window.desktop.media.remove(theme.storagePath);
     }
-    await write({ themes: themes.filter((t) => t.id !== theme.id) });
+    await write({ themes: stored.filter((t) => t.id !== theme.id) });
   };
 
   return {

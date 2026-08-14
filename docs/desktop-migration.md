@@ -138,7 +138,25 @@ Google → Web SDK configuration** as an additional allowed client ID.
 | [src/index.jsx](../src/index.jsx) | guard SW registration |
 | [src/components/AuthGate.jsx](../src/components/AuthGate.jsx) | `signInWithPopup` → bridge + `signInWithCredential` |
 
-### 1.5 Done when
+### 1.5 Running it
+
+```bash
+npm run desktop       # build, then launch
+npm run desktop:dev   # attach to a running `npm start` (vite :5173) for HMR
+```
+
+First-time setup: this repo runs npm with an allow-scripts policy, so Electron's
+postinstall — which downloads the ~100 MB binary — is blocked. Adding the
+`allowScripts` entry for `electron` is necessary but **not sufficient**: npm
+skips postinstalls for packages already on disk, so both `npm install` and
+`npm rebuild electron` will report success while `node_modules/electron/dist`
+stays empty. Run the installer directly once:
+
+```bash
+node node_modules/electron/install.js
+```
+
+### 1.6 Done when
 
 App opens; sign-in completes and lands on the approved-operator console; an
 existing program opens with its schedule; the live view opens on the second

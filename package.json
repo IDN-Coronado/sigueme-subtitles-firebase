@@ -58,5 +58,8 @@
     "workbox-range-requests": "^7.4.1",
     "workbox-routing": "^7.4.1",
     "workbox-strategies": "^7.4.1"
+  },
+  "allowScripts": {
+    "electron@43.4.0": true
   }
 }

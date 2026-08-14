@@ -282,6 +282,7 @@ const en = {
   },
   live: {
     fullscreenHint: "Click for fullscreen · Esc to exit",
+    escapeHint: "Press Esc to close",
   },
   caption: {
     ccStyle: "CC Style",

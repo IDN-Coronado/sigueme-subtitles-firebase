@@ -61,7 +61,7 @@ function createWindow() {
 async function start() {
   if (!isDev) await startAppServer(path.join(ROOT, "dist"), PORT);
   ipcMain.handle("auth:signIn", () => signInWithGoogle());
-  ipcMain.handle("liveView:open", () => live.open(appUrl));
+  ipcMain.handle("liveView:open", () => live.open(appUrl, consoleWindow));
   ipcMain.handle("liveView:close", () => live.close());
   ipcMain.handle("liveView:isOpen", () => live.isOpen());
 

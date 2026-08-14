@@ -317,10 +317,14 @@ a live subscription. Import reuses the local mutator verbatim:
 const importSong = (r) => addSong(r.title, r.sections, { sourceId: r.id });
 ```
 
-`sourceId` is the one extra field, and it answers exactly one question — "already
-imported?" — correctly where title-matching goes wrong (duplicate titles,
-locally renamed copies). Do not grow update-propagation on it. If a repository
-song changes, re-import as new and delete the old one.
+Imported songs **keep their Firestore id as the local id**, which is better
+than the `sourceId` field this plan originally called for: it answers "already
+imported?" for free, and it means every `songId` already stored in a program
+schedule keeps resolving after the migration. Locally created songs get a UUID,
+which cannot collide with Firestore's 20-character ids.
+
+Existing songs are skipped, never overwritten, so a local edit is not silently
+replaced. To take a newer version, delete the local song first.
 
 - **No new dependency** — the Firestore SDK is already in the bundle for
   `caption`.
@@ -335,9 +339,15 @@ song changes, re-import as new and delete the old one.
 First run with an empty local library offers **"import all"** — that *is* the
 data migration for songs. No separate export script.
 
-Programs and themes need a one-time pull; a throwaway script using the existing
-web app (or the Admin SDK) writing `data.json` directly is enough. Don't build a
-migration framework for a one-time move of ~8 programs.
+Programs, themes and media are pulled by the same screen — no throwaway script.
+Because every document keeps its Firestore id, program → song and program →
+theme references survive the move untouched.
+
+Program dates need converting: Firestore Timestamps do not survive JSON, so they
+are stored as ISO strings and normalized on read by `toProgramDate`
+(`src/i18n/formatProgramDate.js`). Three call sites formatted dates via
+`.toDate()` — one of them unguarded, which would have thrown — and all three now
+go through that helper.
 
 ### 3.6 Backup
 

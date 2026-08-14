@@ -19,10 +19,15 @@ async function requestPageFullscreen() {
   }
 }
 
+// Electron opens this window fullscreen at the OS level, which the Fullscreen
+// API cannot see — document.fullscreenElement stays null. Without this the
+// prompt would nag about entering a state the window is already in.
+const isDesktop = typeof window !== "undefined" && Boolean(window.desktop);
+
 function Live() {
   const { preview } = usePreview();
   const mediaRef = useRef(null);
-  const [fullscreenHint, setFullscreenHint] = useState(true);
+  const [fullscreenHint, setFullscreenHint] = useState(!isDesktop);
   const [cacheProgress, setCacheProgress] = useState(null);
 
   useEffect(() => startLiveViewSizeReporter(), []);
@@ -37,6 +42,7 @@ function Live() {
   );
 
   useEffect(() => {
+    if (isDesktop) return;
     let cancelled = false;
 
     const tryFullscreen = async () => {

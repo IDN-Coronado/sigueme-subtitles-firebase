@@ -5,6 +5,7 @@ const { createHash } = require("node:crypto");
 
 const { resolveRequestPath } = require("./server");
 const { pkce } = require("./oauth");
+const { pickDisplay } = require("./liveWindow");
 
 const root = path.join(__dirname, "..", "dist");
 const index = path.join(root, "index.html");
@@ -23,6 +24,14 @@ test("traversal cannot escape the served root", async () => {
   ]) {
     assert.equal(await resolveRequestPath(root, attempt), index, attempt);
   }
+});
+
+test("live view targets a secondary display, never the primary", () => {
+  assert.equal(pickDisplay([{ id: 1 }], 1), null, "single display");
+  assert.deepEqual(pickDisplay([{ id: 1 }, { id: 2 }], 1), { id: 2 });
+  // Primary is not always first in the list.
+  assert.deepEqual(pickDisplay([{ id: 2 }, { id: 1 }], 1), { id: 2 });
+  assert.equal(pickDisplay([], 1), null, "no displays reported");
 });
 
 test("pkce challenge is the S256 digest of its verifier", () => {

@@ -4,4 +4,14 @@ const { contextBridge, ipcRenderer } = require("electron");
 // (see src/index.jsx, src/components/AuthGate.jsx) — no separate flag needed.
 contextBridge.exposeInMainWorld("desktop", {
   signIn: () => ipcRenderer.invoke("auth:signIn"),
+  liveView: {
+    open: () => ipcRenderer.invoke("liveView:open"),
+    close: () => ipcRenderer.invoke("liveView:close"),
+    isOpen: () => ipcRenderer.invoke("liveView:isOpen"),
+    onChange: (handler) => {
+      const listener = (_event, open) => handler(open);
+      ipcRenderer.on("liveView:changed", listener);
+      return () => ipcRenderer.off("liveView:changed", listener);
+    },
+  },
 });

@@ -19,6 +19,25 @@ function notify() {
   });
 }
 
+// Under Electron the live view is a real BrowserWindow on the second display
+// (electron/liveWindow.js): no Window Management permission, no popup blocker,
+// no polling for close, and real fullscreen without a user gesture. The
+// browser implementation below stays for the deployed web console.
+const desktopLive =
+  typeof window !== "undefined" ? window.desktop?.liveView : null;
+
+// isLiveViewOpen() is synchronous (useLiveViewOpen seeds useState with it), so
+// main's state is mirrored here rather than awaited. False is correct at
+// startup — the live window only exists once this console asks for it.
+let desktopOpen = false;
+
+if (desktopLive) {
+  desktopLive.onChange((open) => {
+    desktopOpen = open;
+    notify();
+  });
+}
+
 function stopPolling() {
   if (pollId != null) {
     window.clearInterval(pollId);
@@ -81,10 +100,16 @@ async function resolveTargetScreen() {
 }
 
 export function isLiveViewOpen() {
+  if (desktopLive) return desktopOpen;
   return Boolean(liveWindow && !liveWindow.closed);
 }
 
 export function closeLiveView() {
+  if (desktopLive) {
+    desktopLive.close();
+    return;
+  }
+
   if (liveWindow && !liveWindow.closed) {
     try {
       liveWindow.close();
@@ -109,6 +134,11 @@ export function subscribeLiveViewOpen(handler) {
  * Returns the opened window, or null if blocked.
  */
 export async function openLiveView() {
+  if (desktopLive) {
+    await desktopLive.open();
+    return null;
+  }
+
   const url = liveViewUrl();
   const targetScreen = await resolveTargetScreen();
   const features = targetScreen

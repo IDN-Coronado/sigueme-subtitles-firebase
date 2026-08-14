@@ -201,11 +201,23 @@ already correct and costs nothing.
 `openLiveView`, `closeLiveView`, `isLiveViewOpen`, `subscribeLiveViewOpen`.
 Reimplement those four over IPC and every consumer component compiles unchanged.
 
-### 2.4 Deletions
+### 2.4 Deletions — deferred to step 4
 
-- [src/utils/openLiveView.js](../src/utils/openLiveView.js) — entire file
-- `requestPageFullscreen` + `fullscreenHint` state and banner in
-  [Live.jsx](../src/pages/Live.jsx)
+This plan originally called for deleting
+[openLiveView.js](../src/utils/openLiveView.js) and the `fullscreenHint` banner
+outright. That was written assuming the desktop app had already replaced the web
+console. It hasn't: the deployed web app is still what runs services, so
+removing the browser popup path now would be a live regression.
+
+So the module keeps both paths — the desktop branch delegates to
+`window.desktop.liveView`, and the `window.open` + `getScreenDetails` +
+close-polling implementation stays for the web console. The browser path
+(and the `fullscreenHint` banner, already suppressed under Electron) comes out
+in step 4, alongside the open decision about whether hosting still serves
+anything beyond `/caption`.
+
+Net for this step: no deletions, ~30 lines of IPC added. The payoff is real but
+banked, not spent.
 
 ### 2.5 Done when
 

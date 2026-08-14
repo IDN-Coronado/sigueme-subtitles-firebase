@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
+import {
+  GoogleAuthProvider,
+  signInWithCredential,
+  signInWithPopup,
+  signOut,
+} from "firebase/auth";
 
 import { auth } from "../firebase/firebase";
 import useAuthUser from "../hooks/useAuthUser";
@@ -28,9 +33,24 @@ function AuthGate({ children }) {
   if (user === undefined) return null;
 
   if (user === null) {
-    const onSignIn = () => {
+    // Google rejects OAuth from embedded user agents, so the desktop build
+    // signs in through the system browser (see electron/oauth.js) and hands
+    // back an ID token; everything downstream of this is identical.
+    const onSignIn = async () => {
       setError(false);
-      signInWithPopup(auth, googleProvider).catch(() => setError(true));
+      try {
+        if (window.desktop) {
+          const idToken = await window.desktop.signIn();
+          await signInWithCredential(
+            auth,
+            GoogleAuthProvider.credential(idToken)
+          );
+        } else {
+          await signInWithPopup(auth, googleProvider);
+        }
+      } catch {
+        setError(true);
+      }
     };
 
     return (

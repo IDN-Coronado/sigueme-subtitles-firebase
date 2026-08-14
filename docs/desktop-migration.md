@@ -81,6 +81,33 @@ becomes a call to the bridge instead of `signInWithPopup`.
 > Budget ~100 lines plus Cloud Console setup. This is the largest single risk in
 > the whole migration. Do it first; if it stalls, nothing later is unblocked.
 
+#### Google Cloud setup (manual, one time)
+
+1. Open [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+   with the **`siguemesubtitles`** project selected — the same project Firebase
+   uses.
+2. **Create Credentials → OAuth client ID**, application type **Desktop app**,
+   name it `Apostello Desktop`.
+3. Copy the **Client ID** and **Client secret** into `.env` (already gitignored)
+   with no `VITE_` prefix, so they are read by the Electron main process and
+   never inlined into the renderer bundle:
+
+   ```
+   GOOGLE_DESKTOP_CLIENT_ID=…apps.googleusercontent.com
+   GOOGLE_DESKTOP_CLIENT_SECRET=…
+   ```
+
+   The secret is not confidential in the usual sense — it ships inside the app.
+   PKCE is what actually protects the exchange, which is why the flow uses it.
+4. **No redirect URI to register.** Google matches loopback redirect URIs on
+   host only, so the ephemeral port the app picks needs no entry.
+5. If the OAuth consent screen is in **Testing**, add each operator's Google
+   account under **Audience → Test users**. Internal/published apps need nothing.
+
+If `signInWithCredential` later rejects with `auth/invalid-credential`, add the
+desktop Client ID to **Firebase Console → Authentication → Sign-in method →
+Google → Web SDK configuration** as an additional allowed client ID.
+
 ### 1.3 Smaller items
 
 - **Service worker.** [index.jsx:44](../src/index.jsx#L44) registers `/sw.js` in

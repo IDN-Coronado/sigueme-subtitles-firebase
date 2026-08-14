@@ -13,7 +13,8 @@ it. Doing local assets first would mean writing File System Access API plumbing
 that Electron makes obsolete.
 
 Steps 3 and 4 are independent of each other; both depend on 1. Step 2 depends
-only on 1.
+only on 1. **Steps 1-4 are done.** Step 5 (packaging) is scoped but not
+started — the app currently runs from a checkout via `npm run desktop`.
 
 ---
 
@@ -466,6 +467,70 @@ program opens with all its assets resolving through `storagePath`.
 
 ---
 
+## Step 5 — Packaging (not started)
+
+**Goal:** an installer that can be handed to another machine, instead of
+requiring a checkout and `npm run desktop`.
+
+Not urgent, and deliberately left until the four steps above are proven on
+real hardware — packaging a build nobody has run a service on is premature.
+
+### 5.1 What is already in our favour
+
+- **No native dependencies.** Everything is pure JS (firebase, react, jszip,
+  pptxviewjs, zustand), so there is no per-platform rebuild step. Partly a
+  payoff from choosing a JSON file over SQLite.
+- **No platform-specific code.** `grep` for `process.platform` across
+  `electron/` and `src/` returns nothing.
+- Serving `dist/` from inside `app.asar` works — Electron patches `fs`, and
+  `createReadStream` is what [server.js](../electron/server.js) already uses.
+
+### 5.2 The three blockers
+
+**`.env` will not ship.** [main.js](../electron/main.js) reads
+`GOOGLE_DESKTOP_CLIENT_ID` / `_SECRET` at runtime from a gitignored `.env`,
+which electron-builder will not include — sign-in fails on the target machine
+with the "not set" error. Inject both at build time instead. Per RFC 8252 the
+installed-app secret is not confidential (it ships in every copy regardless),
+so this is a deliberate choice, not a leak. The `VITE_*` Firebase config is
+already inlined into the renderer bundle and needs nothing.
+
+**Data and media do not travel with the installer.** A new machine needs:
+sign in → first-run import (Firestore) → media import (~267 MB from Storage).
+Both need network and an approved operator, so it is a prep-time task, not
+something to do at a venue. Note this depends on Storage still existing — see
+§4.5 about when the bucket can be retired.
+
+**macOS cannot be built from Windows.** electron-builder can target Windows
+from a Mac, but not the reverse: macOS packaging needs Apple tooling for
+signing and notarization. A `.dmg` therefore requires access to a Mac.
+
+### 5.3 Signing
+
+Unsigned builds trip SmartScreen on Windows and Gatekeeper on macOS. For a
+couple of known church machines, clicking through is acceptable. Painless
+distribution needs an Apple Developer account ($99/yr) and a Windows
+code-signing certificate.
+
+### 5.4 macOS behaviour to revisit
+
+Both are Windows conventions that are wrong on a Mac, and neither has been
+tested there:
+
+- [main.js](../electron/main.js) quits on `window-all-closed`; Mac apps
+  normally stay in the dock.
+- `fullscreen: true` on the frameless live window creates a macOS Space,
+  which behaves differently for a projector. `simpleFullscreen` is usually
+  the better fit.
+
+### 5.5 Done when
+
+An installer built on a clean checkout installs on a second machine, signs in
+without a `.env` present, imports data and media, and runs a full service
+offline.
+
+---
+
 ## Open decisions
 
 | Question | Notes |
@@ -479,4 +544,5 @@ program opens with all its assets resolving through `storagePath`.
 
 Operator push-to-repository · SQLite · media sync between machines ·
 content-hash asset IDs · auto-update · a migration framework · repository
-song-update propagation · **backup/export of `data.json` (after step 4)**.
+song-update propagation · **backup/export of `data.json`** · **packaging
+(step 5)**.

@@ -27,7 +27,16 @@ try {
 // app.quit() is asynchronous, so a bare `if (...) app.quit()` would let the
 // whole startup below run anyway and collide with the first instance on PORT.
 const isFirstInstance = app.requestSingleInstanceLock();
-if (!isFirstInstance) app.quit();
+if (!isFirstInstance) {
+  // Say so, loudly. `npm run desktop` rebuilds dist and then lands here, which
+  // looks exactly like "my changes did nothing" — the running window is still
+  // showing the bundle it loaded at startup.
+  console.warn(
+    "Apostello is already running; focusing that window instead.\n" +
+      "Quit it first if you rebuilt and expected to see changes."
+  );
+  app.quit();
+}
 
 function createWindow() {
   const win = new BrowserWindow({

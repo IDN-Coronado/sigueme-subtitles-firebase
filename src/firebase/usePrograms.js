@@ -1,72 +1,65 @@
-import { useEffect, useState } from "react";
-import { collection, query, orderBy, onSnapshot, addDoc, doc, updateDoc, deleteDoc, limit, writeBatch } from "firebase/firestore";
-import db from "./firebase";
-import { create } from "zustand";
+import { useMemo } from "react";
+
+import useDataStore, { newId } from "../local/data";
+import { toProgramDate } from "../i18n/formatProgramDate";
 import { buildDefaultMainLogo } from "./defaultMainLogo";
 
-const COLLECTION_NAME = 'programs';
+// Firestore capped the list at 8 to limit reads. Kept so OpenProgramModal and
+// Home's "recent" list look the same, but getById searches the full set, so
+// opening an older program by URL now works — it silently returned {} before.
+const RECENT_LIMIT = 8;
 
-const useProgramsStore = create(set => ({
-  programs: [],
-  setPrograms: (programs) => set({ programs }),
-  setInitialized: (val) => set({ initialized: val }),
-}));
+function byDateDesc(a, b) {
+  return (
+    new Date(toProgramDate(b.date) || 0) - new Date(toProgramDate(a.date) || 0)
+  );
+}
 
 function usePrograms(id) {
-  const [ program, setProgram ] = useState({});
-  const { programs, setPrograms } = useProgramsStore();
+  const allPrograms = useDataStore((s) => s.data.programs);
+  const write = useDataStore((s) => s.write);
 
-  const getById = (id, dbPrograms = programs) =>
-    dbPrograms.filter(p => p.id === id).shift() || {};
+  const programs = useMemo(
+    () => [...allPrograms].sort(byDateDesc).slice(0, RECENT_LIMIT),
+    [allPrograms]
+  );
 
-  const addProgram = async (program) => {
-    const mainLogo = program.mainLogo || (await buildDefaultMainLogo());
-    const payload = { ...program, mainLogo };
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), payload);
-    setPrograms([
-      ...programs,
-      { ...payload, id: docRef.id }
-    ]);
-    return docRef;
+  const getById = (programId) =>
+    allPrograms.find((p) => p.id === programId) || {};
+
+  const program = getById(id);
+
+  const addProgram = async (fields) => {
+    const mainLogo = fields.mainLogo || (await buildDefaultMainLogo());
+    const next = {
+      ...fields,
+      // JSON has no date type; store ISO and let toProgramDate normalize on
+      // read, since imported programs still carry Firestore Timestamps.
+      ...(fields.date ? { date: new Date(fields.date).toISOString() } : {}),
+      mainLogo,
+      id: newId(),
+    };
+    await write({ programs: [...allPrograms, next] });
+    return next;
   };
 
-  const updateProgram = async (id, data) => {
-    const programRef = doc(db, COLLECTION_NAME, id);
-    await updateDoc(programRef, data);
-    setPrograms(programs.map(p => p.id === id ? { ...p, ...data } : p));
-  };
-
-  const activateProgram = async (id) => {
-    const batch = writeBatch(db);
-    programs.forEach(p => {
-      const ref = doc(db, COLLECTION_NAME, p.id);
-      batch.update(ref, { active: p.id === id });
+  const updateProgram = async (programId, data) => {
+    await write({
+      programs: allPrograms.map((p) =>
+        p.id === programId ? { ...p, ...data } : p
+      ),
     });
-    await batch.commit();
-    setPrograms(programs.map(p => ({ ...p, active: p.id === id })));
   };
 
-  const removeProgram = async (id) => {
-    const programRef = doc(db, COLLECTION_NAME, id);
-    await deleteDoc(programRef);
-    setPrograms(programs.filter(p => p.id !== id));
-  };
-
-  useEffect(() => {
-    const collectionRef = collection(db, COLLECTION_NAME);
-    const q = query(
-      collectionRef,
-      orderBy("date", "desc"),
-      limit(8)
-    );
-    const unsubscribe = onSnapshot(q, querySnapshot => {
-      const dbPrograms = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-      setPrograms(dbPrograms);
-      setProgram(getById(id, dbPrograms));
+  const activateProgram = async (programId) => {
+    await write({
+      programs: allPrograms.map((p) => ({ ...p, active: p.id === programId })),
     });
-    return () => unsubscribe();
-    // eslint-disable-next-line
-  }, [setPrograms, id]);
+  };
+
+  const removeProgram = async (programId) => {
+    await write({ programs: allPrograms.filter((p) => p.id !== programId) });
+  };
 
   return {
     programs,

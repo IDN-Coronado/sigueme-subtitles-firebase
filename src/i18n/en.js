@@ -71,6 +71,8 @@ const en = {
       openProgramDesc: "Open or delete a saved program",
       newSong: "Create new song",
       newSongDesc: "Add lyrics to your library",
+      songRepository: "Import from repository",
+      songRepositoryDesc: "Copy songs from the shared Firebase library",
       uploadFile: "Upload a file",
       uploadFileDesc: "Add media to the general library",
       uploadTheme: "Upload a theme",
@@ -309,6 +311,33 @@ const en = {
   },
   themeDropdown: {
     placeholder: "Select a theme",
+  },
+  desktop: {
+    required: 'The Apostello console now runs as a desktop app. Open Apostello on the booth computer to manage programs.',
+  },
+  localData: {
+    error: 'Could not read your local data',
+    errorHint: 'data.json could not be parsed. A backup from the previous save is next to it as data.json.bak.',
+  },
+  repository: {
+    title: 'Song repository',
+    subtitle: 'Songs shared from Firebase. Importing copies a song into your local library.',
+    import: 'Import',
+    imported: 'In your library',
+    importAll: 'Import all',
+    importing: 'Importing…',
+    empty: 'No songs in the repository.',
+    error: 'Could not load the repository. Check your connection.',
+    open: 'Import from repository',
+  },
+  migrate: {
+    title: 'Import your existing data',
+    body: 'This machine has no local library yet. Import your programs, songs and themes from Firebase to get started.',
+    action: 'Import from Firebase',
+    running: 'Importing…',
+    error: 'Import failed. Check your connection and try again.',
+    skip: 'Start empty',
+    done: '{programs} programs, {songs} songs, {themes} themes imported.',
   },
   programItems: {
     removeSong: "Remove song",

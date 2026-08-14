@@ -10,11 +10,13 @@ import useMedia from "../firebase/useMedia";
 import NewProgramModal from "../components/Program/NewProgramModal";
 import OpenProgramModal from "../components/Program/OpenProgramModal";
 import NewSongModal from "../components/Song/NewSongModal";
+import SongRepositoryModal from "../components/Song/SongRepositoryModal";
 import SlideUploadModal from "../components/SlideUploadModal";
 import NewThemeModal from "../components/Theme/NewThemeModal";
 import GlobalSettingsModal from "../components/GlobalSettingsModal";
 import { IconGear, IconMedia } from "../components/Icons";
 import { t, formatProgramDate } from "../i18n";
+import { toProgramDate } from "../i18n/formatProgramDate";
 
 const MONO = { fontFamily: "JetBrains Mono, monospace" };
 
@@ -35,6 +37,12 @@ const MENU_ITEMS = [
     id: "new-song",
     labelKey: "home.menu.newSong",
     descriptionKey: "home.menu.newSongDesc",
+    shortcut: null,
+  },
+  {
+    id: "song-repository",
+    labelKey: "home.menu.songRepository",
+    descriptionKey: "home.menu.songRepositoryDesc",
     shortcut: null,
   },
   {
@@ -332,8 +340,8 @@ function Home() {
                 </p>
                 <div className="flex flex-col gap-1">
                   {programs.slice(0, 3).map((program) => {
-                    const dateLabel = program.date?.toDate
-                      ? dayjs(program.date.toDate()).format("D MMM YYYY")
+                    const dateLabel = program.date
+                      ? dayjs(toProgramDate(program.date)).format("D MMM YYYY")
                       : "";
                     return (
                       <button
@@ -385,6 +393,10 @@ function Home() {
         isOpen={modal === "new-song"}
         onClose={closeModal}
         onSubmit={handleCreateSong}
+      />
+      <SongRepositoryModal
+        isOpen={modal === "song-repository"}
+        onClose={closeModal}
       />
       <SlideUploadModal
         isOpen={modal === "upload-file"}

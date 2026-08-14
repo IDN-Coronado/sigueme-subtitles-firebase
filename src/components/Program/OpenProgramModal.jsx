@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import "dayjs/locale/es";
 
 import { t } from "../../i18n";
+import { toProgramDate } from "../../i18n/formatProgramDate";
 import ProgramDeleteModal from "./ProgramDeleteModal";
 
 dayjs.locale("es");
@@ -53,8 +54,8 @@ function OpenProgramModal({ isOpen, onClose, programs = [], onSelect, onDelete }
             </p>
           )}
           {programs.map((program) => {
-            const formattedDate = program.date?.toDate
-              ? dayjs(program.date.toDate()).format("D MMM, YYYY")
+            const formattedDate = program.date
+              ? dayjs(toProgramDate(program.date)).format("D MMM, YYYY")
               : "";
             return (
               <div

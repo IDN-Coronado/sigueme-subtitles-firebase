@@ -13,6 +13,8 @@ import Live from "./pages/Live";
 import Program from "./pages/Program";
 import useLocale from "./hooks/useLocale";
 import AuthGate from "./components/AuthGate";
+import DesktopGate from "./components/DesktopGate";
+import LocalDataGate from "./components/LocalDataGate";
 
 function Layout() {
   // Re-render the app shell when language changes so `t()` updates.
@@ -20,9 +22,16 @@ function Layout() {
 
   return (
     <div className="h-full min-h-0 flex flex-col bg-[#101415]">
-      <AuthGate>
-        <Outlet />
-      </AuthGate>
+      {/* The console's data lives in a local file now, so it only runs in the
+          desktop app. /caption and /live are outside this layout and still
+          work in a browser. */}
+      <DesktopGate>
+        <AuthGate>
+          <LocalDataGate>
+            <Outlet />
+          </LocalDataGate>
+        </AuthGate>
+      </DesktopGate>
     </div>
   );
 }

@@ -71,6 +71,8 @@ const es = {
       openProgramDesc: "Abre o elimina un programa guardado",
       newSong: "Crear nueva canción",
       newSongDesc: "Agrega letras a tu biblioteca",
+      songRepository: "Importar del repositorio",
+      songRepositoryDesc: "Copia canciones de la biblioteca compartida en Firebase",
       uploadFile: "Subir un archivo",
       uploadFileDesc: "Agrega media a la biblioteca general",
       uploadTheme: "Subir un tema",
@@ -309,6 +311,33 @@ const es = {
   },
   themeDropdown: {
     placeholder: "Selecciona un tema",
+  },
+  desktop: {
+    required: 'La consola de Apostello ahora es una aplicación de escritorio. Abre Apostello en la computadora de la cabina para gestionar los programas.',
+  },
+  localData: {
+    error: 'No se pudieron leer tus datos locales',
+    errorHint: 'No se pudo interpretar data.json. Hay una copia del guardado anterior junto a él, como data.json.bak.',
+  },
+  repository: {
+    title: 'Repositorio de canciones',
+    subtitle: 'Canciones compartidas desde Firebase. Al importar se copian a tu biblioteca local.',
+    import: 'Importar',
+    imported: 'En tu biblioteca',
+    importAll: 'Importar todas',
+    importing: 'Importando…',
+    empty: 'No hay canciones en el repositorio.',
+    error: 'No se pudo cargar el repositorio. Revisa tu conexión.',
+    open: 'Importar del repositorio',
+  },
+  migrate: {
+    title: 'Importa tus datos existentes',
+    body: 'Esta computadora aún no tiene biblioteca local. Importa tus programas, canciones y temas desde Firebase para empezar.',
+    action: 'Importar desde Firebase',
+    running: 'Importando…',
+    error: 'La importación falló. Revisa tu conexión e inténtalo de nuevo.',
+    skip: 'Empezar vacío',
+    done: '{programs} programas, {songs} canciones, {themes} temas importados.',
   },
   programItems: {
     removeSong: "Quitar canción",

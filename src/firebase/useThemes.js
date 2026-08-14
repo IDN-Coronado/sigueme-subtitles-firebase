@@ -1,60 +1,53 @@
-import { useRef, useEffect, useState, useCallback } from "react";
-import { ref, deleteObject, uploadBytes, getDownloadURL } from "firebase/storage";
-import { collection, query, orderBy, onSnapshot, addDoc, doc, deleteDoc } from "firebase/firestore";
+import {
+  ref,
+  deleteObject,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage";
 
-import db from "./firebase";
-import storage from "../firebase/storage";
+import storage from "./storage";
+import useDataStore, { newId, byTitle } from "../local/data";
 import { evictCachedMedia } from "../utils/mediaCache";
 
-const COLLECTION_NAME = 'themes';
-
-function useThemes () {
-  const allThemes = useRef([]);
-  const [themes, setThemes] = useState([]);
-
-  const getThemeById = useCallback(id =>
-    themes.find(t => t.id === id) || {}, [themes]);
+// The theme record is local; its background asset still lives in Firebase
+// Storage until step 4 moves assets to a local media folder.
+function useThemes() {
+  const themes = useDataStore((s) => s.data.themes);
+  const write = useDataStore((s) => s.write);
 
   const addTheme = async ({ title, storagePath, file }) => {
     const storageRef = ref(storage, storagePath);
     await uploadBytes(storageRef, file);
     const url = await getDownloadURL(storageRef);
-    // Determine asset type
-    const assetType = file.type.startsWith("image/") ? "image" : file.type.startsWith("video/") ? "video" : "";
+
+    const assetType = file.type.startsWith("image/")
+      ? "image"
+      : file.type.startsWith("video/")
+        ? "video"
+        : "";
+
     const theme = {
+      id: newId(),
       title: title.trim(),
       backgroundUrl: url,
-      storagePath: storageRef.fullPath, // Save storage path for deletion
+      storagePath: storageRef.fullPath,
       type: assetType,
-    }
-    return await addDoc(collection(db, COLLECTION_NAME), theme);
+    };
+
+    await write({ themes: [...themes, theme].sort(byTitle) });
+    return theme;
   };
 
   const removeTheme = async (theme) => {
-    // Remove file from storage if storagePath exists
     if (theme.storagePath) {
       await deleteObject(ref(storage, theme.storagePath));
     }
     await evictCachedMedia(theme.backgroundUrl);
-    const themeRef = doc(db, COLLECTION_NAME, theme.id);
-    await deleteDoc(themeRef);
+    await write({ themes: themes.filter((t) => t.id !== theme.id) });
   };
-
-  useEffect(() => {
-    const collectionRef = collection(db, COLLECTION_NAME);
-    const q = query(collectionRef, orderBy("title"));
-
-    const unsubscribe = onSnapshot(q, querySnapshot => {
-      const dbThemes = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }))
-      allThemes.current = dbThemes;
-      setThemes(allThemes.current);
-    });
-    return () => unsubscribe();
-  }, []);
 
   return {
     themes,
-    getThemeById,
     addTheme,
     removeTheme,
   };

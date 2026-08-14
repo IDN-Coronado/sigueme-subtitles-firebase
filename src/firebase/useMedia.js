@@ -7,20 +7,9 @@ import {
   uploadBytes,
   deleteObject,
 } from "firebase/storage";
-import {
-  collection,
-  query,
-  orderBy,
-  onSnapshot,
-  addDoc,
-  doc,
-  deleteDoc,
-  updateDoc,
-  deleteField,
-} from "firebase/firestore";
 
-import db from "./firebase";
 import storage from "./storage";
+import useDataStore, { newId } from "../local/data";
 import { humanizeMediaFileName } from "../utils/mediaTitle";
 import { evictCachedMedia } from "../utils/mediaCache";
 import {
@@ -37,8 +26,6 @@ const PPTX_EXT = /\.pptx$/i;
 const MEDIA_EXT =
   /\.(jpe?g|png|gif|webp|svg|bmp|avif|mp4|webm|mov|m4v|ogv|mp3|wav|m4a|aac|flac|oga|ogg|opus|wma|pptx)$/i;
 
-const YOUTUBE_COLLECTION = "media";
-
 function getMediaType(name) {
   if (PPTX_EXT.test(name)) return "pptx";
   if (VIDEO_EXT.test(name)) return "video";
@@ -47,19 +34,48 @@ function getMediaType(name) {
   return null;
 }
 
-function mergeMediaLists(files, youtubeDocs) {
-  const combined = [...files, ...youtubeDocs];
+function mergeMediaLists(files, youtubeItems) {
+  const combined = [...files, ...youtubeItems];
   combined.sort((a, b) =>
     a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
   );
   return combined;
 }
 
+/**
+ * Display shape for a YouTube entry, stored as-is in the local store so reads
+ * need no mapping. Also used by the Firebase import (src/local/migrate.js).
+ */
+export function buildYouTubeMedia({ id, url, title }) {
+  const youtubeId = parseYouTubeId(url);
+  if (!youtubeId) throw new Error("Invalid YouTube URL");
+
+  const startSeconds = parseYouTubeStartSeconds(url);
+  const name = String(title || "").trim() || `YouTube ${youtubeId}`;
+
+  return {
+    id: id || newId(),
+    type: "youtube",
+    source: "youtube",
+    name,
+    title: name,
+    youtubeId,
+    url: youtubeWatchUrl(youtubeId, startSeconds),
+    thumbnailUrl: youtubeThumbnailUrl(youtubeId),
+    ...(startSeconds > 0 ? { startSeconds } : {}),
+  };
+}
+
+// File media still comes from Firebase Storage; step 4 moves it to a local
+// folder. YouTube entries are local already — they were never more than a row
+// of metadata.
 function useMedia() {
   const [fileMedia, setFileMedia] = useState([]);
-  const [youtubeMedia, setYoutubeMedia] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const youtubeMedia = useDataStore((s) => s.data.media);
+  const write = useDataStore((s) => s.write);
 
   const media = mergeMediaLists(fileMedia, youtubeMedia);
 
@@ -109,54 +125,6 @@ function useMedia() {
     loadFileMedia();
   }, [loadFileMedia]);
 
-  useEffect(() => {
-    const collectionRef = collection(db, YOUTUBE_COLLECTION);
-    const q = query(collectionRef, orderBy("name"));
-    const unsubscribe = onSnapshot(
-      q,
-      (snap) => {
-        const items = snap.docs
-          .map((docSnap) => {
-            const data = docSnap.data() || {};
-            if (data.type !== "youtube" || !data.youtubeId) return null;
-            const startSeconds =
-              Number.isFinite(data.startSeconds) && data.startSeconds > 0
-                ? Math.floor(data.startSeconds)
-                : parseYouTubeStartSeconds(data.url || "");
-            return {
-              id: docSnap.id,
-              name: data.name || data.title || data.youtubeId,
-              url:
-                data.url ||
-                youtubeWatchUrl(data.youtubeId, startSeconds),
-              youtubeId: data.youtubeId,
-              thumbnailUrl:
-                data.thumbnailUrl || youtubeThumbnailUrl(data.youtubeId),
-              type: "youtube",
-              source: "youtube",
-              ...(startSeconds > 0 ? { startSeconds } : {}),
-            };
-          })
-          .filter(Boolean);
-        setYoutubeMedia(items);
-      },
-      (err) => {
-        console.error("Failed to load YouTube media from Firestore", err);
-        setYoutubeMedia([]);
-      }
-    );
-    return () => unsubscribe();
-  }, []);
-
-  const filterByValue = useCallback(
-    (value) => {
-      const q = value.trim().toLowerCase();
-      if (!q) return media;
-      return media.filter((item) => item.name.toLowerCase().includes(q));
-    },
-    [media]
-  );
-
   const uploadMedia = useCallback(
     async ({ file, title }) => {
       const trimmedTitle = String(title || "").trim();
@@ -179,10 +147,7 @@ function useMedia() {
             }
           : {}),
         customMetadata: {
-          title:
-            trimmedTitle ||
-            humanizeMediaFileName(file.name) ||
-            file.name,
+          title: trimmedTitle || humanizeMediaFileName(file.name) || file.name,
         },
       });
       await loadFileMedia();
@@ -191,53 +156,24 @@ function useMedia() {
     [loadFileMedia]
   );
 
-  const addYouTubeMedia = useCallback(async ({ url, title }) => {
-    const youtubeId = parseYouTubeId(url);
-    if (!youtubeId) throw new Error("Invalid YouTube URL");
+  const addYouTubeMedia = async ({ url, title }) => {
+    const item = buildYouTubeMedia({ url, title });
+    await write({ media: [...youtubeMedia, item] });
+    return item.id;
+  };
 
-    const startSeconds = parseYouTubeStartSeconds(url);
-    const name =
-      (title || "").trim() || `YouTube ${youtubeId}`;
-    const payload = {
-      type: "youtube",
-      name,
-      title: name,
-      youtubeId,
-      url: youtubeWatchUrl(youtubeId, startSeconds),
-      thumbnailUrl: youtubeThumbnailUrl(youtubeId),
-      createdAt: new Date().toISOString(),
-      ...(startSeconds > 0 ? { startSeconds } : {}),
-    };
-    const docRef = await addDoc(collection(db, YOUTUBE_COLLECTION), payload);
-    return docRef.id;
-  }, []);
-
-  const updateYouTubeMedia = useCallback(async ({ id, url, title }) => {
+  const updateYouTubeMedia = async ({ id, url, title }) => {
     if (!id) throw new Error("Missing YouTube media id");
-    const youtubeId = parseYouTubeId(url);
-    if (!youtubeId) throw new Error("Invalid YouTube URL");
-
-    const startSeconds = parseYouTubeStartSeconds(url);
-    const name = (title || "").trim() || `YouTube ${youtubeId}`;
-    await updateDoc(doc(db, YOUTUBE_COLLECTION, id), {
-      type: "youtube",
-      name,
-      title: name,
-      youtubeId,
-      url: youtubeWatchUrl(youtubeId, startSeconds),
-      thumbnailUrl: youtubeThumbnailUrl(youtubeId),
-      updatedAt: new Date().toISOString(),
-      startSeconds: startSeconds > 0 ? startSeconds : deleteField(),
-    });
+    const item = buildYouTubeMedia({ id, url, title });
+    await write({ media: youtubeMedia.map((m) => (m.id === id ? item : m)) });
     return id;
-  }, []);
+  };
 
   const removeMedia = useCallback(
     async (item) => {
       if (item?.type === "youtube" || item?.source === "youtube") {
-        const id = item.id;
-        if (!id) throw new Error("Missing YouTube media id");
-        await deleteDoc(doc(db, YOUTUBE_COLLECTION, id));
+        if (!item.id) throw new Error("Missing YouTube media id");
+        await write({ media: youtubeMedia.filter((m) => m.id !== item.id) });
         return;
       }
 
@@ -247,14 +183,13 @@ function useMedia() {
       await evictCachedMedia(item?.url);
       await loadFileMedia();
     },
-    [loadFileMedia]
+    [loadFileMedia, write, youtubeMedia]
   );
 
   return {
     media,
     loading,
     error,
-    filterByValue,
     reload: loadFileMedia,
     uploadMedia,
     addYouTubeMedia,

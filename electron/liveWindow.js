@@ -14,31 +14,43 @@ function notify() {
 }
 
 /**
- * First non-primary display, or null when there is only one. Replaces the
- * browser's getScreenDetails() path, which needed the Window Management
- * permission and could still be denied.
+ * A display other than the one the console is on, or null if there isn't one.
+ *
+ * Deliberately keyed on the console's display rather than "not primary": the
+ * operator may have dragged the console onto the secondary screen, and picking
+ * by primary would then drop a fullscreen window straight on top of it.
+ * Replaces the browser's getScreenDetails() path, which needed the Window
+ * Management permission and could still be denied.
  */
-function pickDisplay(displays, primaryId) {
-  return displays.find((d) => d.id !== primaryId) || null;
+function pickDisplay(displays, consoleDisplayId) {
+  return displays.find((d) => d.id !== consoleDisplayId) || null;
 }
 
-function open(appUrl) {
+function open(appUrl, consoleWindow) {
   if (isOpen()) {
     liveWindow.focus();
     return;
   }
 
-  const display = pickDisplay(screen.getAllDisplays(), screen.getPrimaryDisplay().id);
+  const consoleDisplay =
+    consoleWindow && !consoleWindow.isDestroyed()
+      ? screen.getDisplayMatching(consoleWindow.getBounds())
+      : screen.getPrimaryDisplay();
+
+  const display = pickDisplay(screen.getAllDisplays(), consoleDisplay.id);
   const bounds = display?.bounds;
 
   liveWindow = new BrowserWindow({
     ...(bounds
       ? { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }
       : { width: 1280, height: 720 }),
-    // Only take over the screen when there is a second one. On a single
-    // display, fullscreen would cover the console the operator drives from.
+    // Fullscreen only when there is a screen to take over that the console is
+    // not on. Otherwise it would cover the console the operator drives from.
     fullscreen: Boolean(display),
-    frame: false,
+    // Frameless only when fullscreen. A frameless *windowed* live view has no
+    // title bar, so no close button and nothing behind it to click — there
+    // would be no way to get rid of it. Escape closes it either way, below.
+    frame: !display,
     backgroundColor: "#000000",
     webPreferences: {
       // Same preload as the console: the live view does not call into it, but
@@ -50,9 +62,20 @@ function open(appUrl) {
     },
   });
 
+  // The escape hatch. A fullscreen frameless window on the projector has no
+  // close button, and if it ever lands on the same screen as the console there
+  // is nothing clickable behind it either — Escape is the only way out that
+  // does not depend on where the window ended up.
+  liveWindow.webContents.on("before-input-event", (_event, input) => {
+    if (input.type === "keyDown" && input.key === "Escape") close();
+  });
+
   liveWindow.on("closed", () => {
     liveWindow = null;
     notify();
+    // Hand focus back, so closing the live view never leaves the operator
+    // looking at whatever was behind it.
+    if (consoleWindow && !consoleWindow.isDestroyed()) consoleWindow.focus();
   });
 
   liveWindow.loadURL(`${appUrl}/live`);

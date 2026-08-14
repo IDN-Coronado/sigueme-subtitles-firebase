@@ -27,6 +27,15 @@ function Live() {
   const { preview } = usePreview();
   const mediaRef = useRef(null);
   const [fullscreenHint, setFullscreenHint] = useState(!isDesktop);
+  // Shown briefly on open so the way out is discoverable — a fullscreen
+  // frameless window has no close button to find.
+  const [escapeHint, setEscapeHint] = useState(isDesktop);
+
+  useEffect(() => {
+    if (!escapeHint) return;
+    const id = window.setTimeout(() => setEscapeHint(false), 4000);
+    return () => window.clearTimeout(id);
+  }, [escapeHint]);
 
   useEffect(() => startLiveViewSizeReporter(), []);
 
@@ -66,6 +75,15 @@ function Live() {
       onDoubleClick={enterFullscreen}
     >
       <PreviewConsole preview={preview} mediaRef={mediaRef} variant="live" />
+
+      {escapeHint && (
+        <div
+          className="absolute top-4 right-4 z-20 text-[#c6c6cd]/80 text-xs border border-[rgba(69,70,77,0.5)] bg-[rgba(11,15,16,0.75)] px-3 py-1.5 rounded-sm pointer-events-none"
+          style={MONO}
+        >
+          {t("live.escapeHint")}
+        </div>
+      )}
 
       {fullscreenHint && (
         <button

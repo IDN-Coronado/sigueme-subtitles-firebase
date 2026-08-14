@@ -66,7 +66,7 @@ async function start() {
   // in both modes.
   await startAppServer(path.join(ROOT, "dist"), PORT, media.mediaRoot());
   ipcMain.handle("auth:signIn", () => signInWithGoogle());
-  ipcMain.handle("liveView:open", () => live.open(appUrl));
+  ipcMain.handle("liveView:open", () => live.open(appUrl, consoleWindow));
   ipcMain.handle("liveView:close", () => live.close());
   ipcMain.handle("liveView:isOpen", () => live.isOpen());
   ipcMain.handle("store:load", () => store.load());

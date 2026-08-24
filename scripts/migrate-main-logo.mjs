@@ -19,8 +19,9 @@ import {
 } from "firebase/firestore";
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
 
-const FILENAME = "1784771762871_Logo_Principal.mp4";
+const FILENAME = "1786859135635_Logo.mp4";
 const STORAGE_PATH = `general/${FILENAME}`;
+const STALE_DEFAULTS = new Set(["general/1784771762871_Logo_Principal.mp4"]);
 
 const firebaseConfig = {
   apiKey: process.env.VITE_API_KEY,
@@ -59,7 +60,10 @@ async function main() {
 
   for (const programDoc of snap.docs) {
     const data = programDoc.data();
-    if (data.mainLogo?.storagePath) {
+    // Repoint programs still on a superseded default logo, but never
+    // clobber a custom logo an operator picked via the Logo button.
+    const current = data.mainLogo?.storagePath;
+    if (current && !STALE_DEFAULTS.has(current)) {
       skipped += 1;
       continue;
     }

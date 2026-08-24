@@ -2,7 +2,7 @@ import { ref, getDownloadURL } from "firebase/storage";
 
 import storage from "./storage";
 
-export const DEFAULT_MAIN_LOGO_FILENAME = "1784771762871_Logo_Principal.mp4";
+export const DEFAULT_MAIN_LOGO_FILENAME = "1786859135635_Logo.mp4";
 export const DEFAULT_MAIN_LOGO_STORAGE_PATH = `general/${DEFAULT_MAIN_LOGO_FILENAME}`;
 
 /**

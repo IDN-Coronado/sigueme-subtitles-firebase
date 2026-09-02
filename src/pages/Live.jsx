@@ -5,7 +5,6 @@ import usePreview from "../firebase/usePreview";
 import { MONO } from "../components/Program/constants";
 import { t } from "../i18n";
 import { startLiveViewSizeReporter } from "../utils/liveViewSize";
-import { subscribeCacheProgress } from "../utils/cacheProgressSync";
 
 async function requestPageFullscreen() {
   if (document.fullscreenElement) return true;
@@ -19,24 +18,29 @@ async function requestPageFullscreen() {
   }
 }
 
+// Electron opens this window fullscreen at the OS level, which the Fullscreen
+// API cannot see — document.fullscreenElement stays null. Without this the
+// prompt would nag about entering a state the window is already in.
+const isDesktop = typeof window !== "undefined" && Boolean(window.desktop);
+
 function Live() {
   const { preview } = usePreview();
   const mediaRef = useRef(null);
-  const [fullscreenHint, setFullscreenHint] = useState(true);
-  const [cacheProgress, setCacheProgress] = useState(null);
+  const [fullscreenHint, setFullscreenHint] = useState(!isDesktop);
+  // Shown briefly on open so the way out is discoverable — a fullscreen
+  // frameless window has no close button to find.
+  const [escapeHint, setEscapeHint] = useState(isDesktop);
+
+  useEffect(() => {
+    if (!escapeHint) return;
+    const id = window.setTimeout(() => setEscapeHint(false), 4000);
+    return () => window.clearTimeout(id);
+  }, [escapeHint]);
 
   useEffect(() => startLiveViewSizeReporter(), []);
 
-  useEffect(
-    () =>
-      subscribeCacheProgress((msg) => {
-        if (msg.status === "running") setCacheProgress(msg);
-        else setCacheProgress(null); // done/error — clear the indicator
-      }),
-    []
-  );
-
   useEffect(() => {
+    if (isDesktop) return;
     let cancelled = false;
 
     const tryFullscreen = async () => {
@@ -72,15 +76,12 @@ function Live() {
     >
       <PreviewConsole preview={preview} mediaRef={mediaRef} variant="live" />
 
-      {cacheProgress?.total > 0 && (
+      {escapeHint && (
         <div
-          className="absolute bottom-4 left-4 z-20 text-[#c6c6cd]/80 text-xs border border-[rgba(69,70,77,0.5)] bg-[rgba(11,15,16,0.75)] px-3 py-1.5 rounded-sm"
+          className="absolute top-4 right-4 z-20 text-[#c6c6cd]/80 text-xs border border-[rgba(69,70,77,0.5)] bg-[rgba(11,15,16,0.75)] px-3 py-1.5 rounded-sm pointer-events-none"
           style={MONO}
         >
-          {t("program.preparingMedia", {
-            done: cacheProgress.completed,
-            total: cacheProgress.total,
-          })}
+          {t("live.escapeHint")}
         </div>
       )}
 

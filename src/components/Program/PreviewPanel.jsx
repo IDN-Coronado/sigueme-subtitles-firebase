@@ -257,7 +257,6 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
         ) : item.mediaType === "video" ? (
           <video
             src={item.url}
-            crossOrigin="anonymous"
             className="w-full h-full object-contain pointer-events-none"
             muted
             playsInline
@@ -277,7 +276,6 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
         ) : (
           <img
             src={item.url}
-            crossOrigin="anonymous"
             alt={item.title}
             className="w-full h-full object-contain pointer-events-none"
           />

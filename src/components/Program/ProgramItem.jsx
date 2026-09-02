@@ -1,13 +1,14 @@
 import dayjs from "dayjs";
 
 import { t } from "../../i18n";
+import { toProgramDate } from "../../i18n/formatProgramDate";
 
 function ProgramItem({
   program,
   onClick,
   onDelete,
 }) {
-  const formattedDate = dayjs(program.date.toDate()).format("D MMMM, YYYY");
+  const formattedDate = dayjs(toProgramDate(program.date)).format("D MMMM, YYYY");
   return (
     <div
       key={program.id}

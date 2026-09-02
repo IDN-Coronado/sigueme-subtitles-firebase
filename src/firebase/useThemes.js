@@ -1,60 +1,59 @@
-import { useRef, useEffect, useState, useCallback } from "react";
-import { ref, deleteObject, uploadBytes, getDownloadURL } from "firebase/storage";
-import { collection, query, orderBy, onSnapshot, addDoc, doc, deleteDoc } from "firebase/firestore";
+import { useMemo } from "react";
 
-import db from "./firebase";
-import storage from "../firebase/storage";
-import { evictCachedMedia } from "../utils/mediaCache";
+import useDataStore, { newId, byTitle } from "../local/data";
+import { localUrl, mediaUrl, newStoragePath } from "../local/mediaPath";
 
-const COLLECTION_NAME = 'themes';
+// Theme records and their background assets are both local now. backgroundUrl
+// is derived from storagePath on write rather than persisted as an absolute
+// URL, so moving the media folder cannot strand a theme.
+function useThemes() {
+  const stored = useDataStore((s) => s.data.themes);
+  const write = useDataStore((s) => s.write);
 
-function useThemes () {
-  const allThemes = useRef([]);
-  const [themes, setThemes] = useState([]);
+  // Derived on read, so a theme imported with an absolute Storage URL still
+  // renders from disk without waiting on the media import to rewrite it.
+  const themes = useMemo(
+    () =>
+      stored.map((theme) => ({
+        ...theme,
+        backgroundUrl: localUrl(theme.storagePath, theme.backgroundUrl),
+      })),
+    [stored]
+  );
 
-  const getThemeById = useCallback(id =>
-    themes.find(t => t.id === id) || {}, [themes]);
+  const addTheme = async ({ title, file }) => {
+    const storagePath = newStoragePath("themes", file.name, title);
+    await window.desktop.media.save(storagePath, await file.arrayBuffer());
 
-  const addTheme = async ({ title, storagePath, file }) => {
-    const storageRef = ref(storage, storagePath);
-    await uploadBytes(storageRef, file);
-    const url = await getDownloadURL(storageRef);
-    // Determine asset type
-    const assetType = file.type.startsWith("image/") ? "image" : file.type.startsWith("video/") ? "video" : "";
+    const assetType = file.type.startsWith("image/")
+      ? "image"
+      : file.type.startsWith("video/")
+        ? "video"
+        : "";
+
     const theme = {
+      id: newId(),
       title: title.trim(),
-      backgroundUrl: url,
-      storagePath: storageRef.fullPath, // Save storage path for deletion
+      storagePath,
+      backgroundUrl: mediaUrl(storagePath),
       type: assetType,
-    }
-    return await addDoc(collection(db, COLLECTION_NAME), theme);
+    };
+
+    // Written from `stored`, not the derived list, so the computed
+    // backgroundUrl never gets persisted back into the file.
+    await write({ themes: [...stored, theme].sort(byTitle) });
+    return theme;
   };
 
   const removeTheme = async (theme) => {
-    // Remove file from storage if storagePath exists
     if (theme.storagePath) {
-      await deleteObject(ref(storage, theme.storagePath));
+      await window.desktop.media.remove(theme.storagePath);
     }
-    await evictCachedMedia(theme.backgroundUrl);
-    const themeRef = doc(db, COLLECTION_NAME, theme.id);
-    await deleteDoc(themeRef);
+    await write({ themes: stored.filter((t) => t.id !== theme.id) });
   };
-
-  useEffect(() => {
-    const collectionRef = collection(db, COLLECTION_NAME);
-    const q = query(collectionRef, orderBy("title"));
-
-    const unsubscribe = onSnapshot(q, querySnapshot => {
-      const dbThemes = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }))
-      allThemes.current = dbThemes;
-      setThemes(allThemes.current);
-    });
-    return () => unsubscribe();
-  }, []);
 
   return {
     themes,
-    getThemeById,
     addTheme,
     removeTheme,
   };

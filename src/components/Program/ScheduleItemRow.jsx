@@ -55,7 +55,6 @@ function ScheduleItemRow({ item, index, active, onSelect, onRemove, cacheStatus 
             item.themeType === "video" ? (
               <video
                 src={item.backgroundUrl}
-                crossOrigin="anonymous"
                 className="w-full h-full object-cover"
                 muted
                 playsInline
@@ -63,7 +62,6 @@ function ScheduleItemRow({ item, index, active, onSelect, onRemove, cacheStatus 
             ) : (
               <img
                 src={item.backgroundUrl}
-                crossOrigin="anonymous"
                 alt=""
                 className="w-full h-full object-cover"
               />

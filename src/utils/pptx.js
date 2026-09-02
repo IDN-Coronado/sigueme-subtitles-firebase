@@ -1,6 +1,4 @@
-import { getBytes, ref as storageRef } from "firebase/storage";
-
-import storage from "../firebase/storage";
+import { mediaUrl } from "../local/mediaPath";
 
 const bufferCache = new Map();
 const thumbCache = new Map();
@@ -28,9 +26,9 @@ function cacheKey({ url, storagePath }) {
 }
 
 /**
- * Load a PPTX ArrayBuffer.
- * Prefer Firebase Storage getBytes when storagePath is available;
- * fall back to fetch(url). Both require Storage bucket CORS for browser use.
+ * Load a PPTX ArrayBuffer from the local media folder. storagePath is
+ * preferred; url is accepted for entries that predate it. No Storage SDK and
+ * no bucket CORS involved any more — it is a same-origin fetch.
  */
 export async function fetchPptxArrayBuffer({ url, storagePath } = {}) {
   const key = cacheKey({ url, storagePath });
@@ -42,10 +40,8 @@ export async function fetchPptxArrayBuffer({ url, storagePath } = {}) {
   }
 
   const promise = (async () => {
-    if (storagePath) {
-      return getBytes(storageRef(storage, storagePath));
-    }
-    const response = await fetch(url);
+    const target = storagePath ? mediaUrl(storagePath) : url;
+    const response = await fetch(target);
     if (!response.ok) {
       throw new Error(
         `Failed to fetch PPTX: ${response.status} ${response.statusText}`

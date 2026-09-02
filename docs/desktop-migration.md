@@ -13,7 +13,8 @@ it. Doing local assets first would mean writing File System Access API plumbing
 that Electron makes obsolete.
 
 Steps 3 and 4 are independent of each other; both depend on 1. Step 2 depends
-only on 1.
+only on 1. **Steps 1-4 are done.** Step 5 (packaging) is scoped but not
+started — the app currently runs from a checkout via `npm run desktop`.
 
 ---
 
@@ -81,6 +82,33 @@ becomes a call to the bridge instead of `signInWithPopup`.
 > Budget ~100 lines plus Cloud Console setup. This is the largest single risk in
 > the whole migration. Do it first; if it stalls, nothing later is unblocked.
 
+#### Google Cloud setup (manual, one time)
+
+1. Open [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+   with the **`siguemesubtitles`** project selected — the same project Firebase
+   uses.
+2. **Create Credentials → OAuth client ID**, application type **Desktop app**,
+   name it `Apostello Desktop`.
+3. Copy the **Client ID** and **Client secret** into `.env` (already gitignored)
+   with no `VITE_` prefix, so they are read by the Electron main process and
+   never inlined into the renderer bundle:
+
+   ```
+   GOOGLE_DESKTOP_CLIENT_ID=…apps.googleusercontent.com
+   GOOGLE_DESKTOP_CLIENT_SECRET=…
+   ```
+
+   The secret is not confidential in the usual sense — it ships inside the app.
+   PKCE is what actually protects the exchange, which is why the flow uses it.
+4. **No redirect URI to register.** Google matches loopback redirect URIs on
+   host only, so the ephemeral port the app picks needs no entry.
+5. If the OAuth consent screen is in **Testing**, add each operator's Google
+   account under **Audience → Test users**. Internal/published apps need nothing.
+
+If `signInWithCredential` later rejects with `auth/invalid-credential`, add the
+desktop Client ID to **Firebase Console → Authentication → Sign-in method →
+Google → Web SDK configuration** as an additional allowed client ID.
+
 ### 1.3 Smaller items
 
 - **Service worker.** [index.jsx:44](../src/index.jsx#L44) registers `/sw.js` in
@@ -111,7 +139,25 @@ becomes a call to the bridge instead of `signInWithPopup`.
 | [src/index.jsx](../src/index.jsx) | guard SW registration |
 | [src/components/AuthGate.jsx](../src/components/AuthGate.jsx) | `signInWithPopup` → bridge + `signInWithCredential` |
 
-### 1.5 Done when
+### 1.5 Running it
+
+```bash
+npm run desktop       # build, then launch
+npm run desktop:dev   # attach to a running `npm start` (vite :5173) for HMR
+```
+
+First-time setup: this repo runs npm with an allow-scripts policy, so Electron's
+postinstall — which downloads the ~100 MB binary — is blocked. Adding the
+`allowScripts` entry for `electron` is necessary but **not sufficient**: npm
+skips postinstalls for packages already on disk, so both `npm install` and
+`npm rebuild electron` will report success while `node_modules/electron/dist`
+stays empty. Run the installer directly once:
+
+```bash
+node node_modules/electron/install.js
+```
+
+### 1.6 Done when
 
 App opens; sign-in completes and lands on the approved-operator console; an
 existing program opens with its schedule; the live view opens on the second
@@ -156,11 +202,23 @@ already correct and costs nothing.
 `openLiveView`, `closeLiveView`, `isLiveViewOpen`, `subscribeLiveViewOpen`.
 Reimplement those four over IPC and every consumer component compiles unchanged.
 
-### 2.4 Deletions
+### 2.4 Deletions — deferred to step 4
 
-- [src/utils/openLiveView.js](../src/utils/openLiveView.js) — entire file
-- `requestPageFullscreen` + `fullscreenHint` state and banner in
-  [Live.jsx](../src/pages/Live.jsx)
+This plan originally called for deleting
+[openLiveView.js](../src/utils/openLiveView.js) and the `fullscreenHint` banner
+outright. That was written assuming the desktop app had already replaced the web
+console. It hasn't: the deployed web app is still what runs services, so
+removing the browser popup path now would be a live regression.
+
+So the module keeps both paths — the desktop branch delegates to
+`window.desktop.liveView`, and the `window.open` + `getScreenDetails` +
+close-polling implementation stays for the web console. The browser path
+(and the `fullscreenHint` banner, already suppressed under Electron) comes out
+in step 4, alongside the open decision about whether hosting still serves
+anything beyond `/caption`.
+
+Net for this step: no deletions, ~30 lines of IPC added. The payoff is real but
+banked, not spent.
 
 ### 2.5 Done when
 
@@ -260,10 +318,14 @@ a live subscription. Import reuses the local mutator verbatim:
 const importSong = (r) => addSong(r.title, r.sections, { sourceId: r.id });
 ```
 
-`sourceId` is the one extra field, and it answers exactly one question — "already
-imported?" — correctly where title-matching goes wrong (duplicate titles,
-locally renamed copies). Do not grow update-propagation on it. If a repository
-song changes, re-import as new and delete the old one.
+Imported songs **keep their Firestore id as the local id**, which is better
+than the `sourceId` field this plan originally called for: it answers "already
+imported?" for free, and it means every `songId` already stored in a program
+schedule keeps resolving after the migration. Locally created songs get a UUID,
+which cannot collide with Firestore's 20-character ids.
+
+Existing songs are skipped, never overwritten, so a local edit is not silently
+replaced. To take a newer version, delete the local song first.
 
 - **No new dependency** — the Firestore SDK is already in the bundle for
   `caption`.
@@ -278,14 +340,25 @@ song changes, re-import as new and delete the old one.
 First run with an empty local library offers **"import all"** — that *is* the
 data migration for songs. No separate export script.
 
-Programs and themes need a one-time pull; a throwaway script using the existing
-web app (or the Admin SDK) writing `data.json` directly is enough. Don't build a
-migration framework for a one-time move of ~8 programs.
+Programs, themes and media are pulled by the same screen — no throwaway script.
+Because every document keeps its Firestore id, program → song and program →
+theme references survive the move untouched.
 
-### 3.6 Backup
+Program dates need converting: Firestore Timestamps do not survive JSON, so they
+are stored as ISO strings and normalized on read by `toProgramDate`
+(`src/i18n/formatProgramDate.js`). Three call sites formatted dates via
+`.toDate()` — one of them unguarded, which would have thrown — and all three now
+go through that helper.
 
-`data.json` is now the only copy. Add one menu item that copies it somewhere the
-user picks. One `fs.copyFile`.
+### 3.6 Backup — deferred past step 4
+
+`data.json` is now the only copy of the song library. A menu item that copies
+it somewhere the user picks (one `fs.copyFile`) is **not built** — deliberately
+deferred until after step 4, so the asset move lands first and the backup can
+cover the media folder in the same pass.
+
+Until then the file is at `%APPDATA%/Apostello/data.json`, with the previous
+save alongside it as `data.json.bak`. Copy it by hand before anything risky.
 
 ### 3.7 Done when
 
@@ -344,31 +417,46 @@ root-relative paths are stored. Move the folder, change one setting.
 | [pptx.js:47](../src/utils/pptx.js#L47) | `getBytes(storageRef)` → the existing `fetch(url)` branch, pointed at the local URL |
 | [defaultMainLogo.js](../src/firebase/defaultMainLogo.js) | hardcoded Storage path → local path; becomes synchronous |
 
-### 4.4 Deletions
+### 4.4 Deletions — what actually went
 
-This is the payoff for doing desktop first:
+The payoff for doing desktop first:
 
-- [src/sw.js](../src/sw.js) — whole file
-- `VitePWA` block in [vite.config.js](../vite.config.js) + the five `workbox-*`
-  devDeps
-- [src/utils/precacheSchedule.js](../src/utils/precacheSchedule.js) (129 lines)
-- [src/utils/mediaCache.js](../src/utils/mediaCache.js) + every
-  `evictCachedMedia` call
-- [src/utils/cacheProgressSync.js](../src/utils/cacheProgressSync.js) and
-  [src/hooks/usePrecacheProgram.js](../src/hooks/usePrecacheProgram.js)
-- the cache-progress indicator in [Live.jsx](../src/pages/Live.jsx)
-- all 33 `crossOrigin="anonymous"` attributes
-- [storage.cors.json](../storage.cors.json), and
-  [storage.rules](../storage.rules) if the bucket is decommissioned
+- `src/sw.js` — whole file
+- `VitePWA` block in [vite.config.js](../vite.config.js) and all five
+  `workbox-*` devDeps, plus `vite-plugin-pwa`
+- `src/utils/precacheSchedule.js` (129 lines)
+- `src/utils/mediaCache.js` and every `evictCachedMedia` call
+- `src/utils/cacheProgressSync.js` and `src/hooks/usePrecacheProgram.js`
+- the cache-progress indicator in [Live.jsx](../src/pages/Live.jsx) and the
+  whole precache reconciliation block in [Program.jsx](../src/pages/Program.jsx)
+- **24** `crossOrigin="anonymous"` attributes (this plan said 33 — that number
+  came from a grep that also counted `caches.` and `MEDIA_CACHE_NAME` hits)
+- the service worker registration in [index.jsx](../src/index.jsx)
+- the browser half of [openLiveView.js](../src/utils/openLiveView.js), deferred
+  from step 2 — 139 lines down to 44
+
+**Not deleted, deliberately:** [storage.rules](../storage.rules) and
+[storage.cors.json](../storage.cors.json). The one-time media import still
+reads the bucket from the renderer, so both are needed until every machine has
+run it. Rules are now operator-read-only with writes denied — public read is
+gone, since nothing unauthenticated plays from Storage any more.
 
 ### 4.5 Migration
 
-One-time copy of the bucket into the media root, preserving the `general/`
-prefix:
+Not `gsutil` — that assumed a gcloud install. **Home → "Copy media from
+Firebase"** ([MediaImportModal](../src/components/MediaImportModal.jsx)) lists
+both folders, downloads each file into the media root, and skips anything
+already on disk, so an interrupted run just resumes.
 
-```bash
-gsutil -m cp -r gs://<your-bucket>/general ./media/general
-```
+It also **re-points existing records at local paths**, which the original plan
+missed: theme `backgroundUrl`, program `mainLogo.url`, and every schedule item
+`url`. Theme schedule items carry no `storagePath`, so their path is resolved
+through `themeId`. Without this pass, migrated programs would keep absolute
+Storage URLs and stay bound to the bucket.
+
+`src/local/migrateMedia.js` is the last code in the app touching Firebase
+Storage. Delete it, both Storage configs, and the bucket once every machine has
+migrated.
 
 ### 4.6 Done when
 
@@ -376,6 +464,70 @@ Every media type (image, video, audio, pptx) plays from the local folder with
 the network fully off; video seeks to arbitrary offsets; uploading adds a file
 to the folder and it appears in the browser; deleting removes it; an existing
 program opens with all its assets resolving through `storagePath`.
+
+---
+
+## Step 5 — Packaging (not started)
+
+**Goal:** an installer that can be handed to another machine, instead of
+requiring a checkout and `npm run desktop`.
+
+Not urgent, and deliberately left until the four steps above are proven on
+real hardware — packaging a build nobody has run a service on is premature.
+
+### 5.1 What is already in our favour
+
+- **No native dependencies.** Everything is pure JS (firebase, react, jszip,
+  pptxviewjs, zustand), so there is no per-platform rebuild step. Partly a
+  payoff from choosing a JSON file over SQLite.
+- **No platform-specific code.** `grep` for `process.platform` across
+  `electron/` and `src/` returns nothing.
+- Serving `dist/` from inside `app.asar` works — Electron patches `fs`, and
+  `createReadStream` is what [server.js](../electron/server.js) already uses.
+
+### 5.2 The three blockers
+
+**`.env` will not ship.** [main.js](../electron/main.js) reads
+`GOOGLE_DESKTOP_CLIENT_ID` / `_SECRET` at runtime from a gitignored `.env`,
+which electron-builder will not include — sign-in fails on the target machine
+with the "not set" error. Inject both at build time instead. Per RFC 8252 the
+installed-app secret is not confidential (it ships in every copy regardless),
+so this is a deliberate choice, not a leak. The `VITE_*` Firebase config is
+already inlined into the renderer bundle and needs nothing.
+
+**Data and media do not travel with the installer.** A new machine needs:
+sign in → first-run import (Firestore) → media import (~267 MB from Storage).
+Both need network and an approved operator, so it is a prep-time task, not
+something to do at a venue. Note this depends on Storage still existing — see
+§4.5 about when the bucket can be retired.
+
+**macOS cannot be built from Windows.** electron-builder can target Windows
+from a Mac, but not the reverse: macOS packaging needs Apple tooling for
+signing and notarization. A `.dmg` therefore requires access to a Mac.
+
+### 5.3 Signing
+
+Unsigned builds trip SmartScreen on Windows and Gatekeeper on macOS. For a
+couple of known church machines, clicking through is acceptable. Painless
+distribution needs an Apple Developer account ($99/yr) and a Windows
+code-signing certificate.
+
+### 5.4 macOS behaviour to revisit
+
+Both are Windows conventions that are wrong on a Mac, and neither has been
+tested there:
+
+- [main.js](../electron/main.js) quits on `window-all-closed`; Mac apps
+  normally stay in the dock.
+- `fullscreen: true` on the frameless live window creates a macOS Space,
+  which behaves differently for a projector. `simpleFullscreen` is usually
+  the better fit.
+
+### 5.5 Done when
+
+An installer built on a clean checkout installs on a second machine, signs in
+without a `.env` present, imports data and media, and runs a full service
+offline.
 
 ---
 
@@ -392,4 +544,5 @@ program opens with all its assets resolving through `storagePath`.
 
 Operator push-to-repository · SQLite · media sync between machines ·
 content-hash asset IDs · auto-update · a migration framework · repository
-song-update propagation.
+song-update propagation · **backup/export of `data.json`** · **packaging
+(step 5)**.

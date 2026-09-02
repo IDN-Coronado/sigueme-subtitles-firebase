@@ -10,11 +10,14 @@ import useMedia from "../firebase/useMedia";
 import NewProgramModal from "../components/Program/NewProgramModal";
 import OpenProgramModal from "../components/Program/OpenProgramModal";
 import NewSongModal from "../components/Song/NewSongModal";
+import SongRepositoryModal from "../components/Song/SongRepositoryModal";
 import SlideUploadModal from "../components/SlideUploadModal";
 import NewThemeModal from "../components/Theme/NewThemeModal";
 import GlobalSettingsModal from "../components/GlobalSettingsModal";
+import MediaImportModal from "../components/MediaImportModal";
 import { IconGear, IconMedia } from "../components/Icons";
 import { t, formatProgramDate } from "../i18n";
+import { toProgramDate } from "../i18n/formatProgramDate";
 
 const MONO = { fontFamily: "JetBrains Mono, monospace" };
 
@@ -38,6 +41,12 @@ const MENU_ITEMS = [
     shortcut: null,
   },
   {
+    id: "song-repository",
+    labelKey: "home.menu.songRepository",
+    descriptionKey: "home.menu.songRepositoryDesc",
+    shortcut: null,
+  },
+  {
     id: "upload-file",
     labelKey: "home.menu.uploadFile",
     descriptionKey: "home.menu.uploadFileDesc",
@@ -47,6 +56,12 @@ const MENU_ITEMS = [
     id: "upload-theme",
     labelKey: "home.menu.uploadTheme",
     descriptionKey: "home.menu.uploadThemeDesc",
+    shortcut: null,
+  },
+  {
+    id: "media-import",
+    labelKey: "home.menu.mediaImport",
+    descriptionKey: "home.menu.mediaImportDesc",
     shortcut: null,
   },
   {
@@ -269,8 +284,13 @@ function Home() {
           </div>
         </header>
 
-        <main className="relative z-10 flex-1 flex items-center justify-center p-5 sm:p-8">
-          <div className="w-full max-w-3xl">
+        {/* my-auto rather than items-center: a centered flex child that grows
+            taller than the viewport overflows past the top edge, where the
+            ancestor's scrollbar cannot reach it. Auto margins centre when there
+            is room and collapse to zero when there is not, so the menu stays
+            reachable however many entries it has. */}
+        <main className="relative z-10 flex-1 flex justify-center p-5 sm:p-8">
+          <div className="w-full max-w-3xl my-auto">
             <div className="mb-8 sm:mb-10">
               <p
                 className="text-[#7bd0ff] text-xs tracking-[0.14em] uppercase mb-3"
@@ -332,8 +352,8 @@ function Home() {
                 </p>
                 <div className="flex flex-col gap-1">
                   {programs.slice(0, 3).map((program) => {
-                    const dateLabel = program.date?.toDate
-                      ? dayjs(program.date.toDate()).format("D MMM YYYY")
+                    const dateLabel = program.date
+                      ? dayjs(toProgramDate(program.date)).format("D MMM YYYY")
                       : "";
                     return (
                       <button
@@ -386,6 +406,10 @@ function Home() {
         onClose={closeModal}
         onSubmit={handleCreateSong}
       />
+      <SongRepositoryModal
+        isOpen={modal === "song-repository"}
+        onClose={closeModal}
+      />
       <SlideUploadModal
         isOpen={modal === "upload-file"}
         onClose={closeModal}
@@ -395,6 +419,10 @@ function Home() {
         isVisible={modal === "upload-theme"}
         onClose={closeModal}
         onSubmit={handleCreateTheme}
+      />
+      <MediaImportModal
+        isOpen={modal === "media-import"}
+        onClose={closeModal}
       />
       <GlobalSettingsModal
         isOpen={modal === "settings"}

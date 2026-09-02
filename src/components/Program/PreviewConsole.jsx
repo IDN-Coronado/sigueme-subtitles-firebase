@@ -15,7 +15,7 @@ import {
   subscribeMediaSync,
 } from "../../utils/mediaSync";
 import { MONO } from "./constants";
-import PptxStage from "./PptxStage";
+import PdfStage from "./PdfStage";
 import ScaledLiveStage from "./ScaledLiveStage";
 import YouTubePlayer from "./YouTubePlayer";
 import {
@@ -126,7 +126,7 @@ function PreviewConsole({
   preview,
   mediaRef,
   variant = "console",
-  onPptxLoaded,
+  onPdfLoaded,
 }) {
   const isLive = variant === "live";
   const liveSize = useLiveViewSize();
@@ -372,7 +372,7 @@ function PreviewConsole({
         : parseYouTubeStartSeconds(url || "")
       : 0;
     const showTheme = mediaType === "audio";
-    const pptxSlideIndex = Number.isFinite(slideIndex)
+    const pdfPageIndex = Number.isFinite(slideIndex)
       ? Math.max(0, Math.floor(slideIndex))
       : 0;
     return (
@@ -431,15 +431,15 @@ function PreviewConsole({
                 </p>
               </div>
             </>
-          ) : mediaType === "pptx" ? (
-            <PptxStage
+          ) : mediaType === "pdf" ? (
+            <PdfStage
               key={storagePath || url}
               url={url}
               storagePath={storagePath}
-              slideIndex={pptxSlideIndex}
+              slideIndex={pdfPageIndex}
               stageWidth={liveSize.width}
               stageHeight={liveSize.height}
-              onLoaded={!isLive ? onPptxLoaded : undefined}
+              onLoaded={!isLive ? onPdfLoaded : undefined}
             />
           ) : (
             <img

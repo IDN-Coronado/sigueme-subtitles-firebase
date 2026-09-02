@@ -189,6 +189,13 @@ const es = {
     pptxLast: "Última diapositiva",
     pptxCounter: "{current} / {total}",
     pptxCounterAria: "Diapositiva {current} de {total}",
+    pdfBadge: "PDF",
+    pdfFirst: "Primera página",
+    pdfPrev: "Página anterior",
+    pdfNext: "Página siguiente",
+    pdfLast: "Última página",
+    pdfCounter: "{current} / {total}",
+    pdfCounterAria: "Página {current} de {total}",
   },
   schedule: {
     remove: "Quitar del programa",

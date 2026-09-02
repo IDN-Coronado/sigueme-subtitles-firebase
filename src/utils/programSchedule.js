@@ -6,7 +6,7 @@ export function newItemId() {
 }
 
 export function guessMediaType(name = "") {
-  if (/\.pptx$/i.test(name)) return "pptx";
+  if (/\.pdf$/i.test(name)) return "pdf";
   if (/\.(mp4|webm|mov|m4v|ogv)$/i.test(name)) return "video";
   if (/\.(mp3|wav|m4a|aac|flac|oga|ogg|opus|wma)$/i.test(name)) return "audio";
   return "image";

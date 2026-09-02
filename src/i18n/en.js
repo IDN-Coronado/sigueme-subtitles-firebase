@@ -189,6 +189,13 @@ const en = {
     pptxLast: "Last slide",
     pptxCounter: "{current} / {total}",
     pptxCounterAria: "Slide {current} of {total}",
+    pdfBadge: "PDF",
+    pdfFirst: "First page",
+    pdfPrev: "Previous page",
+    pdfNext: "Next page",
+    pdfLast: "Last page",
+    pdfCounter: "{current} / {total}",
+    pdfCounterAria: "Page {current} of {total}",
   },
   schedule: {
     remove: "Remove from schedule",

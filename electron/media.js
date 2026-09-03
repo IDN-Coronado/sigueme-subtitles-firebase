@@ -9,7 +9,7 @@ const { resolveWithin } = require("./server");
 // every storagePath already written into a program schedule resolves unchanged
 // after the migration — only the root moves.
 const MEDIA_EXT =
-  /\.(jpe?g|png|gif|webp|svg|bmp|avif|mp4|webm|mov|m4v|ogv|mp3|wav|m4a|aac|flac|oga|ogg|opus|wma|pptx)$/i;
+  /\.(jpe?g|png|gif|webp|svg|bmp|avif|mp4|webm|mov|m4v|ogv|mp3|wav|m4a|aac|flac|oga|ogg|opus|wma|pdf)$/i;
 
 let cachedRoot;
 

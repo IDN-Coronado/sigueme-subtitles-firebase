@@ -13,10 +13,10 @@ import {
 const IMAGE_EXT = /\.(jpe?g|png|gif|webp|svg|bmp|avif)$/i;
 const VIDEO_EXT = /\.(mp4|webm|mov|m4v|ogv)$/i;
 const AUDIO_EXT = /\.(mp3|wav|m4a|aac|flac|oga|ogg|opus|wma)$/i;
-const PPTX_EXT = /\.pptx$/i;
+const PDF_EXT = /\.pdf$/i;
 
 function getMediaType(name) {
-  if (PPTX_EXT.test(name)) return "pptx";
+  if (PDF_EXT.test(name)) return "pdf";
   if (VIDEO_EXT.test(name)) return "video";
   if (AUDIO_EXT.test(name)) return "audio";
   if (IMAGE_EXT.test(name)) return "image";

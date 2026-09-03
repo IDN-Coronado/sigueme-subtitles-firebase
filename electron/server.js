@@ -13,6 +13,9 @@ const MEDIA_PREFIX = "/media/";
 const MIME = {
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
+  // pdf.js ships its worker as .mjs; a worker script is refused unless it is
+  // served with a JavaScript type.
+  ".mjs": "text/javascript; charset=utf-8",
   ".css": "text/css; charset=utf-8",
   ".json": "application/json; charset=utf-8",
   ".svg": "image/svg+xml",
@@ -38,8 +41,7 @@ const MIME = {
   ".ogg": "audio/ogg",
   ".opus": "audio/opus",
   ".bmp": "image/bmp",
-  ".pptx":
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  ".pdf": "application/pdf",
 };
 
 async function isFile(target) {

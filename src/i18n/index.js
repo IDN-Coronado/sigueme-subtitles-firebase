@@ -33,5 +33,3 @@ export function t(key, vars) {
 }
 
 export { formatProgramDate } from "./formatProgramDate";
-
-export default catalogs[getLocale()];

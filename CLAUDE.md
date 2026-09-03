@@ -1,3 +1,6 @@
+## General rules
+Avoid adding co-authoring in commit messages.
+
 ## graphify
 
 This project has a graphify knowledge graph at .graphify/.
@@ -11,4 +14,4 @@ Rules:
 - Before deep graph traversal, prefer `graphify summary --graph .graphify/graph.json` for compact first-hop orientation
 - For review impact on changed files, use `graphify review-delta --graph .graphify/graph.json` instead of generic traversal
 - Read `.graphify/GRAPH_REPORT.md` only for broad architecture review or when `query` / `path` / `explain` do not surface enough context
-- After modifying code files in this session, run `npx graphify hook-rebuild` to keep the graph current
+- After modifying code files in this session, run `/graphify . --update` to keep the graph current. Do not use `graphify hook-rebuild`: it is code-only and refuses to overwrite a graph that carries semantic nodes. After deleting or renaming files, do a full `/graphify .` rebuild — `--update` merges but does not prune removed files

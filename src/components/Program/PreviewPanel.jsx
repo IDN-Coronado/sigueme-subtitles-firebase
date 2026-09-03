@@ -1,6 +1,6 @@
 import { t } from "../../i18n";
 import { MONO } from "./constants";
-import PptxThumbnail from "./PptxThumbnail";
+import PdfThumbnail from "./PdfThumbnail";
 import { getBibleVerses } from "../../utils/programSchedule";
 import { normalizeSong } from "../../utils/songSections";
 import { parseYouTubeStartSeconds } from "../../utils/youtube";
@@ -226,7 +226,7 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
               ...(item.youtubeId ? { youtubeId: item.youtubeId } : {}),
               ...(item.thumbnailUrl ? { thumbnailUrl: item.thumbnailUrl } : {}),
               ...(startSeconds > 0 ? { startSeconds } : {}),
-              ...(item.mediaType === "pptx"
+              ...(item.mediaType === "pdf"
                 ? {
                     slideIndex: 0,
                     ...(item.slideCount > 0
@@ -266,8 +266,8 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
           <span className="text-[#45464d] text-xs tracking-[0.1em]" style={MONO}>
             {t("media.audioBadge")} · {item.title}
           </span>
-        ) : item.mediaType === "pptx" ? (
-          <PptxThumbnail
+        ) : item.mediaType === "pdf" ? (
+          <PdfThumbnail
             url={item.url}
             storagePath={item.storagePath}
             alt={item.title}

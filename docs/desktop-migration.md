@@ -514,6 +514,11 @@ All of it is the `build` block in [package.json](../package.json).
   inlined into the renderer bundle exactly as it is on the web, and needs
   nothing.
   A build therefore needs `.env` present — for the `VITE_*` vars anyway.
+  The copy is occasionally skipped with no error — seen twice, both times
+  on the build right after an interrupted one left `win-unpacked` half
+  written. `npm run package` therefore ends by asserting the file is there:
+  its absence is invisible until an operator tries to sign in on the target
+  machine.
 - **`win.icon: "assets/icon.png"`.** `public/favicon.svg` rasterized to
   256×256; electron-builder rejects Windows icons below that, and
   `public/favicon.ico` tops out at 64. It lives in `assets/` rather than the

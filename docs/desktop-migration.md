@@ -13,8 +13,8 @@ it. Doing local assets first would mean writing File System Access API plumbing
 that Electron makes obsolete.
 
 Steps 3 and 4 are independent of each other; both depend on 1. Step 2 depends
-only on 1. **Steps 1-4 are done.** Step 5 (packaging) is scoped but not
-started — the app currently runs from a checkout via `npm run desktop`.
+only on 1. **Steps 1-5 are done.** `npm run desktop` runs it from a checkout;
+`npm run package` builds a Windows installer.
 
 ---
 
@@ -467,15 +467,20 @@ program opens with all its assets resolving through `storagePath`.
 
 ---
 
-## Step 5 — Packaging (not started)
+## Step 5 — Packaging (Windows done)
 
 **Goal:** an installer that can be handed to another machine, instead of
 requiring a checkout and `npm run desktop`.
 
-Not urgent, and deliberately left until the four steps above are proven on
-real hardware — packaging a build nobody has run a service on is premature.
+```bash
+npm run package   # vite build && electron-builder -> release/
+```
 
-### 5.1 What is already in our favour
+Produces `release/Apostello Setup <version>.exe` — ~103 MB, one-click,
+per-user (`perMachine: false`), so it installs without an admin prompt.
+**Unsigned**, deliberately; see §5.3.
+
+### 5.1 What was already in our favour
 
 - **No native dependencies.** Everything is pure JS (firebase, react, jszip,
   pptxviewjs, zustand), so there is no per-platform rebuild step. Partly a
@@ -485,34 +490,73 @@ real hardware — packaging a build nobody has run a service on is premature.
 - Serving `dist/` from inside `app.asar` works — Electron patches `fs`, and
   `createReadStream` is what [server.js](../electron/server.js) already uses.
 
-### 5.2 The three blockers
+### 5.2 The build config, and why each line is there
 
-**`.env` will not ship.** [main.js](../electron/main.js) reads
-`GOOGLE_DESKTOP_CLIENT_ID` / `_SECRET` at runtime from a gitignored `.env`,
-which electron-builder will not include — sign-in fails on the target machine
-with the "not set" error. Inject both at build time instead. Per RFC 8252 the
-installed-app secret is not confidential (it ships in every copy regardless),
-so this is a deliberate choice, not a leak. The `VITE_*` Firebase config is
-already inlined into the renderer bundle and needs nothing.
+All of it is the `build` block in [package.json](../package.json).
 
-**Data and media do not travel with the installer.** A new machine needs:
-sign in → first-run import (Firestore) → media import (~267 MB from Storage).
-Both need network and an approved operator, so it is a prep-time task, not
-something to do at a venue. Note this depends on Storage still existing — see
-§4.5 about when the bucket can be retired.
-
-**macOS cannot be built from Windows.** electron-builder can target Windows
-from a Mac, but not the reverse: macOS packaging needs Apple tooling for
-signing and notarization. A `.dmg` therefore requires access to a Mac.
+- **`directories.output: "release"`.** electron-builder's default output
+  directory is `dist` — which is Vite's. Leaving it would have the packager
+  writing installers into the renderer build it is packaging.
+- **`files: [electron/**, dist/**, package.json, !node_modules/**/*]`.**
+  Excluding `node_modules` is the one entry that matters for size: `firebase`,
+  `react` and friends are `dependencies`, so electron-builder would ship them
+  again alongside the Vite bundle that already contains them. The main process
+  requires nothing but `electron` and `node:` builtins, so there is nothing to
+  keep. Result: 25 files in the asar, no `node_modules`.
+- **`extraResources: [".env"]`.** `ROOT` in [main.js](../electron/main.js) is
+  inside `app.asar` once packaged, and the gitignored `.env` is not in there.
+  It ships as a plain file at `resources/.env` instead, and `main.js` tries
+  both locations in turn. Shipping it in the clear is the point, not an
+  oversight — an installed app cannot hold a secret (RFC 8252 §8.5), which is
+  why the flow uses PKCE and why [firestore.rules](../firestore.rules) is the
+  real boundary: every collection is gated on `isOperator()`, and `approved`
+  is settable only from the Firebase console. The `VITE_*` Firebase config is
+  inlined into the renderer bundle exactly as it is on the web, and needs
+  nothing.
+  A build therefore needs `.env` present — for the `VITE_*` vars anyway.
+  The copy is occasionally skipped with no error — seen twice, both times
+  on the build right after an interrupted one left `win-unpacked` half
+  written. `npm run package` therefore ends by asserting the file is there:
+  its absence is invisible until an operator tries to sign in on the target
+  machine.
+- **`win.icon: "assets/icon.png"`.** `public/favicon.svg` rasterized to
+  256×256; electron-builder rejects Windows icons below that, and
+  `public/favicon.ico` tops out at 64. It lives in `assets/` rather than the
+  conventional `build/` because `/build` is gitignored from the CRA days.
 
 ### 5.3 Signing
 
 Unsigned builds trip SmartScreen on Windows and Gatekeeper on macOS. For a
-couple of known church machines, clicking through is acceptable. Painless
-distribution needs an Apple Developer account ($99/yr) and a Windows
-code-signing certificate.
+couple of known church machines, clicking through "More info → Run anyway"
+once per install is acceptable. The per-user NSIS target at least avoids a UAC
+prompt on top of it. Painless distribution would need a Windows code-signing
+certificate and, for a `.dmg`, an Apple Developer account ($99/yr).
 
-### 5.4 macOS behaviour to revisit
+### 5.4 Building on Windows: Developer Mode
+
+electron-builder unpacks its `winCodeSign` bundle even when signing is
+skipped, and that archive contains macOS symlinks. Without the privilege to
+create symlinks the extraction fails and the NSIS step dies with
+`Cannot create symbolic link ... libcrypto.dylib`, after `win-unpacked` has
+already been written — so it looks like a late, mysterious failure.
+
+Enable **Settings → System → For developers → Developer Mode** once on the
+build machine. (The unblock without it: extract
+`%LOCALAPPDATA%\electron-builder\Cache\winCodeSign\*.7z` by hand into
+`winCodeSign-2.6.0` in that folder with `-x!darwin`.)
+
+### 5.5 What the installer still does not carry
+
+**Data and media.** A new machine needs: sign in → first-run import
+(Firestore) → media import (~267 MB from Storage). Both need network and an
+approved operator, so it is a prep-time task, not something to do at a venue.
+Note this depends on Storage still existing — see §4.5 about when the bucket
+can be retired.
+
+**A macOS build.** electron-builder can target Windows from a Mac, but not the
+reverse: macOS packaging needs Apple tooling. A `.dmg` requires access to a Mac.
+
+### 5.6 macOS behaviour to revisit
 
 Both are Windows conventions that are wrong on a Mac, and neither has been
 tested there:
@@ -523,11 +567,14 @@ tested there:
   which behaves differently for a projector. `simpleFullscreen` is usually
   the better fit.
 
-### 5.5 Done when
+### 5.7 Done when
 
 An installer built on a clean checkout installs on a second machine, signs in
 without a `.env` present, imports data and media, and runs a full service
-offline.
+offline. **Built and verified as far as the artifact goes** — the asar carries
+`dist/` and no `node_modules`, `resources/.env` is in place, `npm run
+test:electron` passes. Installing it on a second machine and running a service
+from it is still untested.
 
 ---
 
@@ -544,5 +591,5 @@ offline.
 
 Operator push-to-repository · SQLite · media sync between machines ·
 content-hash asset IDs · auto-update · a migration framework · repository
-song-update propagation · **backup/export of `data.json`** · **packaging
-(step 5)**.
+song-update propagation · **backup/export of `data.json`** · **code
+signing** · **a macOS build**.

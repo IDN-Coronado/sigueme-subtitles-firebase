@@ -1,7 +1,9 @@
 {
   "name": "apostello",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "private": true,
+  "description": "Presentation console for church services — programs, songs, themes and live captions.",
+  "author": "IDN Coronado",
   "main": "electron/main.js",
   "homepage": "https://siguemesubtitles.web.app/",
   "engines": {
@@ -30,9 +32,30 @@
     "preview": "vite preview",
     "desktop": "vite build && electron .",
     "desktop:dev": "electron . --dev",
+    "package": "vite build && electron-builder && node -e \"if(!require('node:fs').existsSync('release/win-unpacked/resources/.env'))throw new Error('resources/.env did not ship — rerun; sign-in fails without it')\"",
     "test:electron": "node --test electron/electron.test.js",
     "lhci:mobile": "lhci autorun",
     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop"
+  },
+  "build": {
+    "appId": "app.siguemesubtitles.apostello",
+    "productName": "Apostello",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**",
+      "dist/**",
+      "package.json",
+      "!node_modules/**/*"
+    ],
+    "extraResources": [
+      ".env"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.png"
+    }
   },
   "browserslist": {
     "production": [
@@ -51,6 +74,7 @@
     "@lhci/cli": "^0.14.0",
     "@vitejs/plugin-react": "^4.7.0",
     "electron": "^43.4.0",
+    "electron-builder": "^25.1.8",
     "tailwindcss": "^3.2.7",
     "vite": "^6.4.3"
   },

@@ -18,10 +18,17 @@ const appUrl = isDev ? "http://localhost:5173" : `http://127.0.0.1:${PORT}`;
 
 // GOOGLE_DESKTOP_CLIENT_ID / _SECRET live in .env alongside the VITE_ vars,
 // but are read here at runtime rather than inlined into the renderer bundle.
-try {
-  process.loadEnvFile(path.join(ROOT, ".env"));
-} catch {
-  // No .env — signInWithGoogle reports the missing vars with a clear error.
+// Packaged, ROOT is inside app.asar and carries no .env — electron-builder
+// ships it as a resource instead, so try both. Plain text either way: an
+// installed app cannot hold a secret (RFC 8252 §8.5), which is why the flow
+// uses PKCE and why firestore.rules is the actual boundary.
+for (const envFile of [path.join(ROOT, ".env"), path.join(process.resourcesPath || "", ".env")]) {
+  try {
+    process.loadEnvFile(envFile);
+    break;
+  } catch {
+    // Keep looking; signInWithGoogle reports the missing vars with a clear error.
+  }
 }
 
 // app.quit() is asynchronous, so a bare `if (...) app.quit()` would let the

@@ -56,7 +56,13 @@ export async function fetchPdfArrayBuffer({ url, storagePath } = {}) {
 
 /** Resolves to a PDFDocumentProxy. Callers own it and must destroy() it. */
 export async function createPdfDocument(buffer) {
-  return pdfjsLib.getDocument({ data: buffer }).promise;
+  const task = pdfjsLib.getDocument({ data: buffer });
+  const doc = await task.promise;
+  // pdfjs-dist 4+ moved destroy() to the loading task, not the document proxy
+  if (typeof doc.destroy !== "function") {
+    doc.destroy = () => task.destroy();
+  }
+  return doc;
 }
 
 export function getCachedPdfThumbnail(url) {

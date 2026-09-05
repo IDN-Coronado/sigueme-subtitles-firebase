@@ -24,11 +24,11 @@ import {
 import { MONO } from "./constants";
 
 const btnBase =
-  "w-8 h-8 inline-flex items-center justify-center rounded-sm border transition-colors shrink-0";
+  "w-8 h-8 inline-flex items-center justify-center rounded-lg border transition-colors shrink-0";
 const btnIdle =
-  "border-[rgba(69,70,77,0.4)] text-[#c6c6cd] hover:border-[#7bd0ff] hover:text-[#7bd0ff]";
+  "border-[rgba(255,255,255,0.1)] text-[#9AA3B2] hover:border-[rgba(99,102,241,0.4)] hover:text-[#7C83FF]";
 const btnActive =
-  "border-[rgba(123,208,255,0.45)] text-[#7bd0ff] bg-[rgba(123,208,255,0.1)]";
+  "border-[rgba(99,102,241,0.5)] text-[#7C83FF] bg-[rgba(99,102,241,0.15)]";
 
 function CaptionConsoleControls({
   programId,
@@ -211,7 +211,7 @@ function CaptionConsoleControls({
       <button
         type="button"
         onClick={onReset}
-        className="h-8 px-2 inline-flex items-center rounded-sm border border-[rgba(69,70,77,0.4)] text-[#6b7280] text-[10px] tracking-[0.06em] hover:border-[#ffb4ab] hover:text-[#ffb4ab] transition-colors shrink-0"
+        className="h-8 px-2 inline-flex items-center rounded-lg border border-[rgba(255,255,255,0.1)] text-[#9AA3B2] text-[10px] tracking-[0.06em] hover:border-[#EF4444] hover:text-[#EF4444] transition-colors shrink-0"
         style={MONO}
         title={t("console.ccResetProgramHint")}
         aria-label={t("console.ccReset")}

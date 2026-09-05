@@ -20,29 +20,30 @@ const COLLECTION_NAME = "songs";
 const useSongsStore = create((set) => ({
   songs: [],
   setSongs: (songs) => set({ songs }),
-  initialized: false,
-  setInitialized: (val) => set({ initialized: val }),
 }));
 
 function useSongs() {
-  const { songs, setSongs, initialized, setInitialized } = useSongsStore();
+  const { songs, setSongs } = useSongsStore();
 
-  // Only fetch once
+  // No "fetch once" guard here, matching useThemes/usePrograms. Firestore is
+  // configured with persistentLocalCache (see firebase.js), so the first
+  // snapshot is served from IndexedDB and the server's version arrives in a
+  // later one — a listener torn down after the first snapshot pins the app to
+  // whatever was cached, and song edits made elsewhere never show up.
+  // Identical query listeners are collapsed onto one stream by Firestore, so
+  // the two useSongs() callers cost nothing extra.
   useEffect(() => {
-    if (initialized) return;
     const collectionRef = collection(db, COLLECTION_NAME);
     const q = query(collectionRef, orderBy("title"));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const dbSongs = querySnapshot.docs.map((docSnap) => ({
-        ...docSnap.data(),
-        id: docSnap.id,
-      }));
-      setSongs(dbSongs);
-      setInitialized(true);
+    return onSnapshot(q, (querySnapshot) => {
+      setSongs(
+        querySnapshot.docs.map((docSnap) => ({
+          ...docSnap.data(),
+          id: docSnap.id,
+        }))
+      );
     });
-    return () => unsubscribe();
-    // eslint-disable-next-line
-  }, [initialized, setSongs, setInitialized]);
+  }, [setSongs]);
 
   const getById = useCallback(
     (id) => songs.filter((s) => s.id === id).shift() || {},

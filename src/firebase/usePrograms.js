@@ -20,7 +20,10 @@ function usePrograms(id) {
     dbPrograms.filter(p => p.id === id).shift() || {};
 
   const addProgram = async (program) => {
-    const mainLogo = program.mainLogo || (await buildDefaultMainLogo());
+    // A missing/renamed default logo in Storage must not block creating a
+    // program — the logo is settable per program later via the Logo button.
+    const mainLogo =
+      program.mainLogo || (await buildDefaultMainLogo().catch(() => null));
     const payload = { ...program, mainLogo };
     const docRef = await addDoc(collection(db, COLLECTION_NAME), payload);
     setPrograms([

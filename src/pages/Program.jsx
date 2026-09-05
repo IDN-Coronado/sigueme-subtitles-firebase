@@ -24,7 +24,7 @@ import PreviewPanel from "../components/Program/PreviewPanel";
 import PreviewConsole from "../components/Program/PreviewConsole";
 import MediaConsoleControls from "../components/Program/MediaConsoleControls";
 import CaptionConsoleControls from "../components/Program/CaptionConsoleControls";
-import PptxConsoleControls from "../components/Program/PptxConsoleControls";
+import PdfConsoleControls from "../components/Program/PdfConsoleControls";
 import ResourceBrowser from "../components/Program/ResourceBrowser";
 import ProgramHeader from "../components/Program/ProgramHeader";
 import { RESOURCE_TABS, MONO } from "../components/Program/constants";
@@ -75,7 +75,7 @@ function Program() {
   const [editingSong, setEditingSong] = useState(null);
   const [editingYouTube, setEditingYouTube] = useState(null);
   const [pendingDelete, setPendingDelete] = useState(null);
-  const [pptxSlideCount, setPptxSlideCount] = useState(0);
+  const [pdfPageCount, setPdfPageCount] = useState(0);
 
   const { songs, addSong, updateSong, removeSong } = useSongs();
   const { themes, addTheme, removeTheme } = useThemes();
@@ -342,7 +342,7 @@ function Program() {
   };
 
   const handleSetMediaAsLogo = async (item) => {
-    if (!item?.url || !programId || item.type === "pptx") return;
+    if (!item?.url || !programId || item.type === "pdf") return;
     try {
       await updateProgram(programId, {
         mainLogo: {
@@ -358,15 +358,15 @@ function Program() {
     }
   };
 
-  const handlePptxLoaded = async ({ slideCount }) => {
+  const handlePdfLoaded = async ({ slideCount }) => {
     const count = Math.max(0, Math.floor(Number(slideCount) || 0));
-    if (count > 0) setPptxSlideCount(count);
+    if (count > 0) setPdfPageCount(count);
 
     const current = previewRef.current;
     const media = current?.resource?.media;
     if (
       current?.resource?.type !== "media" ||
-      media?.mediaType !== "pptx" ||
+      media?.mediaType !== "pdf" ||
       count <= 0
     ) {
       return;
@@ -568,7 +568,7 @@ function Program() {
 
   const consoleMedia =
     preview?.resource?.type === "media" ? preview.resource.media : null;
-  const showPptxControls = consoleMedia?.mediaType === "pptx";
+  const showPdfControls = consoleMedia?.mediaType === "pdf";
   const showMediaControls =
     consoleMedia &&
     (consoleMedia.mediaType === "audio" ||
@@ -576,12 +576,12 @@ function Program() {
       consoleMedia.mediaType === "youtube");
 
   useEffect(() => {
-    if (consoleMedia?.mediaType !== "pptx") {
-      setPptxSlideCount(0);
+    if (consoleMedia?.mediaType !== "pdf") {
+      setPdfPageCount(0);
       return;
     }
     if (Number.isFinite(consoleMedia.slideCount) && consoleMedia.slideCount > 0) {
-      setPptxSlideCount(Math.floor(consoleMedia.slideCount));
+      setPdfPageCount(Math.floor(consoleMedia.slideCount));
     }
   }, [
     consoleMedia?.mediaType,
@@ -590,8 +590,8 @@ function Program() {
     consoleMedia?.slideCount,
   ]);
 
-  const effectivePptxSlideCount = Math.max(
-    pptxSlideCount,
+  const effectivePdfPageCount = Math.max(
+    pdfPageCount,
     Number.isFinite(consoleMedia?.slideCount)
       ? Math.floor(consoleMedia.slideCount)
       : 0
@@ -718,11 +718,11 @@ function Program() {
         className="h-full"
         action={
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 max-w-full overflow-x-auto">
-            {showPptxControls ? (
-              <PptxConsoleControls
+            {showPdfControls ? (
+              <PdfConsoleControls
                 preview={preview}
                 setPreview={setPreview}
-                slideCount={effectivePptxSlideCount}
+                slideCount={effectivePdfPageCount}
               />
             ) : showMediaControls ? (
               <MediaConsoleControls
@@ -743,7 +743,7 @@ function Program() {
         <PreviewConsole
           preview={preview}
           mediaRef={consoleMediaRef}
-          onPptxLoaded={handlePptxLoaded}
+          onPdfLoaded={handlePdfLoaded}
         />
       </Panel>
     </ResizableSplit>

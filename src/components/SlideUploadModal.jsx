@@ -81,7 +81,7 @@ function SlideUploadModal({ isOpen, onClose, onUpload }) {
             </label>
             <input
               type="file"
-              accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.bmp,.avif,.mp4,.webm,.mov,.m4v,.ogv,.mp3,.wav,.m4a,.aac,.flac,.oga,.ogg,.opus,.wma,.pptx"
+              accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.bmp,.avif,.mp4,.webm,.mov,.m4v,.ogv,.mp3,.wav,.m4a,.aac,.flac,.oga,.ogg,.opus,.wma,.pdf"
               onChange={(e) => setFile(e.target.files[0])}
               className="bg-[#171C2B] text-[#9AA3B2] border border-[rgba(255,255,255,0.08)] rounded-lg px-3 py-2.5 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-[rgba(99,102,241,0.2)] file:text-[#7C83FF] file:text-sm file:font-medium hover:border-[rgba(99,102,241,0.4)] transition-colors"
               required

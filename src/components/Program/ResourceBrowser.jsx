@@ -95,8 +95,8 @@ function SongsBrowser({
                   <div
                     className={`relative h-full rounded-lg border transition-colors ${
                       isSelected
-                        ? "border-[rgba(123,208,255,0.45)] bg-[rgba(123,208,255,0.12)]"
-                        : "border-[rgba(69,70,77,0.3)] bg-[rgba(16,20,21,0.5)] hover:border-[rgba(123,208,255,0.35)] hover:bg-[rgba(123,208,255,0.08)]"
+                        ? "border-[rgba(99,102,241,0.5)] bg-[rgba(99,102,241,0.12)]"
+                        : "border-[rgba(255,255,255,0.08)] bg-[#171C2B] hover:border-[rgba(99,102,241,0.35)] hover:bg-[rgba(99,102,241,0.08)]"
                     }`}
                   >
                     <button
@@ -161,7 +161,7 @@ function SongsBrowser({
             <button
               type="button"
               onClick={() => setSelected({})}
-              className="px-3 py-2 text-sm text-[#c6c6cd] border border-[rgba(69,70,77,0.4)] rounded-sm hover:border-[#7bd0ff] hover:text-[#7bd0ff] transition-colors"
+              className="px-3 py-2 text-sm text-[#9AA3B2] border border-[rgba(255,255,255,0.1)] rounded-lg hover:border-[rgba(99,102,241,0.4)] hover:text-[#7C83FF] transition-colors"
             >
               {t("common.clear")}
             </button>
@@ -170,7 +170,7 @@ function SongsBrowser({
             type="button"
             disabled={selectedCount === 0}
             onClick={handleAddSelected}
-            className="px-4 py-2 bg-[#7bd0ff] text-[#00354a] text-sm font-bold rounded-sm hover:bg-[#5bc0ef] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-[#6366F1] text-white text-sm font-bold rounded-lg hover:bg-[#7C83FF] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {t("resourceMenu.addToSchedule")}
           </button>
@@ -265,8 +265,8 @@ function MediaBrowser({
               key={item.id}
               className={`relative text-left rounded-sm border transition-colors ${
                 isSelected
-                  ? "border-[rgba(123,208,255,0.45)] bg-[rgba(123,208,255,0.12)]"
-                  : "border-[rgba(69,70,77,0.3)] bg-[rgba(16,20,21,0.5)] hover:border-[rgba(123,208,255,0.3)]"
+                  ? "border-[rgba(99,102,241,0.5)] bg-[rgba(99,102,241,0.12)]"
+                  : "border-[rgba(255,255,255,0.08)] bg-[#171C2B] hover:border-[rgba(99,102,241,0.3)]"
               }`}
             >
               <button
@@ -359,7 +359,7 @@ function MediaBrowser({
             <button
               type="button"
               onClick={() => setSelected({})}
-              className="px-3 py-2 text-sm text-[#c6c6cd] border border-[rgba(69,70,77,0.4)] rounded-sm hover:border-[#7bd0ff] hover:text-[#7bd0ff] transition-colors"
+              className="px-3 py-2 text-sm text-[#9AA3B2] border border-[rgba(255,255,255,0.1)] rounded-lg hover:border-[rgba(99,102,241,0.4)] hover:text-[#7C83FF] transition-colors"
             >
               {t("common.clear")}
             </button>
@@ -368,7 +368,7 @@ function MediaBrowser({
             type="button"
             disabled={selectedCount === 0}
             onClick={handleAddSelected}
-            className="px-4 py-2 bg-[#7bd0ff] text-[#00354a] text-sm font-bold rounded-sm hover:bg-[#5bc0ef] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-[#6366F1] text-white text-sm font-bold rounded-lg hover:bg-[#7C83FF] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {t("resourceMenu.addToSchedule")}
           </button>
@@ -404,7 +404,7 @@ function ThemesBrowser({
         {list.map((theme) => (
           <div
             key={theme.id}
-            className="relative text-left rounded-sm border border-[rgba(69,70,77,0.3)] bg-[rgba(16,20,21,0.5)] hover:border-[rgba(123,208,255,0.3)] transition-colors"
+            className="relative text-left rounded-sm border border-[rgba(255,255,255,0.08)] bg-[#171C2B] hover:border-[rgba(99,102,241,0.3)] transition-colors"
           >
             <button
               type="button"

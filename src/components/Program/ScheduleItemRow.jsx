@@ -1,20 +1,27 @@
 import { t } from "../../i18n";
 import { typeLabel, getBibleVerses } from "../../utils/programSchedule";
 import { mediaDisplayTitle } from "../../utils/mediaTitle";
-import {
-  IconBible,
-  IconMedia,
-  IconSong,
-  IconTheme,
-} from "../Icons";
 import { MONO } from "./constants";
 
-function ScheduleTypeIcon({ item }) {
-  const color = "currentColor";
-  if (item.type === "song") return <IconSong color={color} />;
-  if (item.type === "bible") return <IconBible color={color} />;
-  if (item.type === "theme") return <IconTheme color={color} />;
-  return <IconMedia color={color} />;
+const TYPE_CHIP = {
+  song: { label: "CANCION", bg: "bg-[rgba(99,102,241,0.2)]", text: "text-[#7C83FF]" },
+  bible: { label: "BIBLIA", bg: "bg-[rgba(0,212,255,0.15)]", text: "text-[#00D4FF]" },
+  theme: { label: "TEMA", bg: "bg-[rgba(52,211,153,0.15)]", text: "text-[#34D399]" },
+  media: { label: "MEDIA", bg: "bg-[rgba(251,191,36,0.15)]", text: "text-[#FBBF24]" },
+  video: { label: "VIDEO", bg: "bg-[rgba(251,113,133,0.15)]", text: "text-[#FB7185]" },
+  image: { label: "IMAGEN", bg: "bg-[rgba(167,139,250,0.2)]", text: "text-[#A78BFA]" },
+  audio: { label: "AUDIO", bg: "bg-[rgba(96,165,250,0.15)]", text: "text-[#60A5FA]" },
+  youtube: { label: "YOUTUBE", bg: "bg-[rgba(251,113,133,0.15)]", text: "text-[#FB7185]" },
+};
+
+function TypeChip({ item }) {
+  const subtype = item.mediaType || item.type;
+  const chip = TYPE_CHIP[subtype] || TYPE_CHIP[item.type] || TYPE_CHIP.media;
+  return (
+    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold tracking-[0.08em] uppercase ${chip.bg} ${chip.text}`} style={MONO}>
+      {chip.label}
+    </span>
+  );
 }
 
 const CACHE_STATUS_COLOR = {
@@ -24,17 +31,10 @@ const CACHE_STATUS_COLOR = {
   unavailable: "bg-[#6b7280]",
 };
 
-const CACHE_STATUS_LABEL_KEY = {
-  cached: "schedule.cacheStatusCached",
-  loading: "schedule.cacheStatusLoading",
-  error: "schedule.cacheStatusError",
-  unavailable: "schedule.cacheStatusUnavailable",
-};
-
 function CacheStatusDot({ status }) {
   const color = CACHE_STATUS_COLOR[status];
   if (!color) return null;
-  const label = t(CACHE_STATUS_LABEL_KEY[status]);
+  const label = t(`schedule.cacheStatus${status.charAt(0).toUpperCase() + status.slice(1)}`);
   return (
     <span
       className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${color}`}
@@ -44,51 +44,31 @@ function CacheStatusDot({ status }) {
   );
 }
 
-function ScheduleItemRow({ item, index, active, onSelect, onRemove, cacheStatus }) {
+function ScheduleItemRow({ item, index, active, onSelect, onDoubleSelect, onRemove, cacheStatus }) {
   const isTheme = item.type === "theme";
 
   if (isTheme) {
     return (
-      <div className="w-full rounded-lg border border-[rgba(69,70,77,0.25)] bg-[rgba(16,20,21,0.35)] px-3 py-2 flex items-center gap-3">
-        <div className="w-12 h-8 rounded-sm bg-[#272a2c] border border-[rgba(69,70,77,0.3)] overflow-hidden shrink-0">
+      <div className="w-full rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#171C2B] px-3 py-2.5 flex items-center gap-3">
+        <div className="w-12 h-8 rounded-md bg-[#1E2540] border border-[rgba(255,255,255,0.06)] overflow-hidden shrink-0">
           {item.backgroundUrl ? (
             item.themeType === "video" ? (
-              <video
-                src={item.backgroundUrl}
-                crossOrigin="anonymous"
-                className="w-full h-full object-cover"
-                muted
-                playsInline
-              />
+              <video src={item.backgroundUrl} crossOrigin="anonymous" className="w-full h-full object-cover" muted playsInline />
             ) : (
-              <img
-                src={item.backgroundUrl}
-                crossOrigin="anonymous"
-                alt=""
-                className="w-full h-full object-cover"
-              />
+              <img src={item.backgroundUrl} crossOrigin="anonymous" alt="" className="w-full h-full object-cover" />
             )
           ) : (
-            <div
-              className="w-full h-full flex items-center justify-center text-[#45464d] text-[8px] tracking-[0.08em]"
-              style={MONO}
-            >
+            <div className="w-full h-full flex items-center justify-center text-[#9AA3B2] text-[8px]" style={MONO}>
               {t("types.theme")}
             </div>
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p
-            className="text-[#7bd0ff] text-[10px] tracking-[0.1em] uppercase inline-flex items-center gap-1.5"
-            style={MONO}
-          >
-            <span className="inline-flex shrink-0 opacity-80" aria-hidden>
-              <ScheduleTypeIcon item={item} />
-            </span>
-            {t("types.theme")}
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <TypeChip item={item} />
             <CacheStatusDot status={cacheStatus} />
-          </p>
-          <p className="text-[#e0e3e5] text-sm font-semibold truncate leading-tight">
+          </div>
+          <p className="text-[#F8FAFC] text-sm font-semibold truncate leading-tight">
             {item.title}
           </p>
         </div>
@@ -96,66 +76,51 @@ function ScheduleItemRow({ item, index, active, onSelect, onRemove, cacheStatus 
     );
   }
 
-  const bibleCount =
-    item.type === "bible" ? getBibleVerses(item).length : 0;
+  const bibleCount = item.type === "bible" ? getBibleVerses(item).length : 0;
 
   return (
     <button
+      key={active ? "on" : "off"}
       type="button"
       onClick={() => onSelect(item.id)}
-      className={`w-full text-left rounded-lg border transition-colors ${
+      onDoubleClick={() => onDoubleSelect?.(item.id)}
+      className={`w-full text-left rounded-lg border transition-all duration-200 ${
         active
-          ? "border-[rgba(123,208,255,0.35)] bg-[rgba(50,53,55,0.35)] border-l-4 border-l-[#7bd0ff]"
-          : "border-[rgba(69,70,77,0.25)] bg-[rgba(16,20,21,0.35)] hover:border-[rgba(123,208,255,0.2)]"
+          ? "schedule-item-active border-[rgba(99,102,241,0.5)] bg-[rgba(99,102,241,0.1)] border-l-2 border-l-[#6366F1]"
+          : "border-[rgba(255,255,255,0.06)] bg-[#171C2B] hover:border-[rgba(99,102,241,0.3)] hover:bg-[#1E2540]"
       }`}
     >
-      <div className="flex items-start gap-3 p-3">
+      <div className="flex items-center gap-3 px-3 py-2.5">
+        {/* Number */}
+        <span className="text-[#9AA3B2] text-xs font-mono tabular-nums shrink-0 w-5 text-center">
+          {String(index + 1).padStart(2, "0")}
+        </span>
+
+        {/* Content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2 mb-1">
-            <span
-              className="text-[#7bd0ff] text-xs tracking-[0.05em] inline-flex items-center gap-1.5 min-w-0"
-              style={MONO}
-            >
-              <span className="inline-flex shrink-0 opacity-80" aria-hidden>
-                <ScheduleTypeIcon item={item} />
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <TypeChip item={item} />
+            {bibleCount > 0 && (
+              <span className="text-[#9AA3B2] text-[9px]" style={MONO}>
+                {bibleCount} {bibleCount === 1 ? t("schedule.versicleCount", { count: "" }).replace(" ", "") : "vs"}
               </span>
-              <span className="truncate">
-                {String(index + 1).padStart(2, "0")}. {typeLabel(item)}
-              </span>
-              <CacheStatusDot status={cacheStatus} />
-            </span>
+            )}
+            <CacheStatusDot status={cacheStatus} />
           </div>
-          <p className="text-[#e0e3e5] text-sm font-semibold truncate">
+          <p className="text-[#F8FAFC] text-sm font-medium truncate leading-tight">
             {item.type === "media" ? mediaDisplayTitle(item) : item.title}
           </p>
-          {item.type === "bible" && bibleCount > 0 ? (
-            <p
-              className="text-[#6b7280] text-[11px] tracking-[0.04em] mt-0.5"
-              style={MONO}
-            >
-              {t(
-                bibleCount === 1
-                  ? "schedule.versicleCount"
-                  : "schedule.versicleCountPlural",
-                { count: bibleCount },
-              )}
-            </p>
-          ) : null}
         </div>
+
+        {/* Remove */}
         <span
           role="button"
           tabIndex={0}
           title={t("schedule.remove")}
-          className="text-[#6b7280] hover:text-[#ffb4ab] text-lg leading-none px-1"
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove(item.id);
-          }}
+          className="text-[#9AA3B2] hover:text-[#EF4444] text-base leading-none px-1 shrink-0 transition-colors"
+          onClick={(e) => { e.stopPropagation(); onRemove(item.id); }}
           onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.stopPropagation();
-              onRemove(item.id);
-            }
+            if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); onRemove(item.id); }
           }}
         >
           ×

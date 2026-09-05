@@ -30,6 +30,8 @@ import ProgramHeader from "../components/Program/ProgramHeader";
 import { RESOURCE_TABS, MONO } from "../components/Program/constants";
 import { IconChevron } from "../components/Icons";
 import { t } from "../i18n";
+import { flattenSongLines } from "../utils/songSections";
+import { getBibleVerses } from "../utils/programSchedule";
 
 const LAYOUT_STORAGE = {
   vertical: "sigueme.program.layout.vertical",
@@ -141,10 +143,15 @@ function Program() {
   };
 
   const handleSaveSong = async ({ title, sections, id }) => {
-    if (id) {
-      await updateSong(id, title, sections);
-    } else {
-      await addSong(title, sections);
+    try {
+      if (id) {
+        await updateSong(id, title, sections);
+      } else {
+        await addSong(title, sections);
+      }
+    } catch (err) {
+      alert(t("errors.saveSong"));
+      throw err;
     }
   };
 
@@ -173,6 +180,7 @@ function Program() {
   const handleCreateTheme = async ({ title, storagePath, file }) => {
     try {
       await addTheme({ title, storagePath, file });
+      closeCreateModal();
     } catch {
       alert(t("errors.uploadTheme"));
     }
@@ -206,30 +214,38 @@ function Program() {
           }
         : preview?.theme || null;
 
-    await setPreview({
-      programId,
-      theme,
-      resource,
-    });
+    try {
+      await setPreview({
+        programId,
+        theme,
+        resource,
+      });
 
-    if (resource.type === "song") {
-      await setCaption(resource.song?.line || "");
-    } else if (previousType === "song") {
-      await setCaption("");
+      if (resource.type === "song") {
+        await setCaption(resource.song?.line || "");
+      } else if (previousType === "song") {
+        await setCaption("");
+      }
+    } catch {
+      alert(t("errors.updatePreview"));
     }
   };
 
   const handleAddTheme = async (theme) => {
-    await addThemeToSchedule(theme);
-    await setPreview({
-      programId,
-      theme: {
-        id: theme.id,
-        title: theme.title,
-        backgroundUrl: theme.backgroundUrl,
-        themeType: theme.type,
-      },
-    });
+    try {
+      await addThemeToSchedule(theme);
+      await setPreview({
+        programId,
+        theme: {
+          id: theme.id,
+          title: theme.title,
+          backgroundUrl: theme.backgroundUrl,
+          themeType: theme.type,
+        },
+      });
+    } catch {
+      alert(t("errors.addTheme"));
+    }
   };
 
   const isLogoDisplayed =
@@ -278,11 +294,15 @@ function Program() {
         }
       : preview?.theme || null;
 
-    await setCaption("");
-    if (theme) {
-      await setPreview({ programId, theme });
+    try {
+      await setCaption("");
+      if (theme) {
+        await setPreview({ programId, theme });
+      }
+      await clearPreviewResource();
+    } catch {
+      alert(t("errors.clearConsole"));
     }
-    await clearPreviewResource();
   };
 
   const handleShowLogo = async () => {
@@ -300,21 +320,25 @@ function Program() {
           }
         : preview?.theme || null;
 
-    await setCaption("");
-    await setPreview({
-      programId,
-      theme,
-      resource: {
-        type: "media",
-        media: {
-          title: logo.title,
-          name: logo.name || logo.title,
-          url: logo.url,
-          storagePath: logo.storagePath,
-          mediaType: logo.mediaType || "video",
+    try {
+      await setCaption("");
+      await setPreview({
+        programId,
+        theme,
+        resource: {
+          type: "media",
+          media: {
+            title: logo.title,
+            name: logo.name || logo.title,
+            url: logo.url,
+            storagePath: logo.storagePath,
+            mediaType: logo.mediaType || "video",
+          },
         },
-      },
-    });
+      });
+    } catch {
+      alert(t("errors.showLogo"));
+    }
   };
 
   const handleSetMediaAsLogo = async (item) => {
@@ -353,19 +377,179 @@ function Program() {
       ? Math.max(0, Math.min(count - 1, Math.floor(media.slideIndex)))
       : 0;
 
-    await setPreview({
-      programId,
-      theme: current.theme ?? null,
-      resource: {
-        type: "media",
-        media: {
-          ...media,
-          slideIndex,
-          slideCount: count,
+    try {
+      await setPreview({
+        programId,
+        theme: current.theme ?? null,
+        resource: {
+          type: "media",
+          media: {
+            ...media,
+            slideIndex,
+            slideCount: count,
+          },
         },
-      },
-    });
+      });
+    } catch {
+      // background sync — silent fail is acceptable
+    }
   };
+
+  const handleBlackScreen = async () => {
+    try {
+      await setCaption("");
+      await setPreview({ programId, theme: null, resource: null });
+    } catch {
+      alert(t("errors.clearConsole"));
+    }
+  };
+
+  // Keyboard navigation — registered once, reads latest state via refs.
+  const keyHandlerRef = useRef(null);
+  keyHandlerRef.current = (e) => {
+    if (createModal || pendingDelete) return;
+    if (["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return;
+    if (e.target.isContentEditable) return;
+
+    const resource = previewRef.current?.resource;
+
+    // Ctrl+S → guardar (evita diálogo del navegador)
+    if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+      e.preventDefault();
+      return;
+    }
+
+    // F11 → fullscreen toggle
+    if (e.key === "F11") {
+      e.preventDefault();
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.();
+      } else {
+        document.exitFullscreen?.();
+      }
+      return;
+    }
+
+    if (e.key === "Escape") {
+      e.preventDefault();
+      handleClear();
+      return;
+    }
+    if (e.key === "b" || e.key === "B") {
+      handleBlackScreen();
+      return;
+    }
+    if (e.key === "l" || e.key === "L") {
+      handleShowLogo();
+      return;
+    }
+
+    // Space → avanzar al siguiente item del schedule
+    if (e.key === " " && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      if (!schedule.length) return;
+      const currentIdx = schedule.findIndex((i) => i.id === selectedId);
+      const nextIdx = currentIdx < 0 ? 0 : Math.min(schedule.length - 1, currentIdx + 1);
+      setSelectedId(schedule[nextIdx].id);
+      return;
+    }
+
+    const isNext = e.key === "ArrowRight" || e.key === "ArrowDown";
+    const isPrev = e.key === "ArrowLeft" || e.key === "ArrowUp";
+    if (!isNext && !isPrev) return;
+    e.preventDefault(); // evita scroll del browser con arrows
+
+    // PPTX: navegar slides
+    if (resource?.type === "media" && resource.media?.mediaType === "pptx") {
+      e.preventDefault();
+      const media = resource.media;
+      const slideIndex = Number.isFinite(media?.slideIndex)
+        ? Math.max(0, Math.floor(media.slideIndex))
+        : 0;
+      const slideCount = effectivePptxSlideCount;
+      if (slideCount <= 0) return;
+      const next = isNext
+        ? Math.min(slideCount - 1, slideIndex + 1)
+        : Math.max(0, slideIndex - 1);
+      if (next === slideIndex) return;
+      try {
+        const p = setPreview({
+          programId: previewRef.current?.programId,
+          theme: previewRef.current?.theme ?? null,
+          resource: { type: "media", media: { ...media, slideIndex: next, slideCount } },
+        });
+        if (p && typeof p.catch === "function") p.catch(() => {});
+      } catch {/* silent */}
+      return;
+    }
+
+    // Canción: navegar líneas
+    if (selectedItem?.type === "song") {
+      e.preventDefault();
+      const song = songs.find((s) => s.id === selectedItem.songId);
+      if (!song) return;
+      const lines = flattenSongLines(song);
+      if (!lines.length) return;
+      const isSongActive = resource?.type === "song" && resource.song?.songId === selectedItem.songId;
+      const current = isSongActive
+        ? (resource.song?.lineIndex ?? (isNext ? -1 : 0))
+        : (isNext ? -1 : 0);
+      const next = isNext
+        ? Math.min(lines.length - 1, current + 1)
+        : Math.max(0, current - 1);
+      if (next === current && current !== -1) return;
+      handlePreviewSelect({
+        type: "song",
+        song: {
+          songId: selectedItem.songId,
+          title: selectedItem.title || song.title,
+          line: lines[next],
+          lineIndex: next,
+        },
+      });
+      return;
+    }
+
+    // Biblia: navegar versículos
+    if (selectedItem?.type === "bible") {
+      e.preventDefault();
+      const verses = getBibleVerses(selectedItem);
+      if (!verses.length) return;
+      const isBibleActive = resource?.type === "bible";
+      const currentIdx = isBibleActive
+        ? verses.findIndex(
+            (v) =>
+              v.reference === resource.bible?.reference &&
+              v.verse === resource.bible?.verse
+          )
+        : (isNext ? -1 : 0);
+      if (currentIdx === -1 && !isNext) return;
+      const nextIdx = isNext
+        ? Math.min(verses.length - 1, currentIdx + 1)
+        : Math.max(0, currentIdx - 1);
+      if (nextIdx === currentIdx) return;
+      const v = verses[nextIdx];
+      handlePreviewSelect({
+        type: "bible",
+        bible: {
+          reference: v.reference,
+          text: v.text,
+          book: v.book,
+          chapter: v.chapter,
+          verse: v.verse,
+          version: v.version || selectedItem.version,
+        },
+      });
+    }
+  };
+
+  useEffect(() => {
+    const handler = (e) => keyHandlerRef.current?.(e);
+    // capture=true: recibe el evento antes de que cualquier elemento hijo
+    // pueda llamar stopPropagation y bloquearlo
+    window.addEventListener("keydown", handler, true);
+    return () => window.removeEventListener("keydown", handler, true);
+  }, []);
 
   const toggleResourcesCollapsed = () => {
     setResourcesCollapsed((prev) => {
@@ -460,10 +644,10 @@ function Program() {
       >
         <div className="flex flex-col gap-2">
           {!hydrated && (
-            <p className="text-[#6b7280] text-sm">{t("common.loading")}</p>
+            <p className="text-[#9AA3B2] text-sm">{t("common.loading")}</p>
           )}
           {hydrated && schedule.length === 0 && (
-            <p className="text-[#6b7280] text-sm px-1">
+            <p className="text-[#9AA3B2] text-sm px-1">
               {t("program.scheduleEmpty")}
             </p>
           )}
@@ -481,6 +665,35 @@ function Program() {
                 index={itemIndex}
                 active={item.id === selectedId}
                 onSelect={setSelectedId}
+                onDoubleSelect={(id) => {
+                  setSelectedId(id);
+                  const found = schedule.find((i) => i.id === id);
+                  if (!found) return;
+                  if (found.type === "song") {
+                    const song = songs.find((s) => s.id === found.songId);
+                    const lines = song ? flattenSongLines(song) : [];
+                    if (lines.length > 0) {
+                      handlePreviewSelect({
+                        type: "song",
+                        song: { songId: found.songId, title: found.title || song?.title, line: lines[0], lineIndex: 0 },
+                      });
+                    }
+                  } else if (found.type === "bible") {
+                    const verses = getBibleVerses(found);
+                    if (verses.length > 0) {
+                      const v = verses[0];
+                      handlePreviewSelect({
+                        type: "bible",
+                        bible: { reference: v.reference, text: v.text, book: v.book, chapter: v.chapter, verse: v.verse, version: v.version || found.version },
+                      });
+                    }
+                  } else if (found.type === "media") {
+                    handlePreviewSelect({
+                      type: "media",
+                      media: { title: found.title, name: found.name || found.title, url: found.url, mediaType: found.mediaType, ...(found.storagePath ? { storagePath: found.storagePath } : {}) },
+                    });
+                  }
+                }}
                 onRemove={(id) =>
                   setPendingDelete({ type: "schedule", item: { id } })
                 }
@@ -540,13 +753,13 @@ function Program() {
     <section
       className={`${
         resourcesCollapsed ? "shrink-0" : "h-full"
-      } min-h-0 min-w-0 w-full bg-[rgba(29,32,34,0.5)] border border-[rgba(69,70,77,0.35)] rounded-lg flex flex-col overflow-hidden`}
+      } min-h-0 min-w-0 w-full bg-[#111521] border border-[rgba(255,255,255,0.08)] rounded-xl flex flex-col overflow-hidden`}
     >
       <div
         className={`shrink-0 flex items-center gap-2 ${
           resourcesCollapsed
             ? "px-2 py-2"
-            : "px-3 sm:px-4 py-3 border-b border-[rgba(69,70,77,0.25)]"
+            : "px-3 sm:px-4 py-3 border-b border-[rgba(255,255,255,0.06)]"
         }`}
       >
         {!resourcesCollapsed && (
@@ -558,10 +771,10 @@ function Program() {
                   key={tab.id}
                   type="button"
                   onClick={() => setResourceTab(tab.id)}
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-sm text-sm font-medium whitespace-nowrap transition-colors ${
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                     resourceTab === tab.id
-                      ? "bg-[#323537] text-[#e0e3e5]"
-                      : "bg-[rgba(50,53,55,0.35)] text-[#c6c6cd] hover:text-[#e0e3e5]"
+                      ? "bg-[#6366F1] text-white"
+                      : "bg-[rgba(255,255,255,0.05)] text-[#9AA3B2] hover:text-[#F8FAFC] hover:bg-[rgba(255,255,255,0.08)]"
                   }`}
                 >
                   <Icon color="currentColor" />
@@ -655,6 +868,7 @@ function Program() {
         onActivate={handleActivate}
         onClear={handleClear}
         onShowLogo={handleShowLogo}
+        onBlackScreen={handleBlackScreen}
         clearDisabled={isLogoDisplayed}
       />
 

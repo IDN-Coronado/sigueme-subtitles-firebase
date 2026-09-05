@@ -30,6 +30,8 @@ import ProgramHeader from "../components/Program/ProgramHeader";
 import { RESOURCE_TABS, MONO } from "../components/Program/constants";
 import { IconChevron } from "../components/Icons";
 import { t } from "../i18n";
+import { flattenSongLines } from "../utils/songSections";
+import { getBibleVerses } from "../utils/programSchedule";
 
 const LAYOUT_STORAGE = {
   vertical: "sigueme.program.layout.vertical",
@@ -141,10 +143,15 @@ function Program() {
   };
 
   const handleSaveSong = async ({ title, sections, id }) => {
-    if (id) {
-      await updateSong(id, title, sections);
-    } else {
-      await addSong(title, sections);
+    try {
+      if (id) {
+        await updateSong(id, title, sections);
+      } else {
+        await addSong(title, sections);
+      }
+    } catch (err) {
+      alert(t("errors.saveSong"));
+      throw err;
     }
   };
 
@@ -173,6 +180,7 @@ function Program() {
   const handleCreateTheme = async ({ title, storagePath, file }) => {
     try {
       await addTheme({ title, storagePath, file });
+      closeCreateModal();
     } catch {
       alert(t("errors.uploadTheme"));
     }
@@ -206,30 +214,38 @@ function Program() {
           }
         : preview?.theme || null;
 
-    await setPreview({
-      programId,
-      theme,
-      resource,
-    });
+    try {
+      await setPreview({
+        programId,
+        theme,
+        resource,
+      });
 
-    if (resource.type === "song") {
-      await setCaption(resource.song?.line || "");
-    } else if (previousType === "song") {
-      await setCaption("");
+      if (resource.type === "song") {
+        await setCaption(resource.song?.line || "");
+      } else if (previousType === "song") {
+        await setCaption("");
+      }
+    } catch {
+      alert(t("errors.updatePreview"));
     }
   };
 
   const handleAddTheme = async (theme) => {
-    await addThemeToSchedule(theme);
-    await setPreview({
-      programId,
-      theme: {
-        id: theme.id,
-        title: theme.title,
-        backgroundUrl: theme.backgroundUrl,
-        themeType: theme.type,
-      },
-    });
+    try {
+      await addThemeToSchedule(theme);
+      await setPreview({
+        programId,
+        theme: {
+          id: theme.id,
+          title: theme.title,
+          backgroundUrl: theme.backgroundUrl,
+          themeType: theme.type,
+        },
+      });
+    } catch {
+      alert(t("errors.addTheme"));
+    }
   };
 
   const isLogoDisplayed =
@@ -278,11 +294,15 @@ function Program() {
         }
       : preview?.theme || null;
 
-    await setCaption("");
-    if (theme) {
-      await setPreview({ programId, theme });
+    try {
+      await setCaption("");
+      if (theme) {
+        await setPreview({ programId, theme });
+      }
+      await clearPreviewResource();
+    } catch {
+      alert(t("errors.clearConsole"));
     }
-    await clearPreviewResource();
   };
 
   const handleShowLogo = async () => {
@@ -300,21 +320,25 @@ function Program() {
           }
         : preview?.theme || null;
 
-    await setCaption("");
-    await setPreview({
-      programId,
-      theme,
-      resource: {
-        type: "media",
-        media: {
-          title: logo.title,
-          name: logo.name || logo.title,
-          url: logo.url,
-          storagePath: logo.storagePath,
-          mediaType: logo.mediaType || "video",
+    try {
+      await setCaption("");
+      await setPreview({
+        programId,
+        theme,
+        resource: {
+          type: "media",
+          media: {
+            title: logo.title,
+            name: logo.name || logo.title,
+            url: logo.url,
+            storagePath: logo.storagePath,
+            mediaType: logo.mediaType || "video",
+          },
         },
-      },
-    });
+      });
+    } catch {
+      alert(t("errors.showLogo"));
+    }
   };
 
   const handleSetMediaAsLogo = async (item) => {
@@ -353,19 +377,118 @@ function Program() {
       ? Math.max(0, Math.min(count - 1, Math.floor(media.slideIndex)))
       : 0;
 
-    await setPreview({
-      programId,
-      theme: current.theme ?? null,
-      resource: {
-        type: "media",
-        media: {
-          ...media,
-          slideIndex,
-          slideCount: count,
+    try {
+      await setPreview({
+        programId,
+        theme: current.theme ?? null,
+        resource: {
+          type: "media",
+          media: {
+            ...media,
+            slideIndex,
+            slideCount: count,
+          },
         },
-      },
-    });
+      });
+    } catch {
+      // background sync — silent fail is acceptable
+    }
   };
+
+  const handleBlackScreen = async () => {
+    try {
+      await setCaption("");
+      await setPreview({ programId, theme: null, resource: null });
+    } catch {
+      alert(t("errors.clearConsole"));
+    }
+  };
+
+  // Keyboard navigation — registered once, reads latest state via refs.
+  const keyHandlerRef = useRef(null);
+  keyHandlerRef.current = (e) => {
+    if (createModal || pendingDelete) return;
+    if (["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return;
+    if (e.target.isContentEditable) return;
+
+    const resource = previewRef.current?.resource;
+
+    if (e.key === "Escape") {
+      e.preventDefault();
+      handleClear();
+      return;
+    }
+    if (e.key === "b" || e.key === "B") {
+      handleBlackScreen();
+      return;
+    }
+    if (e.key === "l" || e.key === "L") {
+      handleShowLogo();
+      return;
+    }
+
+    const isNext =
+      e.key === "ArrowDown" || e.key === "ArrowRight" || e.key === " ";
+    const isPrev = e.key === "ArrowUp" || e.key === "ArrowLeft";
+    if (!isNext && !isPrev) return;
+
+    if (resource?.type === "song" && selectedItem?.type === "song") {
+      e.preventDefault();
+      const song = songs.find((s) => s.id === selectedItem.songId);
+      if (!song) return;
+      const lines = flattenSongLines(song);
+      if (!lines.length) return;
+      const current = resource.song?.lineIndex ?? (isNext ? -1 : 0);
+      const next = isNext
+        ? Math.min(lines.length - 1, current + 1)
+        : Math.max(0, current - 1);
+      if (next === current && current !== -1) return;
+      handlePreviewSelect({
+        type: "song",
+        song: {
+          songId: selectedItem.songId,
+          title: selectedItem.title || song.title,
+          line: lines[next],
+          lineIndex: next,
+        },
+      });
+      return;
+    }
+
+    if (resource?.type === "bible" && selectedItem?.type === "bible") {
+      e.preventDefault();
+      const verses = getBibleVerses(selectedItem);
+      if (!verses.length) return;
+      const currentIdx = verses.findIndex(
+        (v) =>
+          v.reference === resource.bible?.reference &&
+          v.verse === resource.bible?.verse
+      );
+      if (currentIdx === -1) return;
+      const nextIdx = isNext
+        ? Math.min(verses.length - 1, currentIdx + 1)
+        : Math.max(0, currentIdx - 1);
+      if (nextIdx === currentIdx) return;
+      const v = verses[nextIdx];
+      handlePreviewSelect({
+        type: "bible",
+        bible: {
+          reference: v.reference,
+          text: v.text,
+          book: v.book,
+          chapter: v.chapter,
+          verse: v.verse,
+          version: v.version || selectedItem.version,
+        },
+      });
+    }
+  };
+
+  useEffect(() => {
+    const handler = (e) => keyHandlerRef.current?.(e);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   const toggleResourcesCollapsed = () => {
     setResourcesCollapsed((prev) => {
@@ -655,6 +778,7 @@ function Program() {
         onActivate={handleActivate}
         onClear={handleClear}
         onShowLogo={handleShowLogo}
+        onBlackScreen={handleBlackScreen}
         clearDisabled={isLogoDisplayed}
       />
 

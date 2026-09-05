@@ -12,6 +12,7 @@ function ProgramHeader({
   onActivate,
   onClear,
   onShowLogo,
+  onBlackScreen,
   clearDisabled = false,
 }) {
   const liveOpen = useLiveViewOpen();
@@ -58,6 +59,16 @@ function ProgramHeader({
         </div>
       </div>
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <button
+          type="button"
+          onClick={onBlackScreen}
+          className="hidden sm:inline-flex items-center gap-1.5 text-[#c6c6cd] text-xs sm:text-sm border border-[rgba(69,70,77,0.4)] px-3 py-1.5 rounded-sm hover:border-[rgba(69,70,77,0.8)] hover:bg-[rgba(0,0,0,0.4)] hover:text-[#e0e3e5] transition-colors"
+          style={MONO}
+          title={t("program.blackScreen")}
+        >
+          <span className="inline-block w-3 h-3 rounded-sm bg-black border border-[rgba(255,255,255,0.15)]" />
+          {t("program.blackScreen")}
+        </button>
         <button
           type="button"
           onClick={onClear}

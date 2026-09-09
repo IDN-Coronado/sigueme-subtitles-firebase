@@ -159,8 +159,8 @@ function Home() {
   const handleDeleteProgram = async (program) => {
     try {
       await removeProgram(program.id);
-    } catch {
-      alert(t("errors.deleteResource"));
+    } catch (err) {
+      showError(t("errors.deleteResource"), err);
     }
   };
 
@@ -172,16 +172,16 @@ function Home() {
     try {
       await uploadMedia({ file, title });
       closeModal();
-    } catch {
-      alert(t("errors.uploadFile"));
+    } catch (err) {
+      showError(t("errors.uploadFile"), err);
     }
   };
 
   const handleCreateTheme = async ({ title, storagePath, file }) => {
     try {
       await addTheme({ title, storagePath, file });
-    } catch {
-      alert(t("errors.uploadTheme"));
+    } catch (err) {
+      showError(t("errors.uploadTheme"), err);
     }
   };
 

@@ -15,6 +15,7 @@ import Program from "./pages/Program";
 import useLocale from "./hooks/useLocale";
 import { signInStoredOperator } from "./firebase/operator";
 import DesktopGate from "./components/DesktopGate";
+import ErrorBanner from "./components/ErrorBanner";
 import LocalDataGate from "./components/LocalDataGate";
 
 function Layout() {
@@ -37,6 +38,8 @@ function Layout() {
         <LocalDataGate>
           <Outlet />
         </LocalDataGate>
+        {/* One error surface for the whole console — see utils/notice.js. */}
+        <ErrorBanner />
       </DesktopGate>
     </div>
   );

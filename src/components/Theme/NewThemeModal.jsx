@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import DOMPurify from "dompurify";
 
 import { t } from "../../i18n";
+import { showError } from "../../utils/notice";
 
 const MONO = { fontFamily: "JetBrains Mono, monospace" };
 
@@ -28,7 +29,7 @@ function NewThemeModal({ isVisible, onClose, onSubmit }) {
     const f = e.target.files[0];
     if (!f) return;
     if (!["image/", "video/"].some((type) => f.type.startsWith(type))) {
-      alert(t("themeModal.invalidType"));
+      showError(t("themeModal.invalidType"));
       return;
     }
     setFileType(f.type);
@@ -42,7 +43,7 @@ function NewThemeModal({ isVisible, onClose, onSubmit }) {
       setPreviewUrl(safeUrl);
       setFile(f);
     } else {
-      alert(t("themeModal.invalidPreview"));
+      showError(t("themeModal.invalidPreview"));
       setPreviewUrl("");
       setFile(null);
     }

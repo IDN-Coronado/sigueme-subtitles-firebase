@@ -7,6 +7,7 @@ import ThemeItem from "./ThemeItem";
 import ConfirmationModal from "./ConfirmationModal";
 import NewThemeModal from "./NewThemeModal";
 import { t } from "../../i18n";
+import { showError } from "../../utils/notice";
 
 function ThemeList({ themes, onCreateTheme }) {
   const { removeTheme } = useThemes();
@@ -24,7 +25,7 @@ function ThemeList({ themes, onCreateTheme }) {
       try {
         await removeTheme(themeToDelete);
       } catch (err) {
-        alert(t("errors.deleteTheme"));
+        showError(t("errors.deleteTheme"), err);
       }
       setShowConfirm(false);
       setThemeToDelete(null);

@@ -286,6 +286,7 @@ function MediaBrowser({
                       src={item.url}
                       className="w-full h-full object-cover"
                       muted
+                      preload="metadata"
                     />
                   ) : item.type === "audio" ? (
                     <div
@@ -432,6 +433,7 @@ function ThemesBrowser({
                       src={theme.backgroundUrl}
                       className="w-full h-full object-cover"
                       muted
+                      preload="metadata"
                     />
                   ) : (
                     <img

@@ -1,7 +1,9 @@
 import { ref, listAll, getDownloadURL } from "firebase/storage";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
 
+import db from "../firebase/firebase";
 import storage from "../firebase/storage";
-import useDataStore from "./data";
+import useDataStore, { byTitle } from "./data";
 import { mediaUrl } from "./mediaPath";
 
 // One-time pull of the Storage bucket into the local media folder. This is the
@@ -11,6 +13,11 @@ import { mediaUrl } from "./mediaPath";
 //
 // Safe to re-run: files already present are skipped, so an interrupted import
 // resumes where it stopped.
+
+async function fetchThemes() {
+  const snap = await getDocs(query(collection(db, "themes"), orderBy("title")));
+  return snap.docs.map((d) => ({ ...d.data(), id: d.id }));
+}
 
 async function listFolder(folder) {
   const result = await listAll(ref(storage, folder));
@@ -36,6 +43,12 @@ async function download(target) {
  * @returns { copied, skipped, failed: [{ storagePath, error }] }
  */
 export default async function importMediaFromStorage(onProgress) {
+  // Theme records come across with the files. The backgrounds copied out of
+  // themes/ are inert on their own — nothing points at them until the theme
+  // that owns the storagePath exists locally. Fetched before the downloads so
+  // a permission error fails in a second rather than after 400 MB.
+  const remoteThemes = await fetchThemes();
+
   const folders = await Promise.all([listFolder("general"), listFolder("themes")]);
   const targets = folders.flat();
 
@@ -67,7 +80,17 @@ export default async function importMediaFromStorage(onProgress) {
   // storagePath and ignore the stored url (src/local/mediaPath.js), so assets
   // resolve locally whether or not this ever runs. This just stops stale
   // Firebase URLs sitting in the file confusing whoever reads it next.
-  const themes = (data.themes || []).map((theme) =>
+  // Merged by id, not replaced: a theme already on this machine keeps its local
+  // edits, same rule as the song repository import. Ids are the Firestore ones,
+  // so a program's themeId still resolves after the copy.
+  const local = data.themes || [];
+  const known = new Set(local.map((theme) => theme.id));
+  const merged = [
+    ...local,
+    ...remoteThemes.filter((theme) => !known.has(theme.id)),
+  ].sort(byTitle);
+
+  const themes = merged.map((theme) =>
     theme.storagePath
       ? { ...theme, backgroundUrl: mediaUrl(theme.storagePath) }
       : theme

@@ -1,11 +1,4 @@
 const en = {
-  auth: {
-    signInSubtitle: "Sign in to manage this Sunday's service.",
-    signInButton: "Sign in with Google",
-    signInError: "Sign-in failed. Please try again.",
-    pendingSubtitle: "Your account ({email}) is waiting for approval from an administrator.",
-    signOut: "Sign out",
-  },
   common: {
     cancel: "Cancel",
     close: "Close",
@@ -33,6 +26,15 @@ const en = {
     delete: "Delete",
   },
   errors: {
+    notApprovedTitle: "This machine is not approved yet",
+    notApprovedBody:
+      "It is signed in, but an administrator still has to approve it. Send them this ID to add under the operators collection:",
+    signedOutTitle: "Not signed in",
+    signedOutBody:
+      "Add this machine's operator account under Settings before importing.",
+    genericTitle: "Something went wrong",
+    genericBody:
+      "The request did not go through. Check your connection and try again.",
     uploadFile: "Failed to upload the file.",
     uploadTheme: "Failed to upload the file or save the theme.",
     addYouTube: "Failed to add the YouTube video.",
@@ -71,15 +73,13 @@ const en = {
       openProgramDesc: "Open or delete a saved program",
       newSong: "Create new song",
       newSongDesc: "Add lyrics to your library",
-      songRepository: "Import from repository",
-      songRepositoryDesc: "Copy songs from the shared Firebase library",
+      songRepository: "Songs repository",
+      songRepositoryDesc: "Import songs from the shared Firebase library, or upload your local ones to it",
       uploadFile: "Upload a file",
       uploadFileDesc: "Add media to the general library",
       uploadTheme: "Upload a theme",
       uploadThemeDesc: "Import a background image or video",
       settings: "Settings",
-      mediaImport: "Copy media from Firebase",
-      mediaImportDesc: "One-time migration of assets to this computer",
       settingsDesc: "Language and default caption styles",
     },
   },
@@ -225,9 +225,17 @@ const en = {
     captionDefaults: "Caption defaults",
     captionDefaultsHint:
       "These styles apply to new programs. Each program can still override them from the console.",
-    account: "Account",
+    account: "Operator account",
+    accountHint:
+      "This machine publishes captions as its own Firebase user. An administrator approves the ID below in the operators collection.",
+    emailLabel: "Operator email",
+    passwordLabel: "Password",
+    accountSave: "Sign in",
+    accountError: "Sign-in failed. Check the email and password.",
     signedInAs: "Signed in as {email}",
     signOut: "Sign out",
+    copy: "Copy ID",
+    copied: "Copied",
   },
   mediaModal: {
     eyebrow: "Media",
@@ -296,6 +304,7 @@ const en = {
     escapeHint: "Press Esc to close",
   },
   caption: {
+    publishFailed: "Caption not published",
     ccStyle: "CC Style",
     reset: "RESET",
   },
@@ -330,24 +339,16 @@ const en = {
     errorHint: 'data.json could not be parsed. A backup from the previous save is next to it as data.json.bak.',
   },
   repository: {
-    title: 'Song repository',
-    subtitle: 'Songs shared from Firebase. Importing copies a song into your local library.',
+    upload: "Upload",
+    uploading: "Uploading…",
+    uploadError: "Could not upload the song.",
+    title: "Songs repository",
+    subtitle: "Songs shared from Firebase. Import one into your library, or upload a local song so other churches can use it.",
     import: 'Import',
     imported: 'In your library',
     importAll: 'Import all',
     importing: 'Importing…',
     empty: 'No songs in the repository.',
-    error: 'Could not load the repository. Check your connection.',
-    open: 'Import from repository',
-  },
-  migrate: {
-    title: 'Import your existing data',
-    body: 'This machine has no local library yet. Import your programs, songs and themes from Firebase to get started.',
-    action: 'Import from Firebase',
-    running: 'Importing…',
-    error: 'Import failed. Check your connection and try again.',
-    skip: 'Start empty',
-    done: '{programs} programs, {songs} songs, {themes} themes imported.',
   },
   mediaImport: {
     eyebrow: 'One-time migration',

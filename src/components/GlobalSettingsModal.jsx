@@ -1,10 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChromePicker } from "react-color";
-import { signOut } from "firebase/auth";
-
-import { auth } from "../firebase/firebase";
 import useAuthUser from "../hooks/useAuthUser";
+import MediaImportSection from "./MediaImportSection";
+import {
+  canStoreCredentials,
+  clearCredentials,
+  saveCredentials,
+} from "../firebase/operator";
 import { t, setLocale, getLocale } from "../i18n";
 import { LOCALES } from "../i18n/locale";
 import {
@@ -48,6 +51,11 @@ function GlobalSettingsModal({ isOpen, onClose }) {
     getStyleFromBundle(getGlobalCaptionBundle(), "song")
   );
   const [locale, setLocaleUi] = useState(getLocale);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerPos, setPickerPos] = useState({ top: 0, left: 0 });
   const buttonRef = useRef(null);
@@ -62,6 +70,33 @@ function GlobalSettingsModal({ isOpen, onClose }) {
     sync();
     return subscribeCaptionSettings(sync);
   }, [isOpen, contentType]);
+
+  const onSignIn = async (event) => {
+    event.preventDefault();
+    setBusy(true);
+    setError(false);
+    try {
+      // Stored only after Firebase accepts them, so a typo cannot be saved.
+      await saveCredentials({ email: email.trim(), password });
+      setPassword("");
+    } catch {
+      setError(true);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onSignOut = async () => {
+    await clearCredentials().catch(() => {});
+    setEmail("");
+    setPassword("");
+  };
+
+  const onCopyUid = async () => {
+    await navigator.clipboard.writeText(user.uid).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
 
   useLayoutEffect(() => {
     if (!pickerOpen || !buttonRef.current) return undefined;
@@ -320,7 +355,7 @@ function GlobalSettingsModal({ isOpen, onClose }) {
             </div>
           </section>
 
-          {user && (
+          {canStoreCredentials() && (
             <section className="flex flex-col gap-3">
               <h3
                 className="text-[#c6c6cd] text-[10px] tracking-[0.1em] uppercase"
@@ -328,18 +363,82 @@ function GlobalSettingsModal({ isOpen, onClose }) {
               >
                 {t("settingsModal.account")}
               </h3>
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-[#c6c6cd] text-xs truncate">
-                  {t("settingsModal.signedInAs", { email: user.email })}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => signOut(auth)}
-                  className="h-8 px-3 inline-flex items-center rounded-sm border border-[rgba(69,70,77,0.4)] text-[#c6c6cd] text-xs hover:border-[#ffb4ab] hover:text-[#ffb4ab] transition-colors shrink-0"
-                >
-                  {t("settingsModal.signOut")}
-                </button>
-              </div>
+              <p className="text-[#c6c6cd] text-xs">
+                {t("settingsModal.accountHint")}
+              </p>
+
+              {/* undefined = auth still resolving; showing the form here would
+                  flash it open every time Settings mounts. */}
+              {user === undefined ? null : user ? (
+                <>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-[#c6c6cd] text-xs truncate">
+                      {t("settingsModal.signedInAs", { email: user.email })}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={onSignOut}
+                      className="h-8 px-3 inline-flex items-center rounded-sm border border-[rgba(69,70,77,0.4)] text-[#c6c6cd] text-xs hover:border-[#ffb4ab] hover:text-[#ffb4ab] transition-colors shrink-0"
+                    >
+                      {t("settingsModal.signOut")}
+                    </button>
+                  </div>
+                  {/* The uid an admin approves in operators/{uid}. */}
+                  <div className="flex items-center justify-between gap-3">
+                    <p
+                      className="text-[#c6c6cd] text-xs truncate"
+                      style={MONO}
+                      title={user.uid}
+                    >
+                      {user.uid}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={onCopyUid}
+                      className="h-8 px-3 inline-flex items-center rounded-sm border border-[rgba(69,70,77,0.4)] text-[#c6c6cd] text-xs hover:border-[#7bd0ff] hover:text-[#7bd0ff] transition-colors shrink-0"
+                    >
+                      {copied ? t("settingsModal.copied") : t("settingsModal.copy")}
+                    </button>
+                  </div>
+
+                  {/* Every read it makes needs isOperator(), so it is only
+                      offered once this machine is actually signed in. */}
+                  <MediaImportSection />
+                </>
+              ) : (
+                <form className="flex flex-col gap-2" onSubmit={onSignIn}>
+                  <input
+                    type="email"
+                    required
+                    autoComplete="off"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={t("settingsModal.emailLabel")}
+                    className="h-9 px-3 bg-[#181c1e] border border-[rgba(69,70,77,0.4)] rounded-sm text-[#e0e3e5] text-xs focus:border-[#7bd0ff] outline-none"
+                  />
+                  <input
+                    type="password"
+                    required
+                    autoComplete="off"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={t("settingsModal.passwordLabel")}
+                    className="h-9 px-3 bg-[#181c1e] border border-[rgba(69,70,77,0.4)] rounded-sm text-[#e0e3e5] text-xs focus:border-[#7bd0ff] outline-none"
+                  />
+                  <button
+                    type="submit"
+                    disabled={busy}
+                    className="h-9 px-3 inline-flex items-center justify-center rounded-sm border border-[rgba(123,208,255,0.45)] text-[#7bd0ff] text-xs hover:bg-[rgba(123,208,255,0.1)] disabled:opacity-50 transition-colors"
+                  >
+                    {busy ? t("common.saving") : t("settingsModal.accountSave")}
+                  </button>
+                  {error && (
+                    <p className="text-[#ffb4ab] text-xs">
+                      {t("settingsModal.accountError")}
+                    </p>
+                  )}
+                </form>
+              )}
             </section>
           )}
         </div>

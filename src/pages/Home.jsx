@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import usePrograms from "../firebase/usePrograms";
 import useSongs from "../firebase/useSongs";
 import useThemes from "../firebase/useThemes";
@@ -234,16 +234,6 @@ function Home() {
             <span className="text-[#F8FAFC] font-semibold text-sm hidden sm:block">
               Apostello
             </span>
-            <div className="hidden sm:flex items-center gap-1.5 text-[#9AA3B2]">
-              <span className="w-1 h-1 rounded-full bg-[#9AA3B2]" />
-              <Link
-                to="/live"
-                className="text-[10px] tracking-[0.1em] uppercase hover:text-[#F8FAFC] transition-colors"
-                style={MONO}
-              >
-                {t("home.tagline")}
-              </Link>
-            </div>
           </div>
 
           {/* Right: active program card */}

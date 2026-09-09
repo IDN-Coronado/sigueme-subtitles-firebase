@@ -191,7 +191,7 @@ function PreviewConsole({
       el.muted = true;
       el.defaultMuted = true;
       el.volume = 0;
-      el.loop = false;
+      el.loop = media?.isLogo === true;
       el.currentTime = initialTime;
 
       const broadcastPlay = () => {

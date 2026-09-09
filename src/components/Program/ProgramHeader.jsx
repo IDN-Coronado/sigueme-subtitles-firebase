@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { ChevronDown } from "lucide-react";
 
 import { MONO } from "./constants";
 import openLiveView, { closeLiveView } from "../../utils/openLiveView";
@@ -48,7 +47,6 @@ function ProgramHeader({
             <span className="text-[#F8FAFC] text-sm font-medium truncate max-w-[160px] sm:max-w-xs">
               {title || t("program.untitled")}
             </span>
-            <ChevronDown size={14} className="text-[#9AA3B2] shrink-0 group-hover:text-[#6366F1] transition-colors" />
           </button>
           {formattedDate && (
             <p className="hidden sm:block text-[#9AA3B2] text-[10px] tracking-[0.06em] whitespace-nowrap" style={MONO}>

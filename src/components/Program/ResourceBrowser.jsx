@@ -284,7 +284,6 @@ function MediaBrowser({
                   ) : item.type === "video" ? (
                     <video
                       src={item.url}
-                      crossOrigin="anonymous"
                       className="w-full h-full object-cover"
                       muted
                     />
@@ -303,7 +302,6 @@ function MediaBrowser({
                   ) : (
                     <img
                       src={item.url}
-                      crossOrigin="anonymous"
                       alt=""
                       className="w-full h-full object-cover"
                     />
@@ -329,6 +327,22 @@ function MediaBrowser({
                       style={MONO}
                     >
                       {t("media.pdfBadge")}
+                    </span>
+                  )}
+                  {item.type === "video" && (
+                    <span
+                      className="pointer-events-none absolute bottom-1 left-1 text-[8px] tracking-[0.06em] text-[#9AA3B2] bg-[rgba(16,20,21,0.75)] px-1 py-0.5 rounded-sm"
+                      style={MONO}
+                    >
+                      {t("media.videoBadge")}
+                    </span>
+                  )}
+                  {item.type === "audio" && (
+                    <span
+                      className="pointer-events-none absolute bottom-1 left-1 text-[8px] tracking-[0.06em] text-[#9AA3B2] bg-[rgba(16,20,21,0.75)] px-1 py-0.5 rounded-sm"
+                      style={MONO}
+                    >
+                      {t("media.audioBadge")}
                     </span>
                   )}
                   {isSelected && (
@@ -416,14 +430,12 @@ function ThemesBrowser({
                   theme.type === "video" ? (
                     <video
                       src={theme.backgroundUrl}
-                      crossOrigin="anonymous"
                       className="w-full h-full object-cover"
                       muted
                     />
                   ) : (
                     <img
                       src={theme.backgroundUrl}
-                      crossOrigin="anonymous"
                       alt=""
                       className="w-full h-full object-cover"
                     />

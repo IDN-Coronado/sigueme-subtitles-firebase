@@ -333,6 +333,7 @@ function Program() {
             url: logo.url,
             storagePath: logo.storagePath,
             mediaType: logo.mediaType || "video",
+            isLogo: true,
           },
         },
       });

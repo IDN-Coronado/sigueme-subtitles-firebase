@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   createBrowserRouter,
   RouterProvider,
@@ -12,7 +13,7 @@ import Caption from "./pages/Caption";
 import Live from "./pages/Live";
 import Program from "./pages/Program";
 import useLocale from "./hooks/useLocale";
-import AuthGate from "./components/AuthGate";
+import { signInStoredOperator } from "./firebase/operator";
 import DesktopGate from "./components/DesktopGate";
 import LocalDataGate from "./components/LocalDataGate";
 
@@ -20,17 +21,22 @@ function Layout() {
   // Re-render the app shell when language changes so `t()` updates.
   useLocale();
 
+  // Sign this machine's operator account in once, at console startup. Failures
+  // are surfaced in Settings (as "not signed in") rather than blocking: the
+  // console runs on local data, and only publishing a caption needs Firebase.
+  useEffect(() => {
+    signInStoredOperator().catch(() => {});
+  }, []);
+
   return (
     <div className="h-full min-h-0 flex flex-col bg-[#101415]">
       {/* The console's data lives in a local file now, so it only runs in the
           desktop app. /caption and /live are outside this layout and still
           work in a browser. */}
       <DesktopGate>
-        <AuthGate>
-          <LocalDataGate>
-            <Outlet />
-          </LocalDataGate>
-        </AuthGate>
+        <LocalDataGate>
+          <Outlet />
+        </LocalDataGate>
       </DesktopGate>
     </div>
   );

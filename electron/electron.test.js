@@ -1,7 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const path = require("node:path");
-const { createHash } = require("node:crypto");
 
 const fs = require("node:fs/promises");
 const os = require("node:os");
@@ -10,11 +9,15 @@ process.env.APOSTELLO_DATA_FILE = path.join(
   os.tmpdir(),
   `apostello-test-${process.pid}.json`
 );
+process.env.APOSTELLO_CREDENTIALS_FILE = path.join(
+  os.tmpdir(),
+  `apostello-test-${process.pid}.bin`
+);
 
 const { resolveRequestPath, resolveWithin, parseRange } = require("./server");
-const { pkce } = require("./oauth");
 const { pickDisplay } = require("./liveWindow");
 const store = require("./store");
+const credentials = require("./credentials");
 
 const root = path.join(__dirname, "..", "dist");
 const index = path.join(root, "index.html");
@@ -131,11 +134,22 @@ test("store: concurrent saves do not corrupt the file", async (t) => {
   assert.equal(final.songs.length, 20, "last write wins intact");
 });
 
-test("pkce challenge is the S256 digest of its verifier", () => {
-  const { verifier, challenge } = pkce();
-  assert.equal(
-    challenge,
-    createHash("sha256").update(verifier).digest("base64url")
-  );
-  assert.match(verifier, /^[\w-]{43}$/);
+test("credentials: absent file reads as null, saving nothing clears it", async () => {
+  // safeStorage needs a real Electron runtime, so the encrypt/decrypt roundtrip
+  // is not covered here — only the paths that decide whether this machine is
+  // configured at all, which is what startup sign-in branches on.
+  // ponytail: promote to a spectron/electron-mocha run if the crypto path regresses.
+  const file = credentials.credentialsFile();
+  const exists = () => fs.access(file).then(() => true, () => false);
+
+  await fs.rm(file, { force: true });
+  assert.equal(await credentials.load(), null, "no file reads as not configured");
+
+  await fs.writeFile(file, "whatever");
+  await credentials.save(null);
+  assert.equal(await exists(), false, "clearing removes the stored account");
+
+  await fs.writeFile(file, "whatever");
+  await credentials.save({ email: "a@b.c" });
+  assert.equal(await exists(), false, "a half-filled form clears rather than stores");
 });

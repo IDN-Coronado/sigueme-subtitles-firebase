@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 
 import useDataStore from "../local/data";
-import FirstRunImport from "./FirstRunImport";
 import { t } from "../i18n";
 
 /**
@@ -13,7 +12,6 @@ function LocalDataGate({ children }) {
   const loaded = useDataStore((s) => s.loaded);
   const error = useDataStore((s) => s.error);
   const hydrate = useDataStore((s) => s.hydrate);
-  const data = useDataStore((s) => s.data);
 
   useEffect(() => {
     hydrate();
@@ -37,10 +35,10 @@ function LocalDataGate({ children }) {
 
   if (!loaded) return null;
 
-  const isEmpty =
-    !data.programs.length && !data.songs.length && !data.themes.length;
-  if (isEmpty && !data.migrated) return <FirstRunImport />;
-
+  // No first-run import screen: it reads from Firestore, and on a fresh machine
+  // nobody is signed in yet, so it could only ever fail. An empty library opens
+  // straight to the console; the import lives in the main menu, to be run once
+  // the operator account is signed in.
   return children;
 }
 

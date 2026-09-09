@@ -2,9 +2,9 @@ const { app, BrowserWindow, dialog, ipcMain, shell } = require("electron");
 const path = require("node:path");
 
 const { startAppServer } = require("./server");
-const { signInWithGoogle } = require("./oauth");
 const live = require("./liveWindow");
 const store = require("./store");
+const credentials = require("./credentials");
 const media = require("./media");
 
 let consoleWindow = null;
@@ -15,21 +15,6 @@ const isDev = process.argv.includes("--dev");
 // Dev mode attaches to an already-running `npm start`; prod serves the build.
 // Both are localhost, so the auth and BroadcastChannel behaviour is identical.
 const appUrl = isDev ? "http://localhost:5173" : `http://127.0.0.1:${PORT}`;
-
-// GOOGLE_DESKTOP_CLIENT_ID / _SECRET live in .env alongside the VITE_ vars,
-// but are read here at runtime rather than inlined into the renderer bundle.
-// Packaged, ROOT is inside app.asar and carries no .env — electron-builder
-// ships it as a resource instead, so try both. Plain text either way: an
-// installed app cannot hold a secret (RFC 8252 §8.5), which is why the flow
-// uses PKCE and why firestore.rules is the actual boundary.
-for (const envFile of [path.join(ROOT, ".env"), path.join(process.resourcesPath || "", ".env")]) {
-  try {
-    process.loadEnvFile(envFile);
-    break;
-  } catch {
-    // Keep looking; signInWithGoogle reports the missing vars with a clear error.
-  }
-}
 
 // app.quit() is asynchronous, so a bare `if (...) app.quit()` would let the
 // whole startup below run anyway and collide with the first instance on PORT.
@@ -81,10 +66,11 @@ async function start() {
   // comes from here, proxied by vite's /media rule so asset URLs stay relative
   // in both modes.
   await startAppServer(path.join(ROOT, "dist"), PORT, media.mediaRoot());
-  ipcMain.handle("auth:signIn", () => signInWithGoogle());
   ipcMain.handle("liveView:open", () => live.open(appUrl, consoleWindow));
   ipcMain.handle("liveView:close", () => live.close());
   ipcMain.handle("liveView:isOpen", () => live.isOpen());
+  ipcMain.handle("credentials:load", () => credentials.load());
+  ipcMain.handle("credentials:save", (_event, c) => credentials.save(c));
   ipcMain.handle("store:load", () => store.load());
   ipcMain.handle("store:save", (_event, data) => store.save(data));
   ipcMain.handle("media:list", () => media.list());

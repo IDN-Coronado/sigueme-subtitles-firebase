@@ -55,59 +55,24 @@ Bind to `127.0.0.1` only, never `0.0.0.0`. Pick a fixed port so the origin is
 stable across launches (localStorage and BroadcastChannel are origin-scoped —
 this matters in step 2).
 
-### 1.2 Google sign-in — the one hard part
+### 1.2 Google sign-in — the one hard part *(superseded)*
 
-[AuthGate.jsx:34](../src/components/AuthGate.jsx#L34) uses `signInWithPopup`.
-Google blocks OAuth in embedded user agents, and Electron's UA identifies as
-one. Spoofing the UA to get around that is circumventing a stated policy — not
-the plan.
-
-The sanctioned path is RFC 8252 (*OAuth 2.0 for Native Apps*): sign in via the
-user's real browser with a loopback redirect.
-
-1. Create a **Desktop app** OAuth client in Google Cloud Console for the
-   existing Firebase project.
-2. Main process starts a one-shot loopback listener, builds the Google auth URL
-   with PKCE, and calls `shell.openExternal(url)`.
-3. User signs in in their real browser (usually already signed in — one click).
-4. Google redirects to `http://127.0.0.1:<port>/callback?code=…`; main exchanges
-   the code for an ID token.
-5. Main sends the ID token to the renderer; renderer calls
-   `signInWithCredential(auth, GoogleAuthProvider.credential(idToken))`.
-
-`useAuthUser`, `useOperatorStatus`, and the approval gate are all untouched —
-only the *acquisition* of the credential changes. `AuthGate`'s `onSignIn`
-becomes a call to the bridge instead of `signInWithPopup`.
-
-> Budget ~100 lines plus Cloud Console setup. This is the largest single risk in
-> the whole migration. Do it first; if it stalls, nothing later is unblocked.
-
-#### Google Cloud setup (manual, one time)
-
-1. Open [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
-   with the **`siguemesubtitles`** project selected — the same project Firebase
-   uses.
-2. **Create Credentials → OAuth client ID**, application type **Desktop app**,
-   name it `Apostello Desktop`.
-3. Copy the **Client ID** and **Client secret** into `.env` (already gitignored)
-   with no `VITE_` prefix, so they are read by the Electron main process and
-   never inlined into the renderer bundle:
-
-   ```
-   GOOGLE_DESKTOP_CLIENT_ID=…apps.googleusercontent.com
-   GOOGLE_DESKTOP_CLIENT_SECRET=…
-   ```
-
-   The secret is not confidential in the usual sense — it ships inside the app.
-   PKCE is what actually protects the exchange, which is why the flow uses it.
-4. **No redirect URI to register.** Google matches loopback redirect URIs on
-   host only, so the ephemeral port the app picks needs no entry.
-5. If the OAuth consent screen is in **Testing**, add each operator's Google
-   account under **Audience → Test users**. Internal/published apps need nothing.
-
-If `signInWithCredential` later rejects with `auth/invalid-credential`, add the
-desktop Client ID to **Firebase Console → Authentication → Sign-in method →
-Google → Web SDK configuration** as an additional allowed client ID.
+> **Superseded.** Google sign-in was removed entirely. This section described
+> an RFC 8252 loopback + PKCE flow through the user's real browser, driven by a
+> Desktop OAuth client. It shipped, then came out again along with `AuthGate`,
+> `useOperatorStatus`, `electron/oauth.js` and the runtime `.env` that carried
+> `GOOGLE_DESKTOP_CLIENT_ID` / `_SECRET`. Neither variable is read any more.
+>
+> **What replaces it.** Each machine signs in as its own Firebase
+> email/password user, entered once in Settings and stored with Electron's
+> `safeStorage` (`electron/credentials.js`). The uid lands in `operators/{uid}`
+> exactly as a Google operator's did, so `firestore.rules` never changed and
+> the PWA is unaffected. An admin approves a machine in the Firebase console,
+> and revokes one machine without touching the others.
+>
+> **Loose end:** the `Apostello Desktop` OAuth client still exists in Google
+> Cloud Console. Deleting the `.env` lines does not revoke it — delete the
+> client itself to close the app-impersonation path.
 
 ### 1.3 Smaller items
 

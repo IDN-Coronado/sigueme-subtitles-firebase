@@ -1,15 +1,45 @@
 import { useEffect, useState } from "react";
 
 import useSongRepository from "../../firebase/useSongRepository";
+import { byTitle } from "../../local/data";
 import { flattenSongLines } from "../../utils/songSections";
+import { showError } from "../../utils/notice";
+import ErrorNotice from "../ErrorNotice";
 import { t } from "../../i18n";
 
 const MONO = { fontFamily: "JetBrains Mono, monospace" };
 
+const actionButton =
+  "shrink-0 px-3 py-1.5 text-[#7bd0ff] text-xs border border-[rgba(123,208,255,0.4)] rounded-sm hover:bg-[rgba(123,208,255,0.1)] disabled:opacity-40 transition-colors";
+
+/**
+ * Every song either side knows about, in one list. Local songs and repository
+ * songs share ids (importing and uploading both preserve them), so the union
+ * is deduped by id and each row shows the one action it is missing.
+ */
+function mergeSongs(remote, local) {
+  const byId = new Map();
+  for (const song of remote) byId.set(song.id, song);
+  for (const song of local) if (!byId.has(song.id)) byId.set(song.id, song);
+  return [...byId.values()].sort(byTitle);
+}
+
 function SongRepositoryModal({ isOpen, onClose }) {
-  const { remote, loading, error, load, importSongs, isImported } =
-    useSongRepository();
+  const {
+    songs,
+    remote,
+    loading,
+    error,
+    load,
+    importSongs,
+    uploadSong,
+    isImported,
+    isPublished,
+  } = useSongRepository();
   const [busy, setBusy] = useState(false);
+  // Per-song id while uploading: uploads go one at a time, so only the row
+  // being pushed should show a pending state.
+  const [uploadingId, setUploadingId] = useState(null);
 
   useEffect(() => {
     if (isOpen) load();
@@ -17,6 +47,7 @@ function SongRepositoryModal({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
+  const all = mergeSongs(remote, songs);
   const pending = remote.filter((song) => !isImported(song.id));
 
   const runImport = async (items) => {
@@ -26,6 +57,57 @@ function SongRepositoryModal({ isOpen, onClose }) {
     } finally {
       setBusy(false);
     }
+  };
+
+  const runUpload = async (song) => {
+    setUploadingId(song.id);
+    try {
+      await uploadSong(song);
+    } catch (err) {
+      console.error("Failed to upload song", err);
+      showError(t("repository.uploadError"), err);
+    } finally {
+      setUploadingId(null);
+    }
+  };
+
+  const rowAction = (song) => {
+    if (!isImported(song.id)) {
+      return (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => runImport([song])}
+          className={actionButton}
+        >
+          {t("repository.import")}
+        </button>
+      );
+    }
+
+    if (!isPublished(song.id)) {
+      return (
+        <button
+          type="button"
+          disabled={Boolean(uploadingId)}
+          onClick={() => runUpload(song)}
+          className={actionButton}
+        >
+          {uploadingId === song.id
+            ? t("repository.uploading")
+            : t("repository.upload")}
+        </button>
+      );
+    }
+
+    return (
+      <span
+        className="shrink-0 text-[#6b7280] text-[10px] uppercase tracking-[0.1em] px-2"
+        style={MONO}
+      >
+        {t("repository.imported")}
+      </span>
+    );
   };
 
   return (
@@ -58,13 +140,16 @@ function SongRepositoryModal({ isOpen, onClose }) {
             </p>
           )}
 
+          {/* The repository has to have loaded before any row is meaningful:
+              without it every local song looks unpublished and would offer an
+              Upload that duplicates what is already there. */}
           {!loading && error && (
-            <p className="text-[#ffb4ab] text-sm text-center py-8">
-              {t("repository.error")}
-            </p>
+            <div className="py-6">
+              <ErrorNotice error={error} />
+            </div>
           )}
 
-          {!loading && !error && remote.length === 0 && (
+          {!loading && !error && all.length === 0 && (
             <p className="text-[#6b7280] text-sm text-center py-8">
               {t("repository.empty")}
             </p>
@@ -72,44 +157,27 @@ function SongRepositoryModal({ isOpen, onClose }) {
 
           {!loading &&
             !error &&
-            remote.map((song) => {
-              const imported = isImported(song.id);
-              return (
-                <div
-                  key={song.id}
-                  className="flex items-center gap-2 w-full border border-[rgba(69,70,77,0.35)] bg-[rgba(16,20,21,0.5)] rounded-lg pl-4 pr-2 py-3"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[#e0e3e5] text-sm font-medium truncate">
-                      {song.title}
-                    </p>
-                    <p className="text-[#6b7280] text-xs truncate mt-0.5">
-                      {flattenSongLines(song).slice(0, 1).join(" ")}
-                    </p>
-                  </div>
-                  {imported ? (
-                    <span
-                      className="shrink-0 text-[#6b7280] text-[10px] uppercase tracking-[0.1em] px-2"
-                      style={MONO}
-                    >
-                      {t("repository.imported")}
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => runImport([song])}
-                      className="shrink-0 px-3 py-1.5 text-[#7bd0ff] text-xs border border-[rgba(123,208,255,0.4)] rounded-sm hover:bg-[rgba(123,208,255,0.1)] disabled:opacity-40 transition-colors"
-                    >
-                      {t("repository.import")}
-                    </button>
-                  )}
+            all.map((song) => (
+              <div
+                key={song.id}
+                className="flex items-center gap-2 w-full border border-[rgba(69,70,77,0.35)] bg-[rgba(16,20,21,0.5)] rounded-lg pl-4 pr-2 py-3"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-[#e0e3e5] text-sm font-medium truncate">
+                    {song.title}
+                  </p>
+                  <p className="text-[#6b7280] text-xs truncate mt-0.5">
+                    {flattenSongLines(song).slice(0, 1).join(" ")}
+                  </p>
                 </div>
-              );
-            })}
+                {rowAction(song)}
+              </div>
+            ))}
         </div>
 
         <div className="flex justify-between items-center gap-3 px-5 sm:px-6 py-4 border-t border-[rgba(69,70,77,0.3)]">
+          {/* Batch import only. Uploading writes to a collection every other
+              church reads, so it stays one deliberate song at a time. */}
           <button
             type="button"
             disabled={busy || pending.length === 0}

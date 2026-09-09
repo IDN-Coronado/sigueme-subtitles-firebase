@@ -34,7 +34,9 @@ service cloud.firestore {
     match /media/{id} { allow read: if isOperator(); }
 
     // Songs stay writable: this collection is the shared repository operators
-    // import from. Publishing back to it is deliberately not built yet.
+    // import from, and publish back to one song at a time from the main
+    // menu's Songs repository. The write rule below already allowed it;
+    // nothing here changed when publishing was built.
     match /songs/{id} { allow read, write: if isOperator(); }
   }
 }

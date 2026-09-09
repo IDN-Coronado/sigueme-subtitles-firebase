@@ -1,11 +1,4 @@
 const es = {
-  auth: {
-    signInSubtitle: "Inicia sesión para gestionar el servicio de hoy.",
-    signInButton: "Iniciar sesión con Google",
-    signInError: "Error al iniciar sesión. Inténtalo de nuevo.",
-    pendingSubtitle: "Tu cuenta ({email}) está esperando la aprobación de un administrador.",
-    signOut: "Cerrar sesión",
-  },
   common: {
     cancel: "Cancelar",
     close: "Cerrar",
@@ -33,6 +26,15 @@ const es = {
     delete: "Eliminar",
   },
   errors: {
+    notApprovedTitle: "Este equipo aún no está aprobado",
+    notApprovedBody:
+      "La sesión está iniciada, pero un administrador todavía debe aprobarlo. Envíale este ID para agregarlo en la colección operators:",
+    signedOutTitle: "Sesión no iniciada",
+    signedOutBody:
+      "Agrega la cuenta de operador de este equipo en Ajustes antes de importar.",
+    genericTitle: "Algo salió mal",
+    genericBody:
+      "La solicitud no se completó. Revisa tu conexión e inténtalo de nuevo.",
     uploadFile: "Error al subir el archivo.",
     uploadTheme: "Error al subir el archivo o guardar el tema.",
     addYouTube: "Error al agregar el video de YouTube.",
@@ -71,15 +73,13 @@ const es = {
       openProgramDesc: "Abre o elimina un programa guardado",
       newSong: "Crear nueva canción",
       newSongDesc: "Agrega letras a tu biblioteca",
-      songRepository: "Importar del repositorio",
-      songRepositoryDesc: "Copia canciones de la biblioteca compartida en Firebase",
+      songRepository: "Repositorio de canciones",
+      songRepositoryDesc: "Importa canciones de la biblioteca compartida en Firebase, o sube las tuyas",
       uploadFile: "Subir un archivo",
       uploadFileDesc: "Agrega media a la biblioteca general",
       uploadTheme: "Subir un tema",
       uploadThemeDesc: "Importa una imagen o video de fondo",
       settings: "Ajustes",
-      mediaImport: "Copiar medios desde Firebase",
-      mediaImportDesc: "Migración única de los archivos a esta computadora",
       settingsDesc: "Idioma y estilos de subtítulos por defecto",
     },
   },
@@ -225,9 +225,17 @@ const es = {
     captionDefaults: "Estilos de subtítulos",
     captionDefaultsHint:
       "Estos estilos se aplican a programas nuevos. Cada programa puede sobrescribirlos desde la consola.",
-    account: "Cuenta",
+    account: "Cuenta de operador",
+    accountHint:
+      "Este equipo publica subtítulos con su propio usuario de Firebase. Un administrador aprueba el ID de abajo en la colección operators.",
+    emailLabel: "Correo del operador",
+    passwordLabel: "Contraseña",
+    accountSave: "Iniciar sesión",
+    accountError: "No se pudo iniciar sesión. Revisa el correo y la contraseña.",
     signedInAs: "Sesión iniciada como {email}",
     signOut: "Cerrar sesión",
+    copy: "Copiar ID",
+    copied: "Copiado",
   },
   mediaModal: {
     eyebrow: "Media",
@@ -296,6 +304,7 @@ const es = {
     escapeHint: "Presiona Esc para cerrar",
   },
   caption: {
+    publishFailed: "El subtítulo no se publicó",
     ccStyle: "Estilo CC",
     reset: "RESET",
   },
@@ -330,24 +339,16 @@ const es = {
     errorHint: 'No se pudo interpretar data.json. Hay una copia del guardado anterior junto a él, como data.json.bak.',
   },
   repository: {
-    title: 'Repositorio de canciones',
-    subtitle: 'Canciones compartidas desde Firebase. Al importar se copian a tu biblioteca local.',
+    upload: "Subir",
+    uploading: "Subiendo…",
+    uploadError: "No se pudo subir la canción.",
+    title: "Repositorio de canciones",
+    subtitle: "Canciones compartidas desde Firebase. Importa una a tu biblioteca, o sube una canción local para que otras iglesias puedan usarla.",
     import: 'Importar',
     imported: 'En tu biblioteca',
     importAll: 'Importar todas',
     importing: 'Importando…',
     empty: 'No hay canciones en el repositorio.',
-    error: 'No se pudo cargar el repositorio. Revisa tu conexión.',
-    open: 'Importar del repositorio',
-  },
-  migrate: {
-    title: 'Importa tus datos existentes',
-    body: 'Esta computadora aún no tiene biblioteca local. Importa tus programas, canciones y temas desde Firebase para empezar.',
-    action: 'Importar desde Firebase',
-    running: 'Importando…',
-    error: 'La importación falló. Revisa tu conexión e inténtalo de nuevo.',
-    skip: 'Empezar vacío',
-    done: '{programs} programas, {songs} canciones, {themes} temas importados.',
   },
   mediaImport: {
     eyebrow: 'Migración única',

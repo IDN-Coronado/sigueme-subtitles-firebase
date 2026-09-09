@@ -14,7 +14,6 @@ import SongRepositoryModal from "../components/Song/SongRepositoryModal";
 import SlideUploadModal from "../components/SlideUploadModal";
 import NewThemeModal from "../components/Theme/NewThemeModal";
 import GlobalSettingsModal from "../components/GlobalSettingsModal";
-import MediaImportModal from "../components/MediaImportModal";
 import { IconGear, IconMedia } from "../components/Icons";
 import { t, formatProgramDate } from "../i18n";
 import { toProgramDate } from "../i18n/formatProgramDate";
@@ -56,12 +55,6 @@ const MENU_ITEMS = [
     id: "upload-theme",
     labelKey: "home.menu.uploadTheme",
     descriptionKey: "home.menu.uploadThemeDesc",
-    shortcut: null,
-  },
-  {
-    id: "media-import",
-    labelKey: "home.menu.mediaImport",
-    descriptionKey: "home.menu.mediaImportDesc",
     shortcut: null,
   },
   {
@@ -166,8 +159,8 @@ function Home() {
   const handleDeleteProgram = async (program) => {
     try {
       await removeProgram(program.id);
-    } catch {
-      alert(t("errors.deleteResource"));
+    } catch (err) {
+      showError(t("errors.deleteResource"), err);
     }
   };
 
@@ -179,16 +172,16 @@ function Home() {
     try {
       await uploadMedia({ file, title });
       closeModal();
-    } catch {
-      alert(t("errors.uploadFile"));
+    } catch (err) {
+      showError(t("errors.uploadFile"), err);
     }
   };
 
   const handleCreateTheme = async ({ title, storagePath, file }) => {
     try {
       await addTheme({ title, storagePath, file });
-    } catch {
-      alert(t("errors.uploadTheme"));
+    } catch (err) {
+      showError(t("errors.uploadTheme"), err);
     }
   };
 
@@ -419,10 +412,6 @@ function Home() {
         isVisible={modal === "upload-theme"}
         onClose={closeModal}
         onSubmit={handleCreateTheme}
-      />
-      <MediaImportModal
-        isOpen={modal === "media-import"}
-        onClose={closeModal}
       />
       <GlobalSettingsModal
         isOpen={modal === "settings"}

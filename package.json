@@ -15,7 +15,6 @@
     "dayjs": "^1.11.13",
     "dompurify": "^3.2.6",
     "firebase": "^9.17.2",
-    "firebase-cli": "^1.2.0",
     "jszip": "^3.10.1",
     "pdfjs-dist": "^6.3.289",
     "pptxviewjs": "^1.1.9",
@@ -32,7 +31,7 @@
     "preview": "vite preview",
     "desktop": "vite build && electron .",
     "desktop:dev": "electron . --dev",
-    "package": "vite build && electron-builder && node -e \"if(!require('node:fs').existsSync('release/win-unpacked/resources/.env'))throw new Error('resources/.env did not ship — rerun; sign-in fails without it')\"",
+    "package": "vite build && electron-builder",
     "test:electron": "node --test electron/electron.test.js",
     "lhci:mobile": "lhci autorun",
     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop"
@@ -48,9 +47,6 @@
       "dist/**",
       "package.json",
       "!node_modules/**/*"
-    ],
-    "extraResources": [
-      ".env"
     ],
     "win": {
       "target": "nsis",

@@ -12,7 +12,6 @@ import SongRepositoryModal from "../components/Song/SongRepositoryModal";
 import SlideUploadModal from "../components/SlideUploadModal";
 import NewThemeModal from "../components/Theme/NewThemeModal";
 import GlobalSettingsModal from "../components/GlobalSettingsModal";
-import MediaImportModal from "../components/MediaImportModal";
 import { t, formatProgramDate } from "../i18n";
 import { MONO } from "../fonts";
 
@@ -59,13 +58,6 @@ const MENU_ITEMS = [
     descriptionKey: "home.menu.uploadThemeDesc",
     iconBg: "rgba(245,158,11,0.2)",
     iconColor: "#FCD34D",
-  },
-  {
-    id: "media-import",
-    labelKey: "home.menu.mediaImport",
-    descriptionKey: "home.menu.mediaImportDesc",
-    iconBg: "rgba(56,189,248,0.2)",
-    iconColor: "#38BDF8",
   },
   {
     id: "settings",
@@ -119,14 +111,6 @@ function MenuIcon({ id, color }) {
         <path d="M5 4h9l4 4v10a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1z" stroke={stroke} strokeWidth="1.6" strokeLinejoin="round" />
         <circle cx="9" cy="14" r="1.8" stroke={stroke} strokeWidth="1.4" />
         <path d="M10.8 14V9.5l3.4-.9" stroke={stroke} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    );
-  }
-  if (id === "media-import") {
-    return (
-      <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden>
-        <path d="M11 3v9m0 0l-3.2-3.2M11 12l3.2-3.2" stroke={stroke} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M4 14v3a1 1 0 001 1h12a1 1 0 001-1v-3" stroke={stroke} strokeWidth="1.6" strokeLinecap="round" />
       </svg>
     );
   }
@@ -403,10 +387,6 @@ function Home() {
         isVisible={modal === "upload-theme"}
         onClose={closeModal}
         onSubmit={handleCreateTheme}
-      />
-      <MediaImportModal
-        isOpen={modal === "media-import"}
-        onClose={closeModal}
       />
       <GlobalSettingsModal
         isOpen={modal === "settings"}

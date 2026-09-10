@@ -257,11 +257,11 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
         ) : item.mediaType === "video" ? (
           <video
             src={item.url}
-            crossOrigin="anonymous"
             className="w-full h-full object-contain pointer-events-none"
+            autoPlay
+            loop
             muted
             playsInline
-            preload="metadata"
           />
         ) : item.mediaType === "audio" ? (
           <span className="text-[#45464d] text-xs tracking-[0.1em]" style={MONO}>
@@ -277,8 +277,7 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
         ) : (
           <img
             src={item.url}
-            crossOrigin="anonymous"
-            alt={item.title}
+                       alt={item.title}
             className="w-full h-full object-contain pointer-events-none"
           />
         )}

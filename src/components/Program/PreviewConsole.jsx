@@ -47,7 +47,6 @@ function ThemeBackground({ theme }) {
     return (
       <video
         src={theme.backgroundUrl}
-        crossOrigin="anonymous"
         className="absolute inset-0 w-full h-full object-cover"
         autoPlay
         muted
@@ -61,7 +60,6 @@ function ThemeBackground({ theme }) {
   return (
     <img
       src={theme.backgroundUrl}
-      crossOrigin="anonymous"
       alt=""
       aria-hidden
       className="absolute inset-0 w-full h-full object-cover"
@@ -396,7 +394,6 @@ function PreviewConsole({
               key={url}
               ref={mediaRef}
               src={url}
-              crossOrigin="anonymous"
               className="w-full h-full object-contain pointer-events-none"
               playsInline
               preload="auto"
@@ -411,7 +408,6 @@ function PreviewConsole({
                 key={url}
                 ref={mediaRef}
                 src={url}
-                crossOrigin="anonymous"
                 preload="auto"
                 className="hidden"
                 muted={!isLive}
@@ -444,7 +440,6 @@ function PreviewConsole({
           ) : (
             <img
               src={url}
-              crossOrigin="anonymous"
               alt={title || ""}
               className="w-full h-full object-contain"
             />

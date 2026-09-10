@@ -182,6 +182,7 @@ const es = {
   },
   media: {
     audioBadge: "AUDIO",
+    imageBadge: "IMAGEN",
     videoBadge: "VIDEO",
     youtubeBadge: "YOUTUBE",
     pptxBadge: "PPTX",

@@ -53,9 +53,9 @@ function ScheduleItemRow({ item, index, active, onSelect, onDoubleSelect, onRemo
         <div className="w-12 h-8 rounded-md bg-[#1E2540] border border-[rgba(255,255,255,0.06)] overflow-hidden shrink-0">
           {item.backgroundUrl ? (
             item.themeType === "video" ? (
-              <video src={item.backgroundUrl} crossOrigin="anonymous" className="w-full h-full object-cover" muted playsInline />
+              <video src={item.backgroundUrl} className="w-full h-full object-cover" muted playsInline />
             ) : (
-              <img src={item.backgroundUrl} crossOrigin="anonymous" alt="" className="w-full h-full object-cover" />
+              <img src={item.backgroundUrl} alt="" className="w-full h-full object-cover" />
             )
           ) : (
             <div className="w-full h-full flex items-center justify-center text-[#9AA3B2] text-[8px]" style={MONO}>

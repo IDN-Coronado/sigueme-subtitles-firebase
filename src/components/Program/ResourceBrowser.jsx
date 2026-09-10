@@ -286,10 +286,9 @@ function MediaBrowser({
                       src={item.url}
                       className="w-full h-full object-cover"
                       muted
-                      autoPlay
                       playsInline
-                      loop
-                      preload="auto"
+                      preload="metadata"
+                      onLoadedMetadata={(e) => { e.currentTarget.currentTime = 0.001; }}
                     />
                   ) : item.type === "audio" ? (
                     <div
@@ -319,7 +318,7 @@ function MediaBrowser({
                   />
                   {item.type === "youtube" && (
                     <span
-                      className="pointer-events-none absolute bottom-1 left-1 text-[8px] tracking-[0.06em] text-[#ffb4ab] bg-[rgba(16,20,21,0.75)] px-1 py-0.5 rounded-sm"
+                      className="pointer-events-none absolute bottom-1 left-1 text-[9px] font-semibold tracking-[0.06em] text-[#ffb4ab] bg-[rgba(0,0,0,0.82)] px-1.5 py-0.5 rounded-sm"
                       style={MONO}
                     >
                       {t("media.youtubeBadge")}
@@ -327,7 +326,7 @@ function MediaBrowser({
                   )}
                   {item.type === "pdf" && (
                     <span
-                      className="pointer-events-none absolute bottom-1 left-1 text-[8px] tracking-[0.06em] text-[#7bd0ff] bg-[rgba(16,20,21,0.75)] px-1 py-0.5 rounded-sm"
+                      className="pointer-events-none absolute bottom-1 left-1 text-[9px] font-semibold tracking-[0.06em] text-[#7bd0ff] bg-[rgba(0,0,0,0.82)] px-1.5 py-0.5 rounded-sm"
                       style={MONO}
                     >
                       {t("media.pdfBadge")}
@@ -335,7 +334,7 @@ function MediaBrowser({
                   )}
                   {item.type === "video" && (
                     <span
-                      className="pointer-events-none absolute bottom-1 left-1 text-[8px] tracking-[0.06em] text-[#9AA3B2] bg-[rgba(16,20,21,0.75)] px-1 py-0.5 rounded-sm"
+                      className="pointer-events-none absolute bottom-1 left-1 text-[9px] font-semibold tracking-[0.06em] text-[#D1D5DB] bg-[rgba(0,0,0,0.82)] px-1.5 py-0.5 rounded-sm"
                       style={MONO}
                     >
                       {t("media.videoBadge")}
@@ -343,10 +342,18 @@ function MediaBrowser({
                   )}
                   {item.type === "audio" && (
                     <span
-                      className="pointer-events-none absolute bottom-1 left-1 text-[8px] tracking-[0.06em] text-[#9AA3B2] bg-[rgba(16,20,21,0.75)] px-1 py-0.5 rounded-sm"
+                      className="pointer-events-none absolute bottom-1 left-1 text-[9px] font-semibold tracking-[0.06em] text-[#D1D5DB] bg-[rgba(0,0,0,0.82)] px-1.5 py-0.5 rounded-sm"
                       style={MONO}
                     >
                       {t("media.audioBadge")}
+                    </span>
+                  )}
+                  {item.type === "image" && (
+                    <span
+                      className="pointer-events-none absolute bottom-1 left-1 text-[9px] font-semibold tracking-[0.06em] text-[#D1D5DB] bg-[rgba(0,0,0,0.82)] px-1.5 py-0.5 rounded-sm"
+                      style={MONO}
+                    >
+                      {t("media.imageBadge")}
                     </span>
                   )}
                   {isSelected && (
@@ -436,10 +443,9 @@ function ThemesBrowser({
                       src={theme.backgroundUrl}
                       className="w-full h-full object-cover"
                       muted
-                      autoPlay
                       playsInline
-                      loop
-                      preload="auto"
+                      preload="metadata"
+                      onLoadedMetadata={(e) => { e.currentTarget.currentTime = 0.001; }}
                     />
                   ) : (
                     <img

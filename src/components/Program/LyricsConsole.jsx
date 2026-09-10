@@ -59,8 +59,7 @@ function LyricsConsole({ item, songs }) {
         {item.mediaType === "video" ? (
           <video
             src={item.url}
-            crossOrigin="anonymous"
-            className="w-full h-full object-contain"
+                       className="w-full h-full object-contain"
             controls
             playsInline
           />
@@ -69,13 +68,12 @@ function LyricsConsole({ item, songs }) {
             <span className="text-[#45464d] text-xs tracking-[0.1em]" style={MONO}>
               {t("media.audioBadge")}
             </span>
-            <audio src={item.url} crossOrigin="anonymous" controls className="w-full max-w-sm" />
+            <audio src={item.url} controls className="w-full max-w-sm" />
           </div>
         ) : (
           <img
             src={item.url}
-            crossOrigin="anonymous"
-            alt={item.title}
+                       alt={item.title}
             className="w-full h-full object-contain"
           />
         )}
@@ -90,8 +88,7 @@ function LyricsConsole({ item, songs }) {
           item.themeType === "video" ? (
             <video
               src={item.backgroundUrl}
-              crossOrigin="anonymous"
-              className="w-full h-full object-cover"
+                           className="w-full h-full object-cover"
               autoPlay
               muted
               loop
@@ -100,8 +97,7 @@ function LyricsConsole({ item, songs }) {
           ) : (
             <img
               src={item.backgroundUrl}
-              crossOrigin="anonymous"
-              alt={item.title}
+                           alt={item.title}
               className="w-full h-full object-cover"
             />
           )

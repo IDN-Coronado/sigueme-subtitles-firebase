@@ -66,7 +66,7 @@ registerRoute(
   new CacheFirst({
     cacheName: MEDIA_CACHE_NAME,
     plugins: [
-      new CacheableResponsePlugin({ statuses: [0, 200] }),
+      new CacheableResponsePlugin({ statuses: [200] }),
       new RangeRequestsPlugin(),
     ],
   })

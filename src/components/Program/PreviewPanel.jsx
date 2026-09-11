@@ -258,8 +258,9 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
           <video
             src={item.url}
             className="w-full h-full object-contain pointer-events-none"
-            autoPlay
-            loop
+            // Still first frame. A looping clip here competes with the live
+            // output for attention, and for a decoder.
+            preload="metadata"
             muted
             playsInline
           />

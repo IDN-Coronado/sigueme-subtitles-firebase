@@ -4,11 +4,11 @@ function Panel({ title, action, children, className = "", style, bodyClassName =
   return (
     <section
       style={style}
-      className={`bg-[rgba(29,32,34,0.5)] border border-[rgba(69,70,77,0.35)] rounded-lg flex flex-col min-h-0 overflow-hidden ${className}`}
+      className={`bg-[#111521] border border-[rgba(255,255,255,0.08)] rounded-xl flex flex-col min-h-0 overflow-hidden ${className}`}
     >
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[rgba(69,70,77,0.25)] shrink-0">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[rgba(255,255,255,0.06)] shrink-0">
         <h3
-          className="text-[#c6c6cd] text-xs font-medium tracking-[0.08em] uppercase"
+          className="text-[#9AA3B2] text-[10px] font-semibold tracking-[0.12em] uppercase"
           style={MONO}
         >
           {title}

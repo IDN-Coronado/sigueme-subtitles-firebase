@@ -13,8 +13,7 @@ function ThemeBackground({ url }) {
     return (
       <video
         src={url}
-        crossOrigin="anonymous"
-        autoPlay
+               autoPlay
         loop
         muted
         playsInline
@@ -26,8 +25,7 @@ function ThemeBackground({ url }) {
   return (
     <img
       src={url}
-      crossOrigin="anonymous"
-      alt=""
+           alt=""
       aria-hidden="true"
       className="absolute inset-0 w-full h-full object-cover"
       style={{ zIndex: 0 }}

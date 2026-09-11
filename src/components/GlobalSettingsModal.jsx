@@ -29,17 +29,17 @@ import {
 const MONO = { fontFamily: "JetBrains Mono, monospace" };
 
 const btnBase =
-  "w-8 h-8 inline-flex items-center justify-center rounded-sm border transition-colors shrink-0";
+  "w-8 h-8 inline-flex items-center justify-center rounded-lg border transition-colors shrink-0";
 const btnIdle =
-  "border-[rgba(69,70,77,0.4)] text-[#c6c6cd] hover:border-[#7bd0ff] hover:text-[#7bd0ff]";
+  "border-[rgba(255,255,255,0.1)] text-[#9AA3B2] hover:border-[rgba(99,102,241,0.4)] hover:text-[#7C83FF]";
 const btnActive =
-  "border-[rgba(123,208,255,0.45)] text-[#7bd0ff] bg-[rgba(123,208,255,0.1)]";
+  "border-[rgba(99,102,241,0.5)] text-[#7C83FF] bg-[rgba(99,102,241,0.15)]";
 const chipBase =
-  "h-8 px-3 inline-flex items-center rounded-sm border text-xs transition-colors";
+  "h-8 px-3 inline-flex items-center rounded-lg border text-xs transition-colors";
 const chipIdle =
-  "border-[rgba(69,70,77,0.4)] text-[#c6c6cd] hover:border-[#7bd0ff] hover:text-[#7bd0ff]";
+  "border-[rgba(255,255,255,0.1)] text-[#9AA3B2] hover:border-[rgba(99,102,241,0.4)] hover:text-[#7C83FF]";
 const chipActive =
-  "border-[rgba(123,208,255,0.45)] text-[#7bd0ff] bg-[rgba(123,208,255,0.1)]";
+  "border-[rgba(99,102,241,0.5)] text-[#7C83FF] bg-[rgba(99,102,241,0.15)]";
 
 function GlobalSettingsModal({ isOpen, onClose }) {
   const user = useAuthUser();
@@ -131,29 +131,29 @@ function GlobalSettingsModal({ isOpen, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div
-        className="bg-[#1d2022] border border-[rgba(69,70,77,0.4)] rounded-lg shadow-[0_24px_64px_rgba(0,0,0,0.45)] flex flex-col w-full max-w-lg overflow-hidden"
+        className="bg-[#111521] border border-[rgba(255,255,255,0.08)] rounded-xl shadow-[0_24px_64px_rgba(0,0,0,0.6)] flex flex-col w-full max-w-lg overflow-hidden"
         role="dialog"
         aria-modal="true"
         aria-labelledby="global-settings-title"
       >
-        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-[rgba(69,70,77,0.3)]">
+        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-[rgba(255,255,255,0.06)]">
           <div>
             <p
-              className="text-[#7bd0ff] text-[10px] tracking-[0.12em] uppercase mb-1"
+              className="text-[#6366F1] text-[10px] tracking-[0.12em] uppercase mb-1"
               style={MONO}
             >
               {t("settingsModal.eyebrow")}
             </p>
             <h2
               id="global-settings-title"
-              className="text-[#e0e3e5] font-semibold text-lg tracking-tight"
+              className="text-[#F8FAFC] font-semibold text-lg tracking-tight"
             >
               {t("settingsModal.title")}
             </h2>
           </div>
           <button
             type="button"
-            className="text-[#6b7280] hover:text-[#e0e3e5] text-2xl leading-none transition-colors"
+            className="text-[#9AA3B2] hover:text-[#F8FAFC] text-2xl leading-none transition-colors"
             onClick={onClose}
             aria-label={t("common.close")}
           >
@@ -164,7 +164,7 @@ function GlobalSettingsModal({ isOpen, onClose }) {
         <div className="flex flex-col gap-6 px-5 sm:px-6 py-5 max-h-[min(70vh,560px)] overflow-y-auto">
           <section className="flex flex-col gap-3">
             <h3
-              className="text-[#c6c6cd] text-[10px] tracking-[0.1em] uppercase"
+              className="text-[#9AA3B2] text-[10px] tracking-[0.1em] uppercase"
               style={MONO}
             >
               {t("settingsModal.language")}
@@ -189,7 +189,7 @@ function GlobalSettingsModal({ isOpen, onClose }) {
           <section className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-3">
               <h3
-                className="text-[#c6c6cd] text-[10px] tracking-[0.1em] uppercase"
+                className="text-[#9AA3B2] text-[10px] tracking-[0.1em] uppercase"
                 style={MONO}
               >
                 {t("settingsModal.captionDefaults")}
@@ -213,7 +213,7 @@ function GlobalSettingsModal({ isOpen, onClose }) {
                 ))}
               </div>
             </div>
-            <p className="text-[#6b7280] text-xs">
+            <p className="text-[#9AA3B2] text-xs">
               {t("settingsModal.captionDefaultsHint")}
             </p>
 
@@ -311,7 +311,7 @@ function GlobalSettingsModal({ isOpen, onClose }) {
               <button
                 type="button"
                 onClick={onReset}
-                className="h-8 px-2 inline-flex items-center rounded-sm border border-[rgba(69,70,77,0.4)] text-[#6b7280] text-[10px] tracking-[0.06em] hover:border-[#ffb4ab] hover:text-[#ffb4ab] transition-colors"
+                className="h-8 px-2 inline-flex items-center rounded-sm border border-[rgba(69,70,77,0.4)] text-[#9AA3B2] text-[10px] tracking-[0.06em] hover:border-[#ffb4ab] hover:text-[#ffb4ab] transition-colors"
                 style={MONO}
                 title={t("console.ccResetGlobalHint")}
               >
@@ -323,19 +323,19 @@ function GlobalSettingsModal({ isOpen, onClose }) {
           {user && (
             <section className="flex flex-col gap-3">
               <h3
-                className="text-[#c6c6cd] text-[10px] tracking-[0.1em] uppercase"
+                className="text-[#9AA3B2] text-[10px] tracking-[0.1em] uppercase"
                 style={MONO}
               >
                 {t("settingsModal.account")}
               </h3>
               <div className="flex items-center justify-between gap-3">
-                <p className="text-[#c6c6cd] text-xs truncate">
+                <p className="text-[#9AA3B2] text-xs truncate">
                   {t("settingsModal.signedInAs", { email: user.email })}
                 </p>
                 <button
                   type="button"
                   onClick={() => signOut(auth)}
-                  className="h-8 px-3 inline-flex items-center rounded-sm border border-[rgba(69,70,77,0.4)] text-[#c6c6cd] text-xs hover:border-[#ffb4ab] hover:text-[#ffb4ab] transition-colors shrink-0"
+                  className="h-8 px-3 inline-flex items-center rounded-sm border border-[rgba(69,70,77,0.4)] text-[#9AA3B2] text-xs hover:border-[#ffb4ab] hover:text-[#ffb4ab] transition-colors shrink-0"
                 >
                   {t("settingsModal.signOut")}
                 </button>
@@ -344,11 +344,11 @@ function GlobalSettingsModal({ isOpen, onClose }) {
           )}
         </div>
 
-        <div className="flex justify-end px-5 sm:px-6 py-4 border-t border-[rgba(69,70,77,0.3)]">
+        <div className="flex justify-end px-5 sm:px-6 py-4 border-t border-[rgba(255,255,255,0.06)]">
           <button
             type="button"
             onClick={onClose}
-            className="text-[#101415] text-sm font-medium bg-[#7bd0ff] px-4 py-2 rounded-sm hover:bg-[#9fdfff] transition-colors"
+            className="text-white text-sm font-semibold bg-[#6366F1] px-4 py-2 rounded-lg hover:bg-[#7C83FF] transition-colors"
           >
             {t("common.done")}
           </button>

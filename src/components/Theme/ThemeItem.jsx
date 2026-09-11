@@ -9,15 +9,13 @@ function ThemeItem({ theme, onDelete }) {
       {theme.type === "video" ? (
         <video
           src={theme.backgroundUrl}
-          crossOrigin="anonymous"
-          className="absolute inset-0 w-full h-full object-cover"
+                   className="absolute inset-0 w-full h-full object-cover"
           autoPlay loop muted playsInline controls={false}
         />
       ) : theme.type === "image" ? (
         <img
           src={theme.backgroundUrl}
-          crossOrigin="anonymous"
-          alt={theme.title}
+                   alt={theme.title}
           className="absolute inset-0 w-full h-full object-cover"
         />
       ) : (

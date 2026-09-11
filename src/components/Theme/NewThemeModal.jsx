@@ -68,24 +68,24 @@ function NewThemeModal({ isVisible, onClose, onSubmit }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <form
-        className="bg-[#1d2022] border border-[rgba(69,70,77,0.4)] rounded-lg shadow-[0_24px_64px_rgba(0,0,0,0.45)] flex flex-col w-full max-w-md overflow-hidden"
+        className="bg-[#111521] border border-[rgba(255,255,255,0.08)] rounded-xl shadow-[0_24px_64px_rgba(0,0,0,0.6)] flex flex-col w-full max-w-md overflow-hidden"
         onSubmit={handleSubmit}
       >
-        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-[rgba(69,70,77,0.3)]">
+        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-[rgba(255,255,255,0.06)]">
           <div>
             <p
-              className="text-[#7bd0ff] text-[10px] tracking-[0.12em] uppercase mb-1"
+              className="text-[#6366F1] text-[10px] tracking-[0.12em] uppercase mb-1"
               style={MONO}
             >
               {t("themeModal.eyebrow")}
             </p>
-            <h2 className="text-[#e0e3e5] font-semibold text-lg tracking-tight">
+            <h2 className="text-[#F8FAFC] font-semibold text-lg tracking-tight">
               {t("themeModal.title")}
             </h2>
           </div>
           <button
             type="button"
-            className="text-[#6b7280] hover:text-[#e0e3e5] text-2xl leading-none transition-colors"
+            className="text-[#9AA3B2] hover:text-[#F8FAFC] text-2xl leading-none transition-colors"
             onClick={handleModalClose}
             disabled={uploading}
             aria-label={t("common.close")}
@@ -96,20 +96,20 @@ function NewThemeModal({ isVisible, onClose, onSubmit }) {
 
         <div className="flex flex-col gap-4 px-5 sm:px-6 py-5">
           <div className="flex flex-col gap-2">
-            <label className="text-[#c6c6cd] text-sm font-medium">
+            <label className="text-[#9AA3B2] text-sm font-medium">
               {t("themeModal.nameLabel")}
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="bg-[#0b0f10] text-[#e0e3e5] border border-[rgba(69,70,77,0.3)] rounded-sm px-3 py-2.5 outline-none focus:border-[#7bd0ff] transition-colors"
+              className="bg-[#171C2B] text-[#F8FAFC] border border-[rgba(255,255,255,0.08)] rounded-lg px-3 py-2.5 outline-none focus:border-[#6366F1] transition-colors"
               required
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-[#c6c6cd] text-sm font-medium">
+            <label className="text-[#9AA3B2] text-sm font-medium">
               {t("themeModal.fileLabel")}
             </label>
             <input
@@ -117,13 +117,13 @@ function NewThemeModal({ isVisible, onClose, onSubmit }) {
               accept="image/*,video/*"
               onChange={handleFileChange}
               ref={fileInputRef}
-              className="bg-[#0b0f10] text-[#c6c6cd] border border-[rgba(69,70,77,0.3)] rounded-sm px-3 py-2.5 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-sm file:border-0 file:bg-[rgba(123,208,255,0.15)] file:text-[#7bd0ff] file:text-sm file:font-medium hover:border-[rgba(123,208,255,0.35)] transition-colors"
+              className="bg-[#171C2B] text-[#9AA3B2] border border-[rgba(255,255,255,0.08)] rounded-lg px-3 py-2.5 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-[rgba(99,102,241,0.2)] file:text-[#7C83FF] file:text-sm file:font-medium hover:border-[rgba(99,102,241,0.4)] transition-colors"
               required
             />
           </div>
 
           {previewUrl && (
-            <div className="w-full flex justify-center items-center rounded-lg overflow-hidden border border-[rgba(69,70,77,0.3)] bg-[#0b0f10]">
+            <div className="w-full flex justify-center items-center rounded-lg overflow-hidden border border-[rgba(255,255,255,0.08)] bg-[#171C2B]">
               {file &&
               fileType.startsWith("image/") &&
               previewUrl.startsWith("blob:") ? (
@@ -149,10 +149,10 @@ function NewThemeModal({ isVisible, onClose, onSubmit }) {
           )}
         </div>
 
-        <div className="flex gap-3 justify-end px-5 sm:px-6 py-4 border-t border-[rgba(69,70,77,0.3)]">
+        <div className="flex gap-3 justify-end px-5 sm:px-6 py-4 border-t border-[rgba(255,255,255,0.06)]">
           <button
             type="button"
-            className="px-4 py-2 text-[#c6c6cd] text-sm border border-[rgba(69,70,77,0.4)] rounded-sm hover:border-[#7bd0ff] hover:text-[#7bd0ff] transition-colors disabled:opacity-40"
+            className="px-4 py-2 text-[#9AA3B2] text-sm border border-[rgba(255,255,255,0.1)] rounded-lg hover:border-[rgba(255,255,255,0.2)] hover:text-[#F8FAFC] transition-colors disabled:opacity-40"
             onClick={handleModalClose}
             disabled={uploading}
           >
@@ -160,7 +160,7 @@ function NewThemeModal({ isVisible, onClose, onSubmit }) {
           </button>
           <button
             type="submit"
-            className="px-4 py-2 bg-[#7bd0ff] text-[#00354a] text-sm font-bold rounded-sm hover:bg-[#5bc0ef] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-[#6366F1] text-white text-sm font-semibold rounded-lg hover:bg-[#7C83FF] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             disabled={!title.trim() || !file || uploading}
           >
             {uploading ? t("common.uploading") : t("common.create")}

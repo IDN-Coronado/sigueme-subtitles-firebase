@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import useCaptionSettings from "../../hooks/useCaptionSettings";
 import useLiveViewSize from "../../hooks/useLiveViewSize";
+import useLiveViewOpen from "../../hooks/useLiveViewOpen";
 import { t } from "../../i18n";
 import {
   alignClass,
@@ -47,7 +48,6 @@ function ThemeBackground({ theme }) {
     return (
       <video
         src={theme.backgroundUrl}
-        crossOrigin="anonymous"
         className="absolute inset-0 w-full h-full object-cover"
         autoPlay
         muted
@@ -61,7 +61,6 @@ function ThemeBackground({ theme }) {
   return (
     <img
       src={theme.backgroundUrl}
-      crossOrigin="anonymous"
       alt=""
       aria-hidden
       className="absolute inset-0 w-full h-full object-cover"
@@ -130,6 +129,8 @@ function PreviewConsole({
 }) {
   const isLive = variant === "live";
   const liveSize = useLiveViewSize();
+  const liveOpen = useLiveViewOpen();
+  const wasLiveOpen = useRef(liveOpen);
   const styles = useCaptionSettings(preview?.programId);
   const resource = preview?.resource;
   const theme = preview?.theme;
@@ -140,6 +141,19 @@ function PreviewConsole({
       media.mediaType === "video" ||
       media.mediaType === "youtube");
   const mediaKey = isPlayable ? media.url : null;
+  // A number, not the media object. Every setPreview re-posts the whole
+  // preview over BroadcastChannel, so `media` arrives as a fresh structured
+  // clone with a new identity even when the media did not change. With the
+  // object in the effect deps below, a caption, theme or slide change mid-video
+  // tore the player down and re-seeded it at 0 -- a hard cut on the Live View.
+  const initialTime = isPlayable
+    ? media.mediaType === "youtube"
+      ? media.startSeconds > 0
+        ? Math.floor(media.startSeconds)
+        : parseYouTubeStartSeconds(media.url || "")
+      : 0
+    : 0;
+  const isLogo = media?.isLogo === true;
   const contentType = resource?.type === "bible" ? "bible" : "song";
   const caption = getStyleFromBundle(styles, contentType);
   const fontSize = textSizePx(caption);
@@ -178,21 +192,18 @@ function PreviewConsole({
   useEffect(() => {
     if (isLive || !isPlayable || !mediaRef) return undefined;
 
-    const initialTime =
-      media?.mediaType === "youtube"
-        ? media.startSeconds > 0
-          ? Math.floor(media.startSeconds)
-          : parseYouTubeStartSeconds(media.url || "")
-        : 0;
-
     let activeEl = null;
     const stopWait = waitForMediaEl(mediaRef, (el) => {
       activeEl = el;
       el.muted = true;
       el.defaultMuted = true;
       el.volume = 0;
-      el.loop = false;
+      el.loop = isLogo;
       el.currentTime = initialTime;
+      // Sending media to preview arms it, it does not start it -- the operator
+      // presses play. The logo is the exception: it is the idle holding screen,
+      // so it loops on its own and nobody cues it.
+      if (!isLogo) return;
 
       const broadcastPlay = () => {
         publishMediaSync({
@@ -216,18 +227,42 @@ function PreviewConsole({
       if (activeEl) activeEl.pause();
       publishMediaSync({ type: "stop", mediaKey });
     };
-  }, [isLive, isPlayable, mediaKey, mediaRef, media]);
+  }, [isLive, isPlayable, mediaKey, mediaRef, initialTime, isLogo]);
+
+  // Playback follows the Live View window: a video runs when there is an
+  // audience and stops when there is not. Only the open/close *transition*
+  // acts -- sending media to an already-open Live View still arms it paused
+  // for the operator to cue, which is why the ref updates before the guards
+  // (a media change must not read as a transition).
+  useEffect(() => {
+    const changed = liveOpen !== wasLiveOpen.current;
+    wasLiveOpen.current = liveOpen;
+    if (isLive || !isPlayable || !changed) return;
+
+    const el = mediaRef?.current;
+    if (!el) return;
+
+    if (liveOpen) {
+      el.play().catch(() => {});
+      publishMediaSync({
+        type: "play",
+        mediaKey,
+        currentTime: el.currentTime || 0,
+        loop: !!el.loop,
+      });
+    } else {
+      el.pause();
+      publishMediaSync({
+        type: "pause",
+        mediaKey,
+        currentTime: el.currentTime || 0,
+      });
+    }
+  }, [liveOpen, isLive, isPlayable, mediaKey, mediaRef]);
 
   // Live follower: unmute, no independent autoplay — follow console commands.
   useEffect(() => {
     if (!isLive || !isPlayable || !mediaRef) return undefined;
-
-    const initialTime =
-      media?.mediaType === "youtube"
-        ? media.startSeconds > 0
-          ? Math.floor(media.startSeconds)
-          : parseYouTubeStartSeconds(media.url || "")
-        : 0;
 
     let activeEl = null;
     let unsubscribe = () => {};
@@ -267,7 +302,7 @@ function PreviewConsole({
       if (activeEl) activeEl.pause();
       unsubscribe();
     };
-  }, [isLive, isPlayable, mediaKey, mediaRef, media]);
+  }, [isLive, isPlayable, mediaKey, mediaRef, initialTime]);
 
   if (!resource) {
     // Cleared (or idle): show program theme when available.
@@ -396,7 +431,6 @@ function PreviewConsole({
               key={url}
               ref={mediaRef}
               src={url}
-              crossOrigin="anonymous"
               className="w-full h-full object-contain pointer-events-none"
               playsInline
               preload="auto"
@@ -411,7 +445,6 @@ function PreviewConsole({
                 key={url}
                 ref={mediaRef}
                 src={url}
-                crossOrigin="anonymous"
                 preload="auto"
                 className="hidden"
                 muted={!isLive}
@@ -444,7 +477,6 @@ function PreviewConsole({
           ) : (
             <img
               src={url}
-              crossOrigin="anonymous"
               alt={title || ""}
               className="w-full h-full object-contain"
             />

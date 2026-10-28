@@ -19,7 +19,7 @@ function Layout() {
   useLocale();
 
   return (
-    <div className="h-full min-h-0 flex flex-col bg-[#101415]">
+    <div className="h-full min-h-0 flex flex-col bg-base">
       {/* The console's data lives in a local file now, so it only runs in the
           desktop app. /caption and /live are outside this layout and still
           work in a browser. */}

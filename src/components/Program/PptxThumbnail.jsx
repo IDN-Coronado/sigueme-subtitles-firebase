@@ -66,7 +66,7 @@ function PptxThumbnail({
   if (failed) {
     return (
       <div
-        className="w-full h-full flex items-center justify-center text-[#45464d] text-[8px]"
+        className="w-full h-full flex items-center justify-center text-fg-muted text-[8px]"
         style={MONO}
       >
         {t("media.pptxBadge")}
@@ -76,7 +76,7 @@ function PptxThumbnail({
 
   return (
     <div
-      className="w-full h-full flex items-center justify-center text-[#45464d] text-[8px]"
+      className="w-full h-full flex items-center justify-center text-fg-muted text-[8px]"
       style={MONO}
     >
       {t("common.loading")}

@@ -27,10 +27,10 @@ function LocalDataGate({ children }) {
           <p className="text-danger-fg text-sm font-bold">
             {t("localData.error")}
           </p>
-          <p className="text-[#c6c6cd] text-xs" style={MONO}>
+          <p className="text-fg-muted text-xs" style={MONO}>
             {String(error.message || error)}
           </p>
-          <p className="text-[#c6c6cd] text-xs">{t("localData.errorHint")}</p>
+          <p className="text-fg-muted text-xs">{t("localData.errorHint")}</p>
         </div>
       </div>
     );

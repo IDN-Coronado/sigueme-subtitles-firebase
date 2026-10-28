@@ -114,7 +114,7 @@ function NewThemeModal({ isVisible, onClose, onSubmit }) {
               accept="image/*,video/*"
               onChange={handleFileChange}
               ref={fileInputRef}
-              className="bg-card text-fg-muted border border-hairline rounded-lg px-3 py-2.5 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-[rgba(99,102,241,0.2)] file:text-primary-hover file:text-sm file:font-medium hover:border-[rgba(99,102,241,0.4)] transition-colors"
+              className="bg-card text-fg-muted border border-hairline rounded-lg px-3 py-2.5 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-primary/20 file:text-primary-hover file:text-sm file:font-medium hover:border-primary/40 transition-colors"
               required
             />
           </div>

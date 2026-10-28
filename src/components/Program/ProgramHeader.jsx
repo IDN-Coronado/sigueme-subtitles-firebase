@@ -54,7 +54,7 @@ function ProgramHeader({
             </p>
           )}
           {isActive && (
-            <span className="shrink-0 inline-flex items-center gap-1.5 bg-[rgba(99,102,241,0.2)] text-primary-hover text-[9px] font-semibold tracking-[0.1em] uppercase px-2 py-0.5 rounded-full">
+            <span className="shrink-0 inline-flex items-center gap-1.5 bg-primary/20 text-primary-hover text-[9px] font-semibold tracking-[0.1em] uppercase px-2 py-0.5 rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
               {t("program.active")}
             </span>
@@ -103,8 +103,8 @@ function ProgramHeader({
           onClick={liveOpen ? closeLiveView : handleLiveView}
           className={`inline-flex items-center gap-2 text-xs font-semibold border px-3 py-1.5 rounded-lg transition-colors ${
             liveOpen
-              ? "text-primary-hover border-[rgba(99,102,241,0.4)] hover:bg-[rgba(239,68,68,0.12)] hover:border-danger hover:text-danger"
-              : "text-primary-hover border-[rgba(99,102,241,0.4)] bg-[rgba(99,102,241,0.1)] hover:bg-[rgba(99,102,241,0.18)]"
+              ? "text-primary-hover border-primary/40 hover:bg-[rgba(239,68,68,0.12)] hover:border-danger hover:text-danger"
+              : "text-primary-hover border-primary/40 bg-primary/10 hover:bg-primary/[0.18]"
           }`}
           title={liveOpen ? t("program.closeLiveView") : t("program.openLiveView")}
           aria-label={liveOpen ? t("program.closeLiveView") : t("program.openLiveView")}

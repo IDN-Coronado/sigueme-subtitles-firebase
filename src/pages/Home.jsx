@@ -274,7 +274,7 @@ function Home() {
             <button
               type="button"
               onClick={() => navigate(`/program/${activeProgram.id}`)}
-              className="inline-flex items-center gap-3 text-left border border-hairline bg-surface px-3 py-2 rounded-xl hover:border-[rgba(99,102,241,0.4)] hover:bg-card transition-colors group"
+              className="inline-flex items-center gap-3 text-left border border-hairline bg-surface px-3 py-2 rounded-xl hover:border-primary/40 hover:bg-card transition-colors group"
               title={t("home.openActiveProgram")}
             >
               <span className="shrink-0 w-9 h-9 rounded-lg bg-card border border-hairline flex items-center justify-center text-fg-muted group-hover:text-primary-hover transition-colors">
@@ -347,7 +347,7 @@ function Home() {
                   onClick={() => setModal(item.id)}
                   className={`w-full flex items-center gap-4 px-4 py-3.5 text-left transition-all hover:bg-hover group ${
                     index > 0 ? "border-t border-[rgba(255,255,255,0.05)]" : ""
-                  } ${index === 0 ? "border border-[rgba(99,102,241,0.5)] bg-[rgba(99,102,241,0.08)] rounded-t-xl" : ""}`}
+                  } ${index === 0 ? "border border-primary/50 bg-primary/[0.08] rounded-t-xl" : ""}`}
                 >
                   <span
                     className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"

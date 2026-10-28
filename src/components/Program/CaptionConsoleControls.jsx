@@ -26,9 +26,9 @@ import { MONO } from "../../fonts";
 const btnBase =
   "w-8 h-8 inline-flex items-center justify-center rounded-lg border transition-colors shrink-0";
 const btnIdle =
-  "border-[rgba(255,255,255,0.1)] text-fg-muted hover:border-[rgba(99,102,241,0.4)] hover:text-primary-hover";
+  "border-[rgba(255,255,255,0.1)] text-fg-muted hover:border-primary/40 hover:text-primary-hover";
 const btnActive =
-  "border-[rgba(99,102,241,0.5)] text-primary-hover bg-[rgba(99,102,241,0.15)]";
+  "border-primary/50 text-primary-hover bg-primary/15";
 
 function CaptionConsoleControls({
   programId,

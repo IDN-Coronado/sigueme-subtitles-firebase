@@ -17,7 +17,7 @@ function GateScreen({ children }) {
   return (
     <div className="flex-1 min-h-0 flex items-center justify-center">
       <div className="flex flex-col items-center gap-4 text-center px-4 max-w-xs">
-        <h1 className="text-[#e0e3e5] font-bold text-2xl tracking-tight">Apostello</h1>
+        <h1 className="text-fg font-bold text-2xl tracking-tight">Apostello</h1>
         {children}
       </div>
     </div>
@@ -55,10 +55,10 @@ function AuthGate({ children }) {
 
     return (
       <GateScreen>
-        <p className="text-[#c6c6cd] text-sm">{t("auth.signInSubtitle")}</p>
+        <p className="text-fg-muted text-sm">{t("auth.signInSubtitle")}</p>
         <button
           type="button"
-          className="px-5 py-3 bg-[#7bd0ff] text-[#00354a] font-bold text-sm rounded-sm hover:bg-[#5bc0ef] transition-colors"
+          className="px-5 py-3 bg-primary text-primary font-bold text-sm rounded-sm hover:bg-primary-hover transition-colors"
           onClick={onSignIn}
         >
           {t("auth.signInButton")}
@@ -73,12 +73,12 @@ function AuthGate({ children }) {
   if (!approved) {
     return (
       <GateScreen>
-        <p className="text-[#c6c6cd] text-sm">
+        <p className="text-fg-muted text-sm">
           {t("auth.pendingSubtitle", { email: user.email })}
         </p>
         <button
           type="button"
-          className="px-4 py-2 text-[#c6c6cd] text-sm border border-[rgba(69,70,77,0.4)] rounded-sm hover:border-[#7bd0ff] hover:text-[#7bd0ff] transition-colors"
+          className="px-4 py-2 text-fg-muted text-sm border border-[rgba(69,70,77,0.4)] rounded-sm hover:border-primary hover:text-primary-fg transition-colors"
           onClick={() => signOut(auth)}
         >
           {t("auth.signOut")}

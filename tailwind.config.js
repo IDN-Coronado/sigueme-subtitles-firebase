@@ -13,7 +13,10 @@ module.exports = {
         surface: "#111521",
         card: "#171C2B",
         hover: "#1E2540",
-        primary: { DEFAULT: "#6366F1", hover: "#7C83FF" },
+        // `fg` is the accent for TEXT and icons. `DEFAULT` is for fills and
+        // borders, where WCAG asks 3:1 rather than 4.5:1 — as text on --bg it
+        // only reaches 4.40:1, and much of this accent is set at 10px.
+        primary: { DEFAULT: "#6366F1", hover: "#7C83FF", fg: "#818CF8" },
         accent: "#00D4FF",
         fg: { DEFAULT: "#F8FAFC", muted: "#9AA3B2" },
         hairline: "rgba(255,255,255,0.08)",

@@ -52,7 +52,7 @@ function SlideUploadModal({ isOpen, onClose, onUpload }) {
           </div>
           <button
             type="button"
-            className="text-[#6b7280] hover:text-fg text-2xl leading-none transition-colors"
+            className="text-fg-muted hover:text-fg text-2xl leading-none transition-colors"
             onClick={handleClose}
             disabled={uploading}
             aria-label={t("common.close")}
@@ -83,7 +83,7 @@ function SlideUploadModal({ isOpen, onClose, onUpload }) {
               type="file"
               accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.bmp,.avif,.mp4,.webm,.mov,.m4v,.ogv,.mp3,.wav,.m4a,.aac,.flac,.oga,.ogg,.opus,.wma,.pdf"
               onChange={(e) => setFile(e.target.files[0])}
-              className="bg-card text-fg-muted border border-hairline rounded-lg px-3 py-2.5 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-[rgba(99,102,241,0.2)] file:text-primary-hover file:text-sm file:font-medium hover:border-[rgba(99,102,241,0.4)] transition-colors"
+              className="bg-card text-fg-muted border border-hairline rounded-lg px-3 py-2.5 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-primary/20 file:text-primary-hover file:text-sm file:font-medium hover:border-primary/40 transition-colors"
               required
             />
           </div>

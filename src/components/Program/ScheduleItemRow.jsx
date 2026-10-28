@@ -4,7 +4,7 @@ import { mediaDisplayTitle } from "../../utils/mediaTitle";
 import { MONO } from "../../fonts";
 
 const TYPE_CHIP = {
-  song: { label: "CANCION", bg: "bg-[rgba(99,102,241,0.2)]", text: "text-primary-hover" },
+  song: { label: "CANCION", bg: "bg-primary/20", text: "text-primary-hover" },
   bible: { label: "BIBLIA", bg: "bg-[rgba(0,212,255,0.15)]", text: "text-accent" },
   theme: { label: "TEMA", bg: "bg-[rgba(52,211,153,0.15)]", text: "text-[#34D399]" },
   media: { label: "MEDIA", bg: "bg-[rgba(251,191,36,0.15)]", text: "text-[#FBBF24]" },
@@ -28,7 +28,7 @@ const CACHE_STATUS_COLOR = {
   cached: "bg-emerald-400",
   loading: "bg-amber-400 animate-pulse",
   error: "bg-red-400",
-  unavailable: "bg-[#6b7280]",
+  unavailable: "bg-card",
 };
 
 function CacheStatusDot({ status }) {
@@ -86,8 +86,8 @@ function ScheduleItemRow({ item, index, active, onSelect, onDoubleSelect, onRemo
       onDoubleClick={() => onDoubleSelect?.(item.id)}
       className={`w-full text-left rounded-lg border transition-all duration-200 ${
         active
-          ? "schedule-item-active border-[rgba(99,102,241,0.5)] bg-[rgba(99,102,241,0.1)] border-l-2 border-l-primary"
-          : "border-[rgba(255,255,255,0.06)] bg-card hover:border-[rgba(99,102,241,0.3)] hover:bg-hover"
+          ? "schedule-item-active border-primary/50 bg-primary/10 border-l-2 border-l-primary"
+          : "border-[rgba(255,255,255,0.06)] bg-card hover:border-primary/30 hover:bg-hover"
       }`}
     >
       <div className="flex items-center gap-3 px-3 py-2.5">

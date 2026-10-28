@@ -154,7 +154,7 @@ function MediaConsoleControls({ mediaRef, mediaKey }) {
     <div className="flex items-center gap-2 sm:gap-3 min-w-0 max-w-full">
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <span
-          className="text-[#6b7280] text-[10px] tabular-nums shrink-0"
+          className="text-fg-muted text-[10px] tabular-nums shrink-0"
           style={MONO}
         >
           {formatTime(currentTime)}
@@ -168,12 +168,12 @@ function MediaConsoleControls({ mediaRef, mediaKey }) {
           aria-label={t("media.progressAria")}
         >
           <div
-            className="absolute inset-y-0 left-0 bg-[#7bd0ff] rounded-full transition-[width] duration-100 ease-linear"
+            className="absolute inset-y-0 left-0 bg-primary rounded-full transition-[width] duration-100 ease-linear"
             style={{ width: `${progress}%` }}
           />
         </div>
         <span
-          className="text-[#6b7280] text-[10px] tabular-nums shrink-0"
+          className="text-fg-muted text-[10px] tabular-nums shrink-0"
           style={MONO}
         >
           {formatTime(duration)}
@@ -186,8 +186,8 @@ function MediaConsoleControls({ mediaRef, mediaKey }) {
           onClick={playPause}
           className={`${btnBase} ${
             playing
-              ? "border-[rgba(123,208,255,0.45)] text-[#7bd0ff] bg-[rgba(123,208,255,0.1)]"
-              : "border-[rgba(69,70,77,0.4)] text-[#c6c6cd] hover:border-[#7bd0ff] hover:text-[#7bd0ff]"
+              ? "border-primary/45 text-primary-fg bg-primary/10"
+              : "border-[rgba(69,70,77,0.4)] text-fg-muted hover:border-primary hover:text-primary-fg"
           }`}
           title={playing ? t("media.pause") : t("media.play")}
           aria-label={playing ? t("media.pause") : t("media.play")}
@@ -197,7 +197,7 @@ function MediaConsoleControls({ mediaRef, mediaKey }) {
         <button
           type="button"
           onClick={stop}
-          className={`${btnBase} border-[rgba(69,70,77,0.4)] text-[#c6c6cd] hover:border-danger-fg hover:text-danger-fg`}
+          className={`${btnBase} border-[rgba(69,70,77,0.4)] text-fg-muted hover:border-danger-fg hover:text-danger-fg`}
           title={t("media.stop")}
           aria-label={t("media.stop")}
         >
@@ -208,8 +208,8 @@ function MediaConsoleControls({ mediaRef, mediaKey }) {
           onClick={toggleLoop}
           className={`${btnBase} ${
             loop
-              ? "border-[rgba(123,208,255,0.45)] text-[#7bd0ff] bg-[rgba(123,208,255,0.1)]"
-              : "border-[rgba(69,70,77,0.4)] text-[#c6c6cd] hover:border-[#7bd0ff] hover:text-[#7bd0ff]"
+              ? "border-primary/45 text-primary-fg bg-primary/10"
+              : "border-[rgba(69,70,77,0.4)] text-fg-muted hover:border-primary hover:text-primary-fg"
           }`}
           title={t("media.loop")}
           aria-label={t("media.loop")}

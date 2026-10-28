@@ -14,7 +14,7 @@ function ConfirmationModal({ isVisible, message, onCancel, onConfirm }) {
         <div className="flex gap-3 justify-end px-5 sm:px-6 py-4 border-t border-[rgba(255,255,255,0.06)]">
           <button
             type="button"
-            className="px-4 py-2 text-fg-muted text-sm border border-[rgba(255,255,255,0.1)] rounded-lg hover:border-[rgba(99,102,241,0.4)] hover:text-primary-hover transition-colors"
+            className="px-4 py-2 text-fg-muted text-sm border border-[rgba(255,255,255,0.1)] rounded-lg hover:border-primary/40 hover:text-primary-hover transition-colors"
             onClick={onCancel}
           >
             {t("confirm.cancel")}

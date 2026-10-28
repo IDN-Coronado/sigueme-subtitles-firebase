@@ -45,7 +45,7 @@ function ResizeHandle({ direction, onPointerDown, onPointerMove, onPointerUp }) 
       }`}
     >
       <div
-        className={`absolute rounded-full bg-[rgba(69,70,77,0.55)] transition-colors group-hover:bg-[#7bd0ff] group-active:bg-[#7bd0ff] ${
+        className={`absolute rounded-full bg-[rgba(69,70,77,0.55)] transition-colors group-hover:bg-primary group-active:bg-primary ${
           isHorizontal
             ? "inset-y-3 left-1/2 w-px -translate-x-1/2 group-hover:w-0.5 group-active:w-0.5"
             : "inset-x-3 top-1/2 h-px -translate-y-1/2 group-hover:h-0.5 group-active:h-0.5"

@@ -10,10 +10,10 @@ import { MONO } from "../../fonts";
 
 
 const DROP_ZONE =
-  "mx-2 my-1 min-h-[2rem] rounded-sm border border-dashed border-primary bg-[rgba(99,102,241,0.08)]";
+  "mx-2 my-1 min-h-[2rem] rounded-sm border border-dashed border-primary bg-primary/[0.08]";
 
 const DROP_ZONE_SECTION =
-  "mb-3 min-h-[2.5rem] rounded-sm border border-dashed border-primary bg-[rgba(99,102,241,0.08)]";
+  "mb-3 min-h-[2.5rem] rounded-sm border border-dashed border-primary bg-primary/[0.08]";
 
 function moveLine(sections, fromSectionId, fromIndex, toSectionId, toIndex) {
   if (
@@ -462,7 +462,7 @@ function NewSongModal({ isOpen, onClose, onSubmit, song = null }) {
           </div>
           <button
             type="button"
-            className="text-[#6b7280] hover:text-fg text-2xl leading-none transition-colors"
+            className="text-fg-muted hover:text-fg text-2xl leading-none transition-colors"
             onClick={handleClose}
             disabled={saving}
             aria-label={t("song.close")}
@@ -517,7 +517,7 @@ function NewSongModal({ isOpen, onClose, onSubmit, song = null }) {
                   <div
                     className={`rounded-sm border ${
                       isActive
-                        ? "border-[rgba(99,102,241,0.45)] bg-[rgba(99,102,241,0.06)]"
+                        ? "border-primary/45 bg-primary/[0.06]"
                         : "border-[rgba(255,255,255,0.06)] bg-[rgba(17,21,33,0.4)]"
                     } ${isSectionDragging ? "opacity-40" : ""}`}
                     onDragOver={(e) => onSectionCardDragOver(e, sectionIndex)}
@@ -536,7 +536,7 @@ function NewSongModal({ isOpen, onClose, onSubmit, song = null }) {
                           onSectionDragStart(e, sectionIndex)
                         }
                         onDragEnd={clearDrag}
-                        className="shrink-0 text-[#6b7280] hover:text-fg-muted cursor-grab active:cursor-grabbing touch-none px-0.5 select-none"
+                        className="shrink-0 text-fg-muted hover:text-fg-muted cursor-grab active:cursor-grabbing touch-none px-0.5 select-none"
                         aria-label={t("song.dragSection")}
                         title={t("song.dragSection")}
                         role="button"
@@ -580,7 +580,7 @@ function NewSongModal({ isOpen, onClose, onSubmit, song = null }) {
                       />
                       {!isExpanded && (
                         <span
-                          className="text-[#6b7280] text-[10px] shrink-0"
+                          className="text-fg-muted text-[10px] shrink-0"
                           style={MONO}
                         >
                           {section.lines.length}
@@ -609,8 +609,8 @@ function NewSongModal({ isOpen, onClose, onSubmit, song = null }) {
                           <div
                             className={`mx-2 my-2 min-h-[2.5rem] flex items-center justify-center rounded-sm border border-dashed px-3 py-3 ${
                               isLineDropSection && dragItem?.kind === "line"
-                                ? "border-primary bg-[rgba(99,102,241,0.08)] text-primary-hover"
-                                : "border-hairline text-[#6b7280]"
+                                ? "border-primary bg-primary/[0.08] text-primary-hover"
+                                : "border-hairline text-fg-muted"
                             }`}
                           >
                             <p className="text-sm text-center">
@@ -652,7 +652,7 @@ function NewSongModal({ isOpen, onClose, onSubmit, song = null }) {
                                     onLineDragStart(e, section.id, i)
                                   }
                                   onDragEnd={clearDrag}
-                                  className="shrink-0 text-[#6b7280] hover:text-fg-muted cursor-grab active:cursor-grabbing touch-none px-0.5 select-none"
+                                  className="shrink-0 text-fg-muted hover:text-fg-muted cursor-grab active:cursor-grabbing touch-none px-0.5 select-none"
                                   aria-label={t("song.dragLine")}
                                   title={t("song.dragLine")}
                                   role="button"
@@ -709,7 +709,7 @@ function NewSongModal({ isOpen, onClose, onSubmit, song = null }) {
                             }
                             onFocus={() => setActiveSectionId(section.id)}
                             placeholder={t("song.addLinePlaceholder")}
-                            className="bg-card text-fg placeholder-[#6b7280] border border-hairline rounded-lg px-2.5 py-1.5 flex-1 min-w-0 text-sm outline-none focus:border-primary transition-colors"
+                            className="bg-card text-fg placeholder-fg-muted border border-hairline rounded-lg px-2.5 py-1.5 flex-1 min-w-0 text-sm outline-none focus:border-primary transition-colors"
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
                                 e.preventDefault();
@@ -719,7 +719,7 @@ function NewSongModal({ isOpen, onClose, onSubmit, song = null }) {
                           />
                           <button
                             type="button"
-                            className="px-2.5 py-1.5 bg-[rgba(99,102,241,0.1)] border border-[rgba(99,102,241,0.3)] text-primary-hover text-xs font-medium rounded-lg shrink-0 hover:bg-[rgba(99,102,241,0.18)] transition-colors"
+                            className="px-2.5 py-1.5 bg-primary/10 border border-primary/30 text-primary-hover text-xs font-medium rounded-lg shrink-0 hover:bg-primary/[0.18] transition-colors"
                             onClick={() => onAddLineToSection(section.id)}
                           >
                             {t("song.addLine")}
@@ -739,7 +739,7 @@ function NewSongModal({ isOpen, onClose, onSubmit, song = null }) {
             <button
               type="button"
               onClick={onAddSection}
-              className="w-full text-primary-hover text-xs hover:underline py-2.5 rounded-lg border border-dashed border-[rgba(99,102,241,0.35)] hover:border-[rgba(99,102,241,0.55)] hover:bg-[rgba(99,102,241,0.06)] transition-colors"
+              className="w-full text-primary-hover text-xs hover:underline py-2.5 rounded-lg border border-dashed border-primary/35 hover:border-primary/55 hover:bg-primary/[0.06] transition-colors"
             >
               {t("song.addSection")}
             </button>
@@ -749,7 +749,7 @@ function NewSongModal({ isOpen, onClose, onSubmit, song = null }) {
         <div className="flex gap-3 justify-end px-5 sm:px-6 py-4 border-t border-[rgba(255,255,255,0.06)] shrink-0">
           <button
             type="button"
-            className="px-4 py-2 text-fg-muted text-sm border border-[rgba(255,255,255,0.1)] rounded-lg hover:border-[rgba(99,102,241,0.4)] hover:text-primary-hover transition-colors disabled:opacity-40"
+            className="px-4 py-2 text-fg-muted text-sm border border-[rgba(255,255,255,0.1)] rounded-lg hover:border-primary/40 hover:text-primary-hover transition-colors disabled:opacity-40"
             onClick={handleClose}
             disabled={saving}
           >
@@ -784,7 +784,7 @@ function NewSongModal({ isOpen, onClose, onSubmit, song = null }) {
               className={`w-full text-left px-3 py-2 text-xs sm:text-sm transition-colors ${
                 opt.danger
                   ? "text-danger hover:bg-[rgba(239,68,68,0.15)]"
-                  : "text-fg hover:bg-[rgba(99,102,241,0.1)] hover:text-primary-hover"
+                  : "text-fg hover:bg-primary/10 hover:text-primary-hover"
               }`}
               onClick={(e) => {
                 e.stopPropagation();

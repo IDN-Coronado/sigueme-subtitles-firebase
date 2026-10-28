@@ -78,7 +78,7 @@ function StageFrame({
   const isLive = variant === "live";
   return (
     <div
-      className={`relative h-full w-full min-h-0 overflow-hidden bg-[#0b0f10] ${className}`}
+      className={`relative h-full w-full min-h-0 overflow-hidden bg-base ${className}`}
     >
       <ThemeBackground theme={theme} />
       {dimmed && (
@@ -314,8 +314,8 @@ function PreviewConsole({
       );
     }
     return (
-      <div className="relative h-full min-h-0 overflow-hidden bg-[#0b0f10] rounded-lg border border-[rgba(69,70,77,0.25)]">
-        <div className="h-full flex items-center justify-center text-[#c6c6cd] text-sm px-4 text-center">
+      <div className="relative h-full min-h-0 overflow-hidden bg-base rounded-lg border border-[rgba(69,70,77,0.25)]">
+        <div className="h-full flex items-center justify-center text-fg-muted text-sm px-4 text-center">
           {t("console.clickToSend")}
         </div>
       </div>
@@ -451,13 +451,13 @@ function PreviewConsole({
               />
               <div className="flex flex-col items-center gap-6 px-12">
                 <span
-                  className="text-[#c6c6cd] tracking-[0.1em]"
+                  className="text-fg-muted tracking-[0.1em]"
                   style={{ ...MONO, fontSize: 20 }}
                 >
                   {t("media.audioBadge")}
                 </span>
                 <p
-                  className="text-[#e0e3e5] text-center drop-shadow-[0_1px_8px_rgba(0,0,0,0.85)]"
+                  className="text-fg text-center drop-shadow-[0_1px_8px_rgba(0,0,0,0.85)]"
                   style={{ fontSize: 36 }}
                 >
                   {title}
@@ -495,8 +495,8 @@ function PreviewConsole({
   }
 
   return (
-    <div className="relative h-full min-h-0 overflow-hidden bg-[#0b0f10] rounded-lg border border-[rgba(69,70,77,0.25)]">
-      <div className="h-full flex items-center justify-center text-[#6b7280] text-sm">
+    <div className="relative h-full min-h-0 overflow-hidden bg-base rounded-lg border border-[rgba(69,70,77,0.25)]">
+      <div className="h-full flex items-center justify-center text-fg-muted text-sm">
         {t("console.unsupported")}
       </div>
     </div>

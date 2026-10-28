@@ -35,7 +35,7 @@ function isActiveResource(preview, type, matcher) {
 function PreviewPanel({ item, songs, preview, onSelect }) {
   if (!item) {
     return (
-      <div className="h-full min-h-0 flex items-center justify-center text-[#6b7280] text-sm px-2 text-center">
+      <div className="h-full min-h-0 flex items-center justify-center text-fg-muted text-sm px-2 text-center">
         {t("preview.selectItem")}
       </div>
     );
@@ -48,7 +48,7 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
 
     if (!hasLines) {
       return (
-        <div className="h-full flex items-center justify-center text-[#6b7280] text-sm">
+        <div className="h-full flex items-center justify-center text-fg-muted text-sm">
           {t("preview.noLyrics")}
         </div>
       );
@@ -109,8 +109,8 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
                   }
                   className={`w-full text-left rounded-sm px-3 py-2.5 text-sm transition-colors ${
                     active
-                      ? "bg-[rgba(99,102,241,0.12)] border border-[rgba(99,102,241,0.4)] text-primary-hover"
-                      : "border border-transparent text-fg hover:bg-[rgba(99,102,241,0.08)]"
+                      ? "bg-primary/[0.12] border border-primary/40 text-primary-hover"
+                      : "border border-transparent text-fg hover:bg-primary/[0.08]"
                   }`}
                 >
                   {line}
@@ -129,7 +129,7 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
 
     if (verses.length === 0) {
       return (
-        <div className="h-full flex items-center justify-center text-[#6b7280] text-sm">
+        <div className="h-full flex items-center justify-center text-fg-muted text-sm">
           {t("preview.noVerses")}
         </div>
       );
@@ -172,8 +172,8 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
               }
               className={`w-full text-left rounded-sm px-3 py-2.5 transition-colors ${
                 active
-                  ? "bg-[rgba(99,102,241,0.12)] border border-[rgba(99,102,241,0.4)]"
-                  : "border border-transparent hover:bg-[rgba(99,102,241,0.08)]"
+                  ? "bg-primary/[0.12] border border-primary/40"
+                  : "border border-transparent hover:bg-primary/[0.08]"
               }`}
             >
               <span
@@ -237,10 +237,10 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
             },
           });
         }}
-        className={`w-full h-full min-h-0 rounded-lg border overflow-hidden transition-colors flex items-center justify-center bg-[#0b0f10] ${
+        className={`w-full h-full min-h-0 rounded-lg border overflow-hidden transition-colors flex items-center justify-center bg-base ${
           active
-            ? "border-[rgba(99,102,241,0.5)]"
-            : "border-hairline hover:border-[rgba(99,102,241,0.35)]"
+            ? "border-primary/50"
+            : "border-hairline hover:border-primary/35"
         }`}
       >
         {item.mediaType === "youtube" ? (
@@ -265,7 +265,7 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
             playsInline
           />
         ) : item.mediaType === "audio" ? (
-          <span className="text-[#45464d] text-xs tracking-[0.1em]" style={MONO}>
+          <span className="text-fg-muted text-xs tracking-[0.1em]" style={MONO}>
             {t("media.audioBadge")} · {item.title}
           </span>
         ) : item.mediaType === "pdf" ? (

@@ -60,7 +60,7 @@ function OpenProgramModal({ isOpen, onClose, programs = [], onSelect, onDelete }
             return (
               <div
                 key={program.id}
-                className="group flex items-center gap-2 w-full border border-hairline bg-card rounded-lg pl-4 pr-2 py-3 hover:border-[rgba(99,102,241,0.4)] hover:bg-hover transition-colors"
+                className="group flex items-center gap-2 w-full border border-hairline bg-card rounded-lg pl-4 pr-2 py-3 hover:border-primary/40 hover:bg-hover transition-colors"
               >
                 <button
                   type="button"
@@ -73,7 +73,7 @@ function OpenProgramModal({ isOpen, onClose, programs = [], onSelect, onDelete }
                     </p>
                     {program.active && (
                       <span
-                        className="shrink-0 inline-flex items-center gap-1.5 bg-[rgba(99,102,241,0.2)] text-primary-hover text-[10px] font-medium tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-full"
+                        className="shrink-0 inline-flex items-center gap-1.5 bg-primary/20 text-primary-hover text-[10px] font-medium tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-full"
                         style={MONO}
                       >
                         <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />

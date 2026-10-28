@@ -78,7 +78,7 @@ function Live() {
 
       {escapeHint && (
         <div
-          className="absolute top-4 right-4 z-20 text-[#c6c6cd]/80 text-xs border border-[rgba(69,70,77,0.5)] bg-[rgba(11,15,16,0.75)] px-3 py-1.5 rounded-sm pointer-events-none"
+          className="absolute top-4 right-4 z-20 text-fg-muted/80 text-xs border border-[rgba(69,70,77,0.5)] bg-[rgba(11,15,16,0.75)] px-3 py-1.5 rounded-sm pointer-events-none"
           style={MONO}
         >
           {t("live.escapeHint")}
@@ -89,7 +89,7 @@ function Live() {
         <button
           type="button"
           onClick={enterFullscreen}
-          className="absolute bottom-4 right-4 z-20 text-[#c6c6cd]/80 text-xs border border-[rgba(69,70,77,0.5)] bg-[rgba(11,15,16,0.75)] px-3 py-1.5 rounded-sm hover:text-[#e0e3e5] hover:border-[#7bd0ff] transition-colors"
+          className="absolute bottom-4 right-4 z-20 text-fg-muted/80 text-xs border border-[rgba(69,70,77,0.5)] bg-[rgba(11,15,16,0.75)] px-3 py-1.5 rounded-sm hover:text-fg hover:border-primary transition-colors"
           style={MONO}
         >
           {t("live.fullscreenHint")}

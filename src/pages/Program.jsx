@@ -736,7 +736,7 @@ function Program() {
               : t("program.collapseResources")
           }
           aria-expanded={!resourcesCollapsed}
-          className={`shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-sm text-[#c6c6cd] border border-[rgba(69,70,77,0.4)] hover:border-[#7bd0ff] hover:text-[#7bd0ff] transition-colors ${
+          className={`shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-sm text-fg-muted border border-[rgba(69,70,77,0.4)] hover:border-primary hover:text-primary-fg transition-colors ${
             resourcesCollapsed ? "ml-auto" : ""
           }`}
         >
@@ -796,7 +796,7 @@ function Program() {
 
   return (
     <div
-      className="flex flex-col overflow-hidden bg-[#101415]"
+      className="flex flex-col overflow-hidden bg-base"
       style={{ height: "100vh", maxHeight: "100vh" }}
     >
       <ProgramHeader

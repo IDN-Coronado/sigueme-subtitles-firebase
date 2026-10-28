@@ -20,8 +20,8 @@ function SearchField({ value, onChange, placeholder }) {
 function ToolbarButton({ label, onClick, variant = "primary" }) {
   const styles =
     variant === "secondary"
-      ? "bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] text-fg-muted hover:border-[rgba(99,102,241,0.4)] hover:text-primary-hover"
-      : "bg-[rgba(99,102,241,0.15)] border border-[rgba(99,102,241,0.3)] text-primary-hover hover:bg-[rgba(99,102,241,0.25)]";
+      ? "bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] text-fg-muted hover:border-primary/40 hover:text-primary-hover"
+      : "bg-primary/15 border border-primary/30 text-primary-hover hover:bg-primary/25";
 
   return (
     <button

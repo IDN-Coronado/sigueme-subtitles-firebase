@@ -14,8 +14,8 @@ import NewThemeModal from "../components/Theme/NewThemeModal";
 import GlobalSettingsModal from "../components/GlobalSettingsModal";
 import MediaImportModal from "../components/MediaImportModal";
 import { t, formatProgramDate } from "../i18n";
+import { MONO } from "../fonts";
 
-const MONO = { fontFamily: "JetBrains Mono, monospace" };
 
 const MENU_ITEMS = [
   {

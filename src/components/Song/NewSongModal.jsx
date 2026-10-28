@@ -6,8 +6,8 @@ import {
   flattenSongLines,
   normalizeSong,
 } from "../../utils/songSections";
+import { MONO } from "../../fonts";
 
-const MONO = { fontFamily: "JetBrains Mono, monospace" };
 
 const DROP_ZONE =
   "mx-2 my-1 min-h-[2rem] rounded-sm border border-dashed border-[#6366F1] bg-[rgba(99,102,241,0.08)]";

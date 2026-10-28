@@ -1,7 +1,7 @@
 import { t } from "../../i18n";
 import { typeLabel, getBibleVerses } from "../../utils/programSchedule";
 import { mediaDisplayTitle } from "../../utils/mediaTitle";
-import { MONO } from "./constants";
+import { MONO } from "../../fonts";
 
 const TYPE_CHIP = {
   song: { label: "CANCION", bg: "bg-[rgba(99,102,241,0.2)]", text: "text-[#7C83FF]" },

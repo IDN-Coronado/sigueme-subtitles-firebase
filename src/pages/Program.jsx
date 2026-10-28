@@ -24,7 +24,8 @@ import CaptionConsoleControls from "../components/Program/CaptionConsoleControls
 import PdfConsoleControls from "../components/Program/PdfConsoleControls";
 import ResourceBrowser from "../components/Program/ResourceBrowser";
 import ProgramHeader from "../components/Program/ProgramHeader";
-import { RESOURCE_TABS, MONO } from "../components/Program/constants";
+import { RESOURCE_TABS } from "../components/Program/constants";
+import { MONO } from "../fonts";
 import { IconChevron } from "../components/Icons";
 import { t } from "../i18n";
 import { flattenSongLines } from "../utils/songSections";

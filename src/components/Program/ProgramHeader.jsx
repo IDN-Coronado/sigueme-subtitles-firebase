@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-import { MONO } from "./constants";
+import { MONO } from "../../fonts";
 import openLiveView, { closeLiveView } from "../../utils/openLiveView";
 import useLiveViewOpen from "../../hooks/useLiveViewOpen";
 import { t, formatProgramDate } from "../../i18n";

@@ -15,7 +15,7 @@ import {
   publishMediaSync,
   subscribeMediaSync,
 } from "../../utils/mediaSync";
-import { MONO } from "./constants";
+import { MONO } from "../../fonts";
 import PdfStage from "./PdfStage";
 import ScaledLiveStage from "./ScaledLiveStage";
 import YouTubePlayer from "./YouTubePlayer";

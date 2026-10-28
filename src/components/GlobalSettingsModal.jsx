@@ -17,6 +17,7 @@ import {
   saveGlobalCaptionStyle,
   subscribeCaptionSettings,
 } from "../utils/captionSettings";
+import { MONO } from "../fonts";
 import {
   IconAlignCenter,
   IconAlignLeft,
@@ -26,7 +27,6 @@ import {
   IconTextIncrease,
 } from "./Icons";
 
-const MONO = { fontFamily: "JetBrains Mono, monospace" };
 
 const btnBase =
   "w-8 h-8 inline-flex items-center justify-center rounded-lg border transition-colors shrink-0";

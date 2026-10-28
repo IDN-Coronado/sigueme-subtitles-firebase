@@ -1,8 +1,8 @@
 import { useState } from "react";
 
 import { t } from "../i18n";
+import { MONO } from "../fonts";
 
-const MONO = { fontFamily: "JetBrains Mono, monospace" };
 
 function SlideUploadModal({ isOpen, onClose, onUpload }) {
   const [file, setFile] = useState(null);

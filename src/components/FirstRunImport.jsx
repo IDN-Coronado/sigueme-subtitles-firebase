@@ -3,6 +3,7 @@ import { useState } from "react";
 import useDataStore from "../local/data";
 import importFromFirebase from "../local/migrate";
 import { t } from "../i18n";
+import { MONO } from "../fonts";
 
 /**
  * Shown once, when the machine has no local library yet. Doubles as the data
@@ -49,7 +50,7 @@ function FirstRunImport() {
             <p className="text-[#ffb4ab] text-xs">{t("migrate.error")}</p>
             <p
               className="text-[#6b7280] text-[11px]"
-              style={{ fontFamily: "monospace" }}
+              style={MONO}
             >
               {String(error?.message || error)}
             </p>

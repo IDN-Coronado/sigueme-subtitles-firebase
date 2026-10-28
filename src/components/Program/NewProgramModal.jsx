@@ -2,8 +2,8 @@ import dayjs from "dayjs";
 import { useState } from "react";
 
 import { t } from "../../i18n";
+import { MONO } from "../../fonts";
 
-const MONO = { fontFamily: "JetBrains Mono, monospace" };
 
 function NewProgramModal({ onCancel, onSubmit, isOpen }) {
   const today = dayjs().format("YYYY-MM-DD");

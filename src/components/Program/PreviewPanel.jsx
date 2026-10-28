@@ -1,5 +1,5 @@
 import { t } from "../../i18n";
-import { MONO } from "./constants";
+import { MONO } from "../../fonts";
 import PdfThumbnail from "./PdfThumbnail";
 import { getBibleVerses } from "../../utils/programSchedule";
 import { normalizeSong } from "../../utils/songSections";

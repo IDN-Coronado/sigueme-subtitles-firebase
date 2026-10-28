@@ -1,4 +1,4 @@
-import { MONO } from "./constants";
+import { MONO } from "../../fonts";
 
 function Panel({ title, action, children, className = "", style, bodyClassName = "" }) {
   return (

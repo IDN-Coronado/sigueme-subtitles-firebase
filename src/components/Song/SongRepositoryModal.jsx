@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import useSongRepository from "../../firebase/useSongRepository";
 import { flattenSongLines } from "../../utils/songSections";
 import { t } from "../../i18n";
+import { MONO } from "../../fonts";
 
-const MONO = { fontFamily: "JetBrains Mono, monospace" };
 
 function SongRepositoryModal({ isOpen, onClose }) {
   const { remote, loading, error, load, importSongs, isImported } =

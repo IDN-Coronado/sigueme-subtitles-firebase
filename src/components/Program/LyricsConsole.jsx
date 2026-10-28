@@ -1,5 +1,5 @@
 import { t } from "../../i18n";
-import { MONO } from "./constants";
+import { MONO } from "../../fonts";
 import { flattenSongLines } from "../../utils/songSections";
 
 function LyricsConsole({ item, songs }) {

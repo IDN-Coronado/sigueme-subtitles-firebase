@@ -2,8 +2,8 @@ import { useState, useRef } from "react";
 import DOMPurify from "dompurify";
 
 import { t } from "../../i18n";
+import { MONO } from "../../fonts";
 
-const MONO = { fontFamily: "JetBrains Mono, monospace" };
 
 function NewThemeModal({ isVisible, onClose, onSubmit }) {
   const [title, setTitle] = useState("");

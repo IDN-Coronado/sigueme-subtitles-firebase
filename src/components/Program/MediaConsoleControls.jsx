@@ -7,7 +7,7 @@ import {
   snapshotMediaState,
   subscribeMediaSync,
 } from "../../utils/mediaSync";
-import { MONO } from "./constants";
+import { MONO } from "../../fonts";
 
 function formatTime(seconds) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";

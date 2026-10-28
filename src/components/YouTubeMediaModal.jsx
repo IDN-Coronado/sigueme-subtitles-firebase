@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 
 import { t } from "../i18n";
 import { parseYouTubeId, youtubeWatchUrl } from "../utils/youtube";
+import { MONO } from "../fonts";
 
-const MONO = { fontFamily: "JetBrains Mono, monospace" };
 
 function YouTubeMediaModal({ isOpen, onClose, onSubmit, item = null }) {
   const [url, setUrl] = useState("");

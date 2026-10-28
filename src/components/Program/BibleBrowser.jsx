@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { t } from "../../i18n";
-import { MONO } from "./constants";
+import { MONO } from "../../fonts";
 
 const BIBLE_VERSIONS = [
   {

@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import useDataStore from "../local/data";
 import FirstRunImport from "./FirstRunImport";
 import { t } from "../i18n";
+import { MONO } from "../fonts";
 
 /**
  * Loads data.json once before the console renders. A read failure is shown
@@ -26,7 +27,7 @@ function LocalDataGate({ children }) {
           <p className="text-[#ffb4ab] text-sm font-bold">
             {t("localData.error")}
           </p>
-          <p className="text-[#c6c6cd] text-xs" style={{ fontFamily: "monospace" }}>
+          <p className="text-[#c6c6cd] text-xs" style={MONO}>
             {String(error.message || error)}
           </p>
           <p className="text-[#c6c6cd] text-xs">{t("localData.errorHint")}</p>

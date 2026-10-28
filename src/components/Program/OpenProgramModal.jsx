@@ -5,10 +5,10 @@ import "dayjs/locale/es";
 import { t } from "../../i18n";
 import { toProgramDate } from "../../i18n/formatProgramDate";
 import ProgramDeleteModal from "./ProgramDeleteModal";
+import { MONO } from "../../fonts";
 
 dayjs.locale("es");
 
-const MONO = { fontFamily: "JetBrains Mono, monospace" };
 
 function OpenProgramModal({ isOpen, onClose, programs = [], onSelect, onDelete }) {
   const [pendingDelete, setPendingDelete] = useState(null);

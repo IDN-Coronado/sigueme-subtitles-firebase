@@ -2,8 +2,8 @@ import { useState } from "react";
 
 import importMediaFromStorage from "../local/migrateMedia";
 import { t } from "../i18n";
+import { MONO } from "../fonts";
 
-const MONO = { fontFamily: "JetBrains Mono, monospace" };
 
 /**
  * One-time copy of the Firebase Storage bucket into the local media folder.

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { MONO } from "./constants";
+import { MONO } from "../../fonts";
 import ResourceToolbar from "./ResourceToolbar";
 import ResourceItemMenu from "./ResourceItemMenu";
 import BibleBrowser from "./BibleBrowser";

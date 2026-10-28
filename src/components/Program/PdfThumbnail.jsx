@@ -7,7 +7,7 @@ import {
   getCachedPdfThumbnail,
   setCachedPdfThumbnail,
 } from "../../utils/pdf";
-import { MONO } from "./constants";
+import { MONO } from "../../fonts";
 
 /**
  * On-demand first-page thumbnail for a .pdf media item.

@@ -5,7 +5,7 @@ import {
   IconSlideNext,
   IconSlidePrev,
 } from "../Icons";
-import { MONO } from "./constants";
+import { MONO } from "../../fonts";
 
 // ponytail: near-identical to PptxConsoleControls, which is currently gated
 // off. Collapse the two into one page-nav component when PPTX is deleted.

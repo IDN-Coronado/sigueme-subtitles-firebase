@@ -5,7 +5,7 @@ import {
   IconSlideNext,
   IconSlidePrev,
 } from "../Icons";
-import { MONO } from "./constants";
+import { MONO } from "../../fonts";
 
 const btnBase =
   "w-8 h-8 inline-flex items-center justify-center rounded-sm border transition-colors shrink-0";

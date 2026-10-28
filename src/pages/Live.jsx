@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import PreviewConsole from "../components/Program/PreviewConsole";
 import usePreview from "../firebase/usePreview";
-import { MONO } from "../components/Program/constants";
+import { MONO } from "../fonts";
 import { t } from "../i18n";
 import { startLiveViewSizeReporter } from "../utils/liveViewSize";
 

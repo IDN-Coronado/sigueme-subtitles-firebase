@@ -7,7 +7,7 @@ import {
   getCachedPptxThumbnail,
   setCachedPptxThumbnail,
 } from "../../utils/pptx";
-import { MONO } from "./constants";
+import { MONO } from "../../fonts";
 
 /**
  * On-demand first-slide thumbnail for a .pptx media item.

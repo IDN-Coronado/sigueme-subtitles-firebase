@@ -4,6 +4,10 @@ const { contextBridge, ipcRenderer } = require("electron");
 // (see src/index.jsx, src/components/AuthGate.jsx) — no separate flag needed.
 contextBridge.exposeInMainWorld("desktop", {
   signIn: () => ipcRenderer.invoke("auth:signIn"),
+  // Proof that an over-the-air bundle actually mounted. Sent from the
+  // renderer, not from here: this file ships in the installer and would load
+  // happily in front of a bundle that cannot run at all.
+  ready: () => ipcRenderer.invoke("update:ready"),
   store: {
     load: () => ipcRenderer.invoke("store:load"),
     save: (data) => ipcRenderer.invoke("store:save", data),

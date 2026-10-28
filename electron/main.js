@@ -6,6 +6,7 @@ const { signInWithGoogle } = require("./oauth");
 const live = require("./liveWindow");
 const store = require("./store");
 const media = require("./media");
+const update = require("./update");
 
 let consoleWindow = null;
 
@@ -80,8 +81,12 @@ async function start() {
   // Started in dev too: the renderer loads from vite there, but media still
   // comes from here, proxied by vite's /media rule so asset URLs stay relative
   // in both modes.
-  await startAppServer(path.join(ROOT, "dist"), PORT, media.mediaRoot());
+  // The bundle inside app.asar is only the floor: once an over-the-air bundle
+  // has been staged, that folder is served instead (see update.js).
+  const bundle = await update.activeBundle(path.join(ROOT, "dist"));
+  await startAppServer(bundle.dir, PORT, media.mediaRoot());
   ipcMain.handle("auth:signIn", () => signInWithGoogle());
+  ipcMain.handle("update:ready", () => update.confirmHealthy());
   ipcMain.handle("liveView:open", () => live.open(appUrl, consoleWindow));
   ipcMain.handle("liveView:close", () => live.close());
   ipcMain.handle("liveView:isOpen", () => live.isOpen());
@@ -98,7 +103,23 @@ async function start() {
     }
   });
 
+  // Armed before the window exists, not after: the renderer can signal ready
+  // while we are still inside start(), and a timer armed after that signal
+  // would roll back a bundle that booted perfectly well.
+  if (bundle.pending) update.armRollback();
+
   await createWindow();
+
+  // Dev loads from vite, so there is no bundle to replace. A failure here is
+  // logged and dropped — the app keeps running on the bundle it already has.
+  if (!isDev) {
+    update
+      .checkForUpdate(bundle.dir)
+      .then((version) => {
+        if (version) console.log(`Staged bundle ${version}; applies on restart.`);
+      })
+      .catch((err) => console.error("Update check failed", err));
+  }
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

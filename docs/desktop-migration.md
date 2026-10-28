@@ -13,8 +13,9 @@ it. Doing local assets first would mean writing File System Access API plumbing
 that Electron makes obsolete.
 
 Steps 3 and 4 are independent of each other; both depend on 1. Step 2 depends
-only on 1. **Steps 1-5 are done.** `npm run desktop` runs it from a checkout;
-`npm run package` builds a Windows installer.
+only on 1. **Steps 1-6 are done.** `npm run desktop` runs it from a checkout;
+`npm run package` builds a Windows installer; `npm run release:bundle` ships a
+renderer-only update to installs already out there.
 
 ---
 
@@ -578,6 +579,113 @@ from it is still untested.
 
 ---
 
+## Step 6 — Over-the-air renderer bundles
+
+**Goal:** ship a fix in `src/` — HTML, CSS, JS — without handing anyone an
+installer. **Done.**
+
+### 6.1 Why this is nearly free
+
+[main.js](../electron/main.js) serves the renderer from a *folder* over
+`http://127.0.0.1` ([server.js](../electron/server.js)) rather than from
+`file://` or inside the asar, and [firebase.json](../firebase.json) already
+deploys that same `dist/` to the `apostello` Hosting target. So the update
+channel is "point the server at a different folder, and mirror the deployed
+site into it". No release server, no electron-updater, no code signing.
+
+electron-builder was the alternative: a ~100 MB NSIS download per fix, and an
+unsigned installer that Windows SmartScreen puts a wall in front of. Deferred
+until a change actually needs the main process.
+
+### 6.2 What it does and does not cover
+
+| Changed | Ships how |
+|---|---|
+| `src/**`, `index.html`, CSS, assets in `public/` | over the air |
+| `electron/**`, the Electron binary, `.env` | installer, as before |
+
+`manifest.minShell` (from `apostello.minShell` in
+[package.json](../package.json)) is the guard between the two: **bump it
+whenever the renderer starts depending on a preload method or IPC channel an
+older installed shell does not have**, or an old install will download a bundle
+that calls into nothing.
+
+### 6.3 Trust
+
+Replacing the bundle is arbitrary code execution on an operator's machine, so
+"it downloaded over HTTPS" is not the boundary:
+
+- `manifest.json` carries a **sha256 per file**; `manifest.sig` is an
+  **Ed25519 signature over the manifest bytes**, verified *before* the JSON is
+  parsed. The public key is a constant in [update.js](../electron/update.js);
+  with it unset the updater stays off rather than trusting what it fetches.
+- Hosting rewrites any unknown path to `index.html` **with a 200**, so a file
+  that was never deployed arrives looking like a success. The per-file hash is
+  what catches it.
+- Files are written to a temp folder and renamed into place only once all of
+  them verify — a half-applied bundle is unbootable.
+
+### 6.4 Rollback
+
+A new bundle is `pending` until the renderer calls `window.desktop.ready()`
+([index.jsx](../src/index.jsx)) — which proves React actually mounted, where
+`did-fail-load` would not: a bundle whose JS fails to parse still "loads". No
+signal within 20s and the app deletes the bundle, reverts to the previous one
+and relaunches itself.
+
+> This means **a bundle that drops that `ready()` call rolls itself back**.
+> That is the safe direction, but it is a real tripwire if `src/index.jsx` gets
+> refactored.
+
+What it catches is the failure mode that only appears in a built bundle: a
+chunk that 404s, a parse error, a module-scope throw — nothing reaches the
+`ready()` call. What it does **not** catch is `<App />` throwing during render,
+which leaves a blank screen but still signals ready. That one fails identically
+in `npm start`, so it is a release-testing problem rather than an update-channel
+one; tightening it would mean gating the signal on a paint, and a signal that
+can mis-fire would roll back working installs.
+
+### 6.5 Bandwidth
+
+Vite fingerprints its output, so unchanged chunks keep their hashes and are
+copied from the bundle already on disk instead of re-downloaded. This matters
+more than it sounds: the vendor chunks (pptxviewjs, pdf.js) are ~20 MB against
+~1.7 MB of app code, so a typo fix is a ~1.7 MB download, not a 24 MB one.
+Verified at 3 requests for a one-file change.
+
+### 6.6 Release flow
+
+One time, on the release machine:
+
+```bash
+npm run update:keygen        # paste the public half into electron/update.js
+```
+
+Keep the private half in `APOSTELLO_UPDATE_KEY` on that machine only — not in
+the repo, not in the installer. Losing it means cutting a new key and shipping
+an installer to pick it up; leaking it means anyone can push code to every
+install.
+
+Then per release:
+
+```bash
+npm version patch            # bundle version = package version
+npm run release:bundle       # vite build + sign + deploy hosting:apostello
+```
+
+Installed apps check at launch, stage in the background, and apply on the next
+restart — never mid-service.
+
+### 6.7 Done when
+
+`npm run test:electron` covers version comparison, signature rejection and the
+dangling-bundle fallback; an end-to-end run against a local server reproducing
+Hosting's SPA rewrite covers install, reuse, tamper rejection and cleanup.
+**Not yet verified end to end against the real Hosting target** — that needs
+one real `npm run release:bundle` and an installed app to pick it up.
+
+---
+
 ## Open decisions
 
 | Question | Notes |
@@ -590,6 +698,7 @@ from it is still untested.
 ## Deferred, on purpose
 
 Operator push-to-repository · SQLite · media sync between machines ·
-content-hash asset IDs · auto-update · a migration framework · repository
-song-update propagation · **backup/export of `data.json`** · **code
+content-hash asset IDs · **auto-update of the Electron shell itself** (the
+renderer updates over the air — see step 6) · a migration framework ·
+repository song-update propagation · **backup/export of `data.json`** · **code
 signing** · **a macOS build**.

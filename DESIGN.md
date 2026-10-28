@@ -77,8 +77,9 @@ change both or neither.
 | `--surface` | `#111521` | panels |
 | `--card` | `#171C2B` | raised cards, icon wells |
 | `--hover` | `#1E2540` | hover fill |
-| `--primary` | `#6366F1` | primary action, active state |
+| `--primary` | `#6366F1` | primary action, active state (fills, borders) |
 | `--primary-hover` | `#7C83FF` | hover and focus |
+| `primary-fg` | `#818CF8` | accent text and icons (contrast) |
 | `--accent` | `#00D4FF` | reserved accent |
 | `--text` | `#F8FAFC` | primary text |
 | `--text-2` | `#9AA3B2` | secondary text |
@@ -91,34 +92,38 @@ green `#4ADE80`, amber `#FCD34D`, sky `#38BDF8`.
 Semantic: `#4ADE80` live/active, `#EF4444` destructive action, `#FFB4AB`
 error text.
 
-### Two palettes, one app
+### Accent on text vs accent on shapes
 
-**The console is half-migrated.** The redesign introduced the slate/indigo
-palette above; much of the app still uses the original cyan/warm-grey one,
-and the two are roughly equal in volume:
+`primary-fg` `#818CF8` is the accent for **text and icons**; `primary`
+`#6366F1` is for **fills and borders**. This is not decoration. On `--bg`,
+`primary` reaches only 4.40:1, below AA for normal text, and much of this
+accent is set at 10px for an operator reading in a dark room. `primary-fg`
+reaches 6.59:1. Borders and fills are held to 3:1, which `primary` clears.
 
-| Legacy | Uses | Nearest replacement |
+Reach for `primary-fg` whenever the accent carries a word.
+
+### No legacy palette
+
+The console previously ran two palettes at once — the redesign's slate/indigo
+and an older cyan/warm-grey — in roughly equal volume. They have been
+unified; no solid legacy hex remains. The mapping used, should you meet one
+in an old branch:
+
+| Legacy | Now | Contrast on `--bg` |
 | --- | --- | --- |
-| `#7BD0FF` cyan accent | 60 | `--primary` `#6366F1` |
-| `#C6C6CD` body grey | 57 | `--text-2` `#9AA3B2` |
-| `#6B7280` muted grey | 37 | `--text-2` `#9AA3B2` |
-| `#E0E3E5` bright text | 28 | `--text` `#F8FAFC` |
-| `#0B0F10` / `#101415` background | 15 | `--bg` `#090B12` |
-| `#45464D` / `#1D2022` | 17 | `--border`, `--card` |
+| `#7BD0FF` cyan accent | `primary-fg` (text) / `primary` (shapes) | 11.52 → 6.59 |
+| `#C6C6CD` body grey | `fg-muted` | 11.57 → 7.73 |
+| `#6B7280` muted grey | `fg-muted` | 4.07 → 7.73 |
+| `#E0E3E5` bright text | `fg` | 15.25 → 18.79 |
+| `#0B0F10` / `#101415` | `base` | — |
+| `#1D2022` | `card` | — |
+| `#45464D` | `hairline` (edges) / `fg-muted` (text) | — |
 
-`src/pages` is largely converted. `src/components` is not — the heaviest
-remaining files are `Sidebar.jsx`, `Program/BibleBrowser.jsx`,
-`YouTubeMediaModal.jsx` and `Song/SongRepositoryModal.jsx`.
+Colours still written as arbitrary values are neutral overlays — white and
+grey at low alpha, such as `rgba(255,255,255,0.06)`. Those are scrim rather
+than palette, and are deliberately not tokens.
 
-**New work uses the `:root` tokens.** When touching a file that still uses
-the legacy palette, convert that file rather than adding to it. Do not
-convert files you are not otherwise editing: a sweeping colour change is hard
-to review and easy to get wrong in a surface nobody can test mid-service.
-
-Existing markup still writes arbitrary values (`text-[#F8FAFC]`) everywhere;
-the named tokens are declared but not yet used. Converting the values that
-already match a token is a mechanical, pixel-identical change and the
-sensible first step, since it leaves only genuinely legacy colours behind.
+**New work uses the named classes**, not hexes.
 
 ## Shape and spacing
 

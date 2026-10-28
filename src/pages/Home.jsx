@@ -210,7 +210,7 @@ function Home() {
 
   return (
     <>
-      <div className="h-full overflow-y-auto flex flex-col bg-[#090B12] relative">
+      <div className="h-full overflow-y-auto flex flex-col bg-base relative">
         {/* Atmosphere */}
         <svg
           className="pointer-events-none absolute inset-0 w-full h-full"
@@ -261,10 +261,10 @@ function Home() {
         <header className="relative z-10 h-14 sm:h-16 border-b border-[rgba(255,255,255,0.06)] flex items-center justify-between px-5 sm:px-8 shrink-0">
           {/* Left: logo + tagline */}
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-[#6366F1] flex items-center justify-center text-white font-bold text-sm shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm shrink-0">
               A
             </div>
-            <span className="text-[#F8FAFC] font-semibold text-sm hidden sm:block">
+            <span className="text-fg font-semibold text-sm hidden sm:block">
               Apostello
             </span>
           </div>
@@ -274,10 +274,10 @@ function Home() {
             <button
               type="button"
               onClick={() => navigate(`/program/${activeProgram.id}`)}
-              className="inline-flex items-center gap-3 text-left border border-[rgba(255,255,255,0.08)] bg-[#111521] px-3 py-2 rounded-xl hover:border-[rgba(99,102,241,0.4)] hover:bg-[#171C2B] transition-colors group"
+              className="inline-flex items-center gap-3 text-left border border-hairline bg-surface px-3 py-2 rounded-xl hover:border-[rgba(99,102,241,0.4)] hover:bg-card transition-colors group"
               title={t("home.openActiveProgram")}
             >
-              <span className="shrink-0 w-9 h-9 rounded-lg bg-[#171C2B] border border-[rgba(255,255,255,0.08)] flex items-center justify-center text-[#9AA3B2] group-hover:text-[#7C83FF] transition-colors">
+              <span className="shrink-0 w-9 h-9 rounded-lg bg-card border border-hairline flex items-center justify-center text-fg-muted group-hover:text-primary-hover transition-colors">
                 <svg width="16" height="16" viewBox="0 0 22 22" fill="none" aria-hidden>
                   <rect x="2" y="4" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.6" />
                   <circle cx="11" cy="11" r="2.5" stroke="currentColor" strokeWidth="1.4" />
@@ -285,16 +285,16 @@ function Home() {
               </span>
               <span className="min-w-0 flex flex-col gap-0.5">
                 <span className="flex items-center gap-2 min-w-0">
-                  <span className="text-[#F8FAFC] text-sm font-semibold truncate leading-tight max-w-[160px]">
+                  <span className="text-fg text-sm font-semibold truncate leading-tight max-w-[160px]">
                     {activeProgram.title || t("home.activeProgramFallback")}
                   </span>
-                  <span className="shrink-0 inline-flex items-center gap-1 text-[#4ADE80] text-[10px] font-semibold tracking-[0.08em] uppercase">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#4ADE80] animate-pulse" />
+                  <span className="shrink-0 inline-flex items-center gap-1 text-live text-[10px] font-semibold tracking-[0.08em] uppercase">
+                    <span className="w-1.5 h-1.5 rounded-full bg-live animate-pulse" />
                     {t("program.active")}
                   </span>
                 </span>
                 <span
-                  className="flex items-center gap-1.5 text-[#9AA3B2] text-[10px] tracking-[0.06em] uppercase truncate"
+                  className="flex items-center gap-1.5 text-fg-muted text-[10px] tracking-[0.06em] uppercase truncate"
                   style={MONO}
                 >
                   {activeProgramDate && <span>{activeProgramDate}</span>}
@@ -322,22 +322,22 @@ function Home() {
             {/* Title */}
             <div className="mb-6 sm:mb-8">
               <p
-                className="text-[#6366F1] text-[10px] tracking-[0.16em] uppercase mb-2.5 font-semibold"
+                className="text-primary text-[10px] tracking-[0.16em] uppercase mb-2.5 font-semibold"
                 style={MONO}
               >
                 {t("home.fileMenu")}
               </p>
-              <h1 className="text-[#F8FAFC] font-bold text-3xl sm:text-4xl tracking-tight leading-tight">
+              <h1 className="text-fg font-bold text-3xl sm:text-4xl tracking-tight leading-tight">
                 Apostello
               </h1>
-              <p className="text-[#9AA3B2] text-sm sm:text-base mt-1.5">
+              <p className="text-fg-muted text-sm sm:text-base mt-1.5">
                 {t("home.subtitle")}
               </p>
             </div>
 
             {/* Menu */}
             <nav
-              className="bg-[#111521] border border-[rgba(255,255,255,0.08)] rounded-xl overflow-hidden"
+              className="bg-surface border border-hairline rounded-xl overflow-hidden"
               aria-label={t("home.mainActionsAria")}
             >
               {MENU_ITEMS.map((item, index) => (
@@ -345,7 +345,7 @@ function Home() {
                   key={item.id}
                   type="button"
                   onClick={() => setModal(item.id)}
-                  className={`w-full flex items-center gap-4 px-4 py-3.5 text-left transition-all hover:bg-[#1E2540] group ${
+                  className={`w-full flex items-center gap-4 px-4 py-3.5 text-left transition-all hover:bg-hover group ${
                     index > 0 ? "border-t border-[rgba(255,255,255,0.05)]" : ""
                   } ${index === 0 ? "border border-[rgba(99,102,241,0.5)] bg-[rgba(99,102,241,0.08)] rounded-t-xl" : ""}`}
                 >
@@ -356,14 +356,14 @@ function Home() {
                     <MenuIcon id={item.id} color={item.iconColor} />
                   </span>
                   <span className="flex-1 min-w-0">
-                    <span className="block text-[#F8FAFC] font-semibold text-sm">
+                    <span className="block text-fg font-semibold text-sm">
                       {t(item.labelKey)}
                     </span>
-                    <span className="block text-[#9AA3B2] text-xs mt-0.5 truncate">
+                    <span className="block text-fg-muted text-xs mt-0.5 truncate">
                       {t(item.descriptionKey)}
                     </span>
                   </span>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden className="text-[#9AA3B2] group-hover:text-[#7C83FF] transition-colors shrink-0">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden className="text-fg-muted group-hover:text-primary-hover transition-colors shrink-0">
                     <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>

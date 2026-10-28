@@ -24,7 +24,7 @@ function LocalDataGate({ children }) {
     return (
       <div className="flex-1 min-h-0 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3 text-center px-4 max-w-md">
-          <p className="text-[#ffb4ab] text-sm font-bold">
+          <p className="text-danger-fg text-sm font-bold">
             {t("localData.error")}
           </p>
           <p className="text-[#c6c6cd] text-xs" style={MONO}>

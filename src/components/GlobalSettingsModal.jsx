@@ -31,15 +31,15 @@ import {
 const btnBase =
   "w-8 h-8 inline-flex items-center justify-center rounded-lg border transition-colors shrink-0";
 const btnIdle =
-  "border-[rgba(255,255,255,0.1)] text-[#9AA3B2] hover:border-[rgba(99,102,241,0.4)] hover:text-[#7C83FF]";
+  "border-[rgba(255,255,255,0.1)] text-fg-muted hover:border-[rgba(99,102,241,0.4)] hover:text-primary-hover";
 const btnActive =
-  "border-[rgba(99,102,241,0.5)] text-[#7C83FF] bg-[rgba(99,102,241,0.15)]";
+  "border-[rgba(99,102,241,0.5)] text-primary-hover bg-[rgba(99,102,241,0.15)]";
 const chipBase =
   "h-8 px-3 inline-flex items-center rounded-lg border text-xs transition-colors";
 const chipIdle =
-  "border-[rgba(255,255,255,0.1)] text-[#9AA3B2] hover:border-[rgba(99,102,241,0.4)] hover:text-[#7C83FF]";
+  "border-[rgba(255,255,255,0.1)] text-fg-muted hover:border-[rgba(99,102,241,0.4)] hover:text-primary-hover";
 const chipActive =
-  "border-[rgba(99,102,241,0.5)] text-[#7C83FF] bg-[rgba(99,102,241,0.15)]";
+  "border-[rgba(99,102,241,0.5)] text-primary-hover bg-[rgba(99,102,241,0.15)]";
 
 function GlobalSettingsModal({ isOpen, onClose }) {
   const user = useAuthUser();
@@ -131,7 +131,7 @@ function GlobalSettingsModal({ isOpen, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div
-        className="bg-[#111521] border border-[rgba(255,255,255,0.08)] rounded-xl shadow-[0_24px_64px_rgba(0,0,0,0.6)] flex flex-col w-full max-w-lg overflow-hidden"
+        className="bg-surface border border-hairline rounded-xl shadow-[0_24px_64px_rgba(0,0,0,0.6)] flex flex-col w-full max-w-lg overflow-hidden"
         role="dialog"
         aria-modal="true"
         aria-labelledby="global-settings-title"
@@ -139,21 +139,21 @@ function GlobalSettingsModal({ isOpen, onClose }) {
         <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-[rgba(255,255,255,0.06)]">
           <div>
             <p
-              className="text-[#6366F1] text-[10px] tracking-[0.12em] uppercase mb-1"
+              className="text-primary text-[10px] tracking-[0.12em] uppercase mb-1"
               style={MONO}
             >
               {t("settingsModal.eyebrow")}
             </p>
             <h2
               id="global-settings-title"
-              className="text-[#F8FAFC] font-semibold text-lg tracking-tight"
+              className="text-fg font-semibold text-lg tracking-tight"
             >
               {t("settingsModal.title")}
             </h2>
           </div>
           <button
             type="button"
-            className="text-[#9AA3B2] hover:text-[#F8FAFC] text-2xl leading-none transition-colors"
+            className="text-fg-muted hover:text-fg text-2xl leading-none transition-colors"
             onClick={onClose}
             aria-label={t("common.close")}
           >
@@ -164,7 +164,7 @@ function GlobalSettingsModal({ isOpen, onClose }) {
         <div className="flex flex-col gap-6 px-5 sm:px-6 py-5 max-h-[min(70vh,560px)] overflow-y-auto">
           <section className="flex flex-col gap-3">
             <h3
-              className="text-[#9AA3B2] text-[10px] tracking-[0.1em] uppercase"
+              className="text-fg-muted text-[10px] tracking-[0.1em] uppercase"
               style={MONO}
             >
               {t("settingsModal.language")}
@@ -189,7 +189,7 @@ function GlobalSettingsModal({ isOpen, onClose }) {
           <section className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-3">
               <h3
-                className="text-[#9AA3B2] text-[10px] tracking-[0.1em] uppercase"
+                className="text-fg-muted text-[10px] tracking-[0.1em] uppercase"
                 style={MONO}
               >
                 {t("settingsModal.captionDefaults")}
@@ -213,7 +213,7 @@ function GlobalSettingsModal({ isOpen, onClose }) {
                 ))}
               </div>
             </div>
-            <p className="text-[#9AA3B2] text-xs">
+            <p className="text-fg-muted text-xs">
               {t("settingsModal.captionDefaultsHint")}
             </p>
 
@@ -311,7 +311,7 @@ function GlobalSettingsModal({ isOpen, onClose }) {
               <button
                 type="button"
                 onClick={onReset}
-                className="h-8 px-2 inline-flex items-center rounded-sm border border-[rgba(69,70,77,0.4)] text-[#9AA3B2] text-[10px] tracking-[0.06em] hover:border-[#ffb4ab] hover:text-[#ffb4ab] transition-colors"
+                className="h-8 px-2 inline-flex items-center rounded-sm border border-[rgba(69,70,77,0.4)] text-fg-muted text-[10px] tracking-[0.06em] hover:border-danger-fg hover:text-danger-fg transition-colors"
                 style={MONO}
                 title={t("console.ccResetGlobalHint")}
               >
@@ -323,19 +323,19 @@ function GlobalSettingsModal({ isOpen, onClose }) {
           {user && (
             <section className="flex flex-col gap-3">
               <h3
-                className="text-[#9AA3B2] text-[10px] tracking-[0.1em] uppercase"
+                className="text-fg-muted text-[10px] tracking-[0.1em] uppercase"
                 style={MONO}
               >
                 {t("settingsModal.account")}
               </h3>
               <div className="flex items-center justify-between gap-3">
-                <p className="text-[#9AA3B2] text-xs truncate">
+                <p className="text-fg-muted text-xs truncate">
                   {t("settingsModal.signedInAs", { email: user.email })}
                 </p>
                 <button
                   type="button"
                   onClick={() => signOut(auth)}
-                  className="h-8 px-3 inline-flex items-center rounded-sm border border-[rgba(69,70,77,0.4)] text-[#9AA3B2] text-xs hover:border-[#ffb4ab] hover:text-[#ffb4ab] transition-colors shrink-0"
+                  className="h-8 px-3 inline-flex items-center rounded-sm border border-[rgba(69,70,77,0.4)] text-fg-muted text-xs hover:border-danger-fg hover:text-danger-fg transition-colors shrink-0"
                 >
                   {t("settingsModal.signOut")}
                 </button>
@@ -348,7 +348,7 @@ function GlobalSettingsModal({ isOpen, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="text-white text-sm font-semibold bg-[#6366F1] px-4 py-2 rounded-lg hover:bg-[#7C83FF] transition-colors"
+            className="text-white text-sm font-semibold bg-primary px-4 py-2 rounded-lg hover:bg-primary-hover transition-colors"
           >
             {t("common.done")}
           </button>

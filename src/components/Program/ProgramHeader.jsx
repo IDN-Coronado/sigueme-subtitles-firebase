@@ -24,17 +24,17 @@ function ProgramHeader({
   const formattedDate = formatProgramDate(date);
 
   return (
-    <header className="shrink-0 z-10 h-14 sm:h-16 bg-[#0D1117] border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between gap-3 px-4 sm:px-6">
+    <header className="shrink-0 z-10 h-14 sm:h-16 bg-[#0D1117] border-b border-hairline flex items-center justify-between gap-3 px-4 sm:px-6">
       {/* Left: logo + program info */}
       <div className="flex items-center gap-3 min-w-0">
         <Link
           to="/"
-          className="shrink-0 w-8 h-8 rounded-lg bg-[#6366F1] flex items-center justify-center text-white font-bold text-sm hover:bg-[#7C83FF] transition-colors"
+          className="shrink-0 w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm hover:bg-primary-hover transition-colors"
           title={t("program.home")}
         >
           A
         </Link>
-        <span className="hidden sm:block text-[#F8FAFC] font-semibold text-sm">
+        <span className="hidden sm:block text-fg font-semibold text-sm">
           Apostello
         </span>
         <div className="w-px h-5 bg-[rgba(255,255,255,0.15)] shrink-0" />
@@ -44,18 +44,18 @@ function ProgramHeader({
             className="inline-flex items-center gap-1.5 min-w-0 group"
             title={title}
           >
-            <span className="text-[#F8FAFC] text-sm font-medium truncate max-w-[160px] sm:max-w-xs">
+            <span className="text-fg text-sm font-medium truncate max-w-[160px] sm:max-w-xs">
               {title || t("program.untitled")}
             </span>
           </button>
           {formattedDate && (
-            <p className="hidden sm:block text-[#9AA3B2] text-[10px] tracking-[0.06em] whitespace-nowrap" style={MONO}>
+            <p className="hidden sm:block text-fg-muted text-[10px] tracking-[0.06em] whitespace-nowrap" style={MONO}>
               {formattedDate}
             </p>
           )}
           {isActive && (
-            <span className="shrink-0 inline-flex items-center gap-1.5 bg-[rgba(99,102,241,0.2)] text-[#7C83FF] text-[9px] font-semibold tracking-[0.1em] uppercase px-2 py-0.5 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#6366F1] animate-pulse" />
+            <span className="shrink-0 inline-flex items-center gap-1.5 bg-[rgba(99,102,241,0.2)] text-primary-hover text-[9px] font-semibold tracking-[0.1em] uppercase px-2 py-0.5 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
               {t("program.active")}
             </span>
           )}
@@ -67,7 +67,7 @@ function ProgramHeader({
         <button
           type="button"
           onClick={onBlackScreen}
-          className="hidden sm:inline-flex items-center gap-1.5 text-[#9AA3B2] text-xs font-medium border border-[rgba(255,255,255,0.1)] px-3 py-1.5 rounded-lg hover:border-[rgba(255,255,255,0.2)] hover:text-[#F8FAFC] transition-colors"
+          className="hidden sm:inline-flex items-center gap-1.5 text-fg-muted text-xs font-medium border border-[rgba(255,255,255,0.1)] px-3 py-1.5 rounded-lg hover:border-[rgba(255,255,255,0.2)] hover:text-fg transition-colors"
           title={t("program.blackScreen")}
         >
           <span className="inline-block w-2.5 h-2.5 rounded-sm bg-black border border-[rgba(255,255,255,0.2)]" />
@@ -77,14 +77,14 @@ function ProgramHeader({
           type="button"
           onClick={onClear}
           disabled={clearDisabled}
-          className="text-[#9AA3B2] text-xs font-medium border border-[rgba(255,255,255,0.1)] px-3 py-1.5 rounded-lg hover:border-[#EF4444] hover:text-[#EF4444] transition-colors disabled:opacity-40 disabled:pointer-events-none"
+          className="text-fg-muted text-xs font-medium border border-[rgba(255,255,255,0.1)] px-3 py-1.5 rounded-lg hover:border-danger hover:text-danger transition-colors disabled:opacity-40 disabled:pointer-events-none"
         >
           {t("program.clear")}
         </button>
         <button
           type="button"
           onClick={onShowLogo}
-          className="text-[#9AA3B2] text-xs font-medium border border-[rgba(255,255,255,0.1)] px-3 py-1.5 rounded-lg hover:border-[#6366F1] hover:text-[#7C83FF] transition-colors"
+          className="text-fg-muted text-xs font-medium border border-[rgba(255,255,255,0.1)] px-3 py-1.5 rounded-lg hover:border-primary hover:text-primary-hover transition-colors"
           title={t("program.showLogo")}
         >
           {t("program.logo")}
@@ -93,7 +93,7 @@ function ProgramHeader({
           <button
             type="button"
             onClick={onActivate}
-            className="hidden sm:inline-flex text-[#9AA3B2] text-xs font-medium border border-[rgba(255,255,255,0.1)] px-3 py-1.5 rounded-lg hover:border-[#6366F1] hover:text-[#7C83FF] transition-colors"
+            className="hidden sm:inline-flex text-fg-muted text-xs font-medium border border-[rgba(255,255,255,0.1)] px-3 py-1.5 rounded-lg hover:border-primary hover:text-primary-hover transition-colors"
           >
             {t("program.activate")}
           </button>
@@ -103,8 +103,8 @@ function ProgramHeader({
           onClick={liveOpen ? closeLiveView : handleLiveView}
           className={`inline-flex items-center gap-2 text-xs font-semibold border px-3 py-1.5 rounded-lg transition-colors ${
             liveOpen
-              ? "text-[#7C83FF] border-[rgba(99,102,241,0.4)] hover:bg-[rgba(239,68,68,0.12)] hover:border-[#EF4444] hover:text-[#EF4444]"
-              : "text-[#7C83FF] border-[rgba(99,102,241,0.4)] bg-[rgba(99,102,241,0.1)] hover:bg-[rgba(99,102,241,0.18)]"
+              ? "text-primary-hover border-[rgba(99,102,241,0.4)] hover:bg-[rgba(239,68,68,0.12)] hover:border-danger hover:text-danger"
+              : "text-primary-hover border-[rgba(99,102,241,0.4)] bg-[rgba(99,102,241,0.1)] hover:bg-[rgba(99,102,241,0.18)]"
           }`}
           title={liveOpen ? t("program.closeLiveView") : t("program.openLiveView")}
           aria-label={liveOpen ? t("program.closeLiveView") : t("program.openLiveView")}

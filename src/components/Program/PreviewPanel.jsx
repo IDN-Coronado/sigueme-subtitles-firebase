@@ -67,7 +67,7 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
     return (
       <div className="h-full min-h-0 flex flex-col gap-1 overflow-auto">
         <p
-          className="text-[#7C83FF] text-[10px] tracking-[0.1em] uppercase shrink-0 px-1 mb-1"
+          className="text-primary-hover text-[10px] tracking-[0.1em] uppercase shrink-0 px-1 mb-1"
           style={MONO}
         >
           {item.title || song?.title || t("types.song")}
@@ -109,8 +109,8 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
                   }
                   className={`w-full text-left rounded-sm px-3 py-2.5 text-sm transition-colors ${
                     active
-                      ? "bg-[rgba(99,102,241,0.12)] border border-[rgba(99,102,241,0.4)] text-[#7C83FF]"
-                      : "border border-transparent text-[#F8FAFC] hover:bg-[rgba(99,102,241,0.08)]"
+                      ? "bg-[rgba(99,102,241,0.12)] border border-[rgba(99,102,241,0.4)] text-primary-hover"
+                      : "border border-transparent text-fg hover:bg-[rgba(99,102,241,0.08)]"
                   }`}
                 >
                   {line}
@@ -138,7 +138,7 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
     return (
       <div className="h-full min-h-0 flex flex-col gap-1 overflow-auto">
         <p
-          className="text-[#7C83FF] text-[10px] tracking-[0.1em] uppercase shrink-0 px-1 mb-1"
+          className="text-primary-hover text-[10px] tracking-[0.1em] uppercase shrink-0 px-1 mb-1"
           style={MONO}
         >
           {item.title || item.reference || t("types.bible")}
@@ -178,7 +178,7 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
             >
               <span
                 className={`text-[10px] tracking-[0.05em] block mb-1 ${
-                  active ? "text-[#7C83FF]" : "text-[#7C83FF]/80"
+                  active ? "text-primary-hover" : "text-primary-hover/80"
                 }`}
                 style={MONO}
               >
@@ -186,7 +186,7 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
               </span>
               <p
                 className={`text-sm leading-6 ${
-                  active ? "text-[#7C83FF]" : "text-[#F8FAFC]"
+                  active ? "text-primary-hover" : "text-fg"
                 }`}
               >
                 {v.text}
@@ -240,7 +240,7 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
         className={`w-full h-full min-h-0 rounded-lg border overflow-hidden transition-colors flex items-center justify-center bg-[#0b0f10] ${
           active
             ? "border-[rgba(99,102,241,0.5)]"
-            : "border-[rgba(255,255,255,0.08)] hover:border-[rgba(99,102,241,0.35)]"
+            : "border-hairline hover:border-[rgba(99,102,241,0.35)]"
         }`}
       >
         {item.mediaType === "youtube" ? (

@@ -11,7 +11,7 @@ function SearchField({ value, onChange, placeholder }) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="bg-[#171C2B] text-[#F8FAFC] placeholder-[#9AA3B2] text-sm rounded-lg pl-10 pr-4 py-2.5 w-full outline-none border border-[rgba(255,255,255,0.08)] focus:border-[#6366F1] transition-colors"
+        className="bg-card text-fg placeholder-fg-muted text-sm rounded-lg pl-10 pr-4 py-2.5 w-full outline-none border border-hairline focus:border-primary transition-colors"
       />
     </div>
   );
@@ -20,8 +20,8 @@ function SearchField({ value, onChange, placeholder }) {
 function ToolbarButton({ label, onClick, variant = "primary" }) {
   const styles =
     variant === "secondary"
-      ? "bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] text-[#9AA3B2] hover:border-[rgba(99,102,241,0.4)] hover:text-[#7C83FF]"
-      : "bg-[rgba(99,102,241,0.15)] border border-[rgba(99,102,241,0.3)] text-[#7C83FF] hover:bg-[rgba(99,102,241,0.25)]";
+      ? "bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] text-fg-muted hover:border-[rgba(99,102,241,0.4)] hover:text-primary-hover"
+      : "bg-[rgba(99,102,241,0.15)] border border-[rgba(99,102,241,0.3)] text-primary-hover hover:bg-[rgba(99,102,241,0.25)]";
 
   return (
     <button

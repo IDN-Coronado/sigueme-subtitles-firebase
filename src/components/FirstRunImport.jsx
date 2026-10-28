@@ -47,7 +47,7 @@ function FirstRunImport() {
 
         {status === "error" && (
           <>
-            <p className="text-[#ffb4ab] text-xs">{t("migrate.error")}</p>
+            <p className="text-danger-fg text-xs">{t("migrate.error")}</p>
             <p
               className="text-[#6b7280] text-[11px]"
               style={MONO}

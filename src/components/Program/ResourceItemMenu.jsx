@@ -55,7 +55,7 @@ function ResourceItemMenu({ options }) {
               role="menuitem"
               className={`w-full text-left px-3 py-2 text-xs sm:text-sm transition-colors ${
                 opt.danger
-                  ? "text-[#ffb4ab] hover:bg-[rgba(147,0,10,0.2)]"
+                  ? "text-danger-fg hover:bg-[rgba(147,0,10,0.2)]"
                   : "text-[#e0e3e5] hover:bg-[rgba(123,208,255,0.1)] hover:text-[#7bd0ff]"
               }`}
               onClick={(e) => {

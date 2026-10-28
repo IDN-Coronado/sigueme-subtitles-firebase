@@ -583,10 +583,10 @@ function Program() {
       >
         <div className="flex flex-col gap-2">
           {!hydrated && (
-            <p className="text-[#9AA3B2] text-sm">{t("common.loading")}</p>
+            <p className="text-fg-muted text-sm">{t("common.loading")}</p>
           )}
           {hydrated && schedule.length === 0 && (
-            <p className="text-[#9AA3B2] text-sm px-1">
+            <p className="text-fg-muted text-sm px-1">
               {t("program.scheduleEmpty")}
             </p>
           )}
@@ -691,7 +691,7 @@ function Program() {
     <section
       className={`${
         resourcesCollapsed ? "shrink-0" : "h-full"
-      } min-h-0 min-w-0 w-full bg-[#111521] border border-[rgba(255,255,255,0.08)] rounded-xl flex flex-col overflow-hidden`}
+      } min-h-0 min-w-0 w-full bg-surface border border-hairline rounded-xl flex flex-col overflow-hidden`}
     >
       <div
         className={`shrink-0 flex items-center gap-2 ${
@@ -711,8 +711,8 @@ function Program() {
                   onClick={() => setResourceTab(tab.id)}
                   className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                     resourceTab === tab.id
-                      ? "bg-[#6366F1] text-white"
-                      : "bg-[rgba(255,255,255,0.05)] text-[#9AA3B2] hover:text-[#F8FAFC] hover:bg-[rgba(255,255,255,0.08)]"
+                      ? "bg-primary text-white"
+                      : "bg-[rgba(255,255,255,0.05)] text-fg-muted hover:text-fg hover:bg-hairline"
                   }`}
                 >
                   <Icon color="currentColor" />

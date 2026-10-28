@@ -63,7 +63,7 @@ function AuthGate({ children }) {
         >
           {t("auth.signInButton")}
         </button>
-        {error && <p className="text-[#ffb4ab] text-xs">{t("auth.signInError")}</p>}
+        {error && <p className="text-danger-fg text-xs">{t("auth.signInError")}</p>}
       </GateScreen>
     );
   }

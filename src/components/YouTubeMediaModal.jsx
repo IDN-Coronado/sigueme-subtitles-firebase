@@ -114,7 +114,7 @@ function YouTubeMediaModal({ isOpen, onClose, onSubmit, item = null }) {
               autoFocus
             />
             {invalid && (
-              <p className="text-[#ffb4ab] text-xs">{t("youtubeModal.invalidUrl")}</p>
+              <p className="text-danger-fg text-xs">{t("youtubeModal.invalidUrl")}</p>
             )}
           </div>
 

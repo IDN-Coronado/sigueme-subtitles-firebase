@@ -59,7 +59,7 @@ function SongRepositoryModal({ isOpen, onClose }) {
           )}
 
           {!loading && error && (
-            <p className="text-[#ffb4ab] text-sm text-center py-8">
+            <p className="text-danger-fg text-sm text-center py-8">
               {t("repository.error")}
             </p>
           )}

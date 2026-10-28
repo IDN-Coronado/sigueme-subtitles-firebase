@@ -197,7 +197,7 @@ function MediaConsoleControls({ mediaRef, mediaKey }) {
         <button
           type="button"
           onClick={stop}
-          className={`${btnBase} border-[rgba(69,70,77,0.4)] text-[#c6c6cd] hover:border-[#ffb4ab] hover:text-[#ffb4ab]`}
+          className={`${btnBase} border-[rgba(69,70,77,0.4)] text-[#c6c6cd] hover:border-danger-fg hover:text-danger-fg`}
           title={t("media.stop")}
           aria-label={t("media.stop")}
         >

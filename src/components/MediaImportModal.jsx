@@ -67,7 +67,7 @@ function MediaImportModal({ isOpen, onClose }) {
               </p>
               {result.failed.length > 0 && (
                 <div className="flex flex-col gap-1">
-                  <p className="text-[#ffb4ab] text-xs">
+                  <p className="text-danger-fg text-xs">
                     {t("mediaImport.failed", { count: result.failed.length })}
                   </p>
                   {result.failed.slice(0, 5).map((f) => (
@@ -85,7 +85,7 @@ function MediaImportModal({ isOpen, onClose }) {
           )}
 
           {status === "error" && (
-            <p className="text-[#ffb4ab] text-xs">
+            <p className="text-danger-fg text-xs">
               {String(error?.message || error)}
             </p>
           )}

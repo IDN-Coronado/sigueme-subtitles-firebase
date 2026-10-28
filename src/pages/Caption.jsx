@@ -11,23 +11,41 @@ const LOCAL_STORAGE_COLOR = 'sigueme:color';
 const LOCAL_STORAGE_CC = 'sigueme:cc';
 const LOCAL_STORAGE_SIZE = 'sigueme:size';
 const DEFAULT_BG = '#a3e635';
-const textSizes = ['text-xs', 'text-sm', 'text-base', 'text-lg', 'text-xl', 'text-2xl', 'text-3xl', 'text-4xl', 'text-5xl', 'text-6xl', 'text-7xl', 'text-8xl', 'text-9xl', 'text-10xl'];
+const textSizes = ['text-xs', 'text-sm', 'text-base', 'text-lg', 'text-xl', 'text-2xl', 'text-3xl', 'text-4xl', 'text-5xl', 'text-6xl', 'text-7xl', 'text-8xl', 'text-9xl'];
 
 const getColor = () => {
-  const color = localStorage.getItem(LOCAL_STORAGE_COLOR);
-  return color ? JSON.parse(color) : { hex: DEFAULT_BG };
+  try {
+    const color = localStorage.getItem(LOCAL_STORAGE_COLOR);
+    return color ? JSON.parse(color) : { hex: DEFAULT_BG };
+  } catch {
+    return { hex: DEFAULT_BG };
+  }
 };
 
 const getIsCC = () => {
-  const cc = localStorage.getItem(LOCAL_STORAGE_CC);
-  return cc ? JSON.parse(cc) : true;
+  try {
+    const cc = localStorage.getItem(LOCAL_STORAGE_CC);
+    return cc ? JSON.parse(cc) : true;
+  } catch {
+    return true;
+  }
+};
+
+const getTextSize = () => {
+  try {
+    const size = localStorage.getItem(LOCAL_STORAGE_SIZE);
+    const n = size ? Number(size) : 9;
+    return Number.isFinite(n) ? Math.min(textSizes.length - 1, Math.max(0, n)) : 9;
+  } catch {
+    return 9;
+  }
 };
 
 const Caption = () => {
   const [ caption, setCaption ] = useState('');
   const [ color, setColor ] = useState(getColor());
   const [ isCC, setIsCC ] = useState(getIsCC());
-  const [ textSize, setTextSize ] = useState(9);
+  const [ textSize, setTextSize ] = useState(getTextSize);
   const [ isPickerVisible, setIsPickerVisible ] = useState(false);
   const [ isActionsVisible, setIsActionsVisible ] = useState(false);
 
@@ -57,13 +75,13 @@ const Caption = () => {
   }
 
   const onIncrease = () => {
-    const newSize = textSize + 1;
+    const newSize = Math.min(textSizes.length - 1, textSize + 1);
     setTextSize(newSize);
     localStorage.setItem(LOCAL_STORAGE_SIZE, newSize);
   }
 
   const onDecrease = () => {
-    const newSize = textSize - 1;
+    const newSize = Math.max(0, textSize - 1);
     setTextSize(newSize);
     localStorage.setItem(LOCAL_STORAGE_SIZE, newSize);
   }
@@ -79,7 +97,7 @@ const Caption = () => {
   const textColor = tinycolor(color.hex).isDark() || isCC ? 'white' : 'black';
 
   return <div className="grid h-screen place-items-center" style={{ backgroundColor: color.hex }}>
-    {caption && <h1 className={`${textSizes[textSize]} p-2 text-center text-${textColor} ${isCC ? 'bg-zinc-900' : ''}`}>
+    {caption && <h1 className={`${textSizes[textSize]} p-2 text-center ${isCC ? 'bg-zinc-900' : ''}`} style={{ color: textColor }}>
       {caption}
     </h1>}
     <div

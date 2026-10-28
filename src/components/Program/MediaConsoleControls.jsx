@@ -97,24 +97,14 @@ function MediaConsoleControls({ mediaRef, mediaKey }) {
     };
   }, [mediaRef, mediaKey]);
 
-  // Keep Live View aligned while playing (drift correction).
-  useEffect(() => {
-    if (!playing || !mediaKey) return undefined;
-
-    const id = window.setInterval(() => {
-      const el = mediaRef?.current;
-      if (!el || el.paused) return;
-      publishMediaSync({
-        type: "seek",
-        mediaKey,
-        currentTime: el.currentTime || 0,
-        playing: true,
-        loop: !!el.loop,
-      });
-    }, 2000);
-
-    return () => window.clearInterval(id);
-  }, [playing, mediaKey, mediaRef]);
+  // No periodic drift correction here. This used to re-publish the preview's
+  // currentTime every 2s and the Live View hard-seeked whenever it was more
+  // than 0.35s off. Two decoders always drift, and a seek flushes the decoder
+  // -- a visible freeze plus an audio gap -- which itself costs enough time to
+  // put the follower straight back out of tolerance: a cut every 2 seconds.
+  // Live catches up once on open via "request-state", and play/pause/stop/loop
+  // still publish commands. A muted preview nobody watches is not worth
+  // interrupting the only video the audience actually sees.
 
   const playPause = () => {
     const el = mediaRef?.current;

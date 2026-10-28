@@ -5,8 +5,6 @@ import {
   Navigate,
 } from "react-router-dom";
 
-import "./App.css";
-
 import Home from "./pages/Home";
 import Caption from "./pages/Caption";
 import Live from "./pages/Live";

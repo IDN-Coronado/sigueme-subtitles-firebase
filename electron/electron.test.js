@@ -1,7 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const path = require("node:path");
-const { createHash } = require("node:crypto");
+const { createHash, generateKeyPairSync, sign } = require("node:crypto");
 
 const fs = require("node:fs/promises");
 const os = require("node:os");
@@ -10,11 +10,16 @@ process.env.APOSTELLO_DATA_FILE = path.join(
   os.tmpdir(),
   `apostello-test-${process.pid}.json`
 );
+process.env.APOSTELLO_BUNDLE_ROOT = path.join(
+  os.tmpdir(),
+  `apostello-bundles-${process.pid}`
+);
 
 const { resolveRequestPath, resolveWithin, parseRange } = require("./server");
 const { pkce } = require("./oauth");
 const { pickDisplay } = require("./liveWindow");
 const store = require("./store");
+const update = require("./update");
 
 const root = path.join(__dirname, "..", "dist");
 const index = path.join(root, "index.html");
@@ -129,6 +134,98 @@ test("store: concurrent saves do not corrupt the file", async (t) => {
 
   const final = await store.load();
   assert.equal(final.songs.length, 20, "last write wins intact");
+});
+
+test("update: version compare decides what counts as newer", () => {
+  assert.equal(update.compareVersions("3.0.1", "3.0.0"), 1);
+  assert.equal(update.compareVersions("3.0.0", "3.0.1"), -1);
+  assert.equal(update.compareVersions("3.0.0", "3.0.0"), 0);
+  // Not string order: "3.0.10" > "3.0.9" and "3.10.0" > "3.9.0".
+  assert.equal(update.compareVersions("3.0.10", "3.0.9"), 1);
+  assert.equal(update.compareVersions("3.10.0", "3.9.0"), 1);
+  // Short forms pad with zeros rather than comparing undefined.
+  assert.equal(update.compareVersions("3.1", "3.1.0"), 0);
+  assert.equal(update.compareVersions("4", "3.9.9"), 1);
+});
+
+test("update: only a correctly signed manifest is accepted", () => {
+  const { publicKey, privateKey } = generateKeyPairSync("ed25519");
+  const pub = publicKey.export({ type: "spki", format: "der" }).toString("base64");
+
+  const manifest = Buffer.from(
+    JSON.stringify({ version: "3.0.1", minShell: "3.0.0", files: {} })
+  );
+  const signature = sign(null, manifest, privateKey).toString("base64");
+
+  assert.equal(update.verifyManifest(manifest, signature, pub), true);
+
+  // The reason this exists: swapping the bundle is arbitrary code execution,
+  // so every one of these must fail closed rather than throw or pass.
+  const tampered = Buffer.from(
+    JSON.stringify({ version: "9.9.9", minShell: "3.0.0", files: {} })
+  );
+  assert.equal(update.verifyManifest(tampered, signature, pub), false);
+
+  const other = generateKeyPairSync("ed25519");
+  assert.equal(
+    update.verifyManifest(manifest, sign(null, manifest, other.privateKey).toString("base64"), pub),
+    false,
+    "signed by the wrong key"
+  );
+
+  // Hosting answers a missing /manifest.json with index.html and a 200, so an
+  // HTML body with no signature is the everyday failure, not an exotic one.
+  assert.equal(
+    update.verifyManifest(Buffer.from("<!doctype html>"), "", pub),
+    false
+  );
+  assert.equal(update.verifyManifest(manifest, "not base64 at all", pub), false);
+  assert.equal(
+    update.verifyManifest(manifest, signature, ""),
+    false,
+    "no public key configured = updates off"
+  );
+});
+
+test("update: a staged bundle missing its index falls back to the shipped one", async (t) => {
+  const root = process.env.APOSTELLO_BUNDLE_ROOT;
+  const shipped = path.join(__dirname, "..", "dist");
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+
+  await fs.rm(root, { recursive: true, force: true });
+  assert.deepEqual(await update.activeBundle(shipped), {
+    dir: shipped,
+    pending: false,
+  });
+
+  // State pointing at a folder that is no longer there: serving it would
+  // answer every route with nothing at all.
+  await fs.mkdir(root, { recursive: true });
+  await fs.writeFile(
+    path.join(root, "state.json"),
+    JSON.stringify({ version: "3.0.1", pending: true })
+  );
+  assert.deepEqual(await update.activeBundle(shipped), {
+    dir: shipped,
+    pending: false,
+  });
+  assert.deepEqual(
+    JSON.parse(await fs.readFile(path.join(root, "state.json"), "utf8")),
+    {},
+    "the dangling pointer is cleared, not retried every launch"
+  );
+
+  // A real bundle is served, and reports that it still has to prove itself.
+  await fs.mkdir(path.join(root, "3.0.2"), { recursive: true });
+  await fs.writeFile(path.join(root, "3.0.2", "index.html"), "<!doctype html>");
+  await fs.writeFile(
+    path.join(root, "state.json"),
+    JSON.stringify({ version: "3.0.2", pending: true })
+  );
+  assert.deepEqual(await update.activeBundle(shipped), {
+    dir: path.join(root, "3.0.2"),
+    pending: true,
+  });
 });
 
 test("pkce challenge is the S256 digest of its verifier", () => {

@@ -1,0 +1,294 @@
+const { app } = require("electron");
+const { createHash, createPublicKey, verify } = require("node:crypto");
+const { mkdir, readdir, readFile, rename, rm, stat, writeFile } =
+  require("node:fs/promises");
+const path = require("node:path");
+
+const { resolveWithin } = require("./server");
+
+// The renderer is served from a folder (electron/server.js), not from inside
+// app.asar, so a new dist/ can replace it without an installer. That covers
+// everything in src/ — HTML, CSS, JS — but nothing in electron/: a change to
+// main, preload or server still ships as a build. `minShell` is what keeps a
+// new bundle from booting on a shell that is too old for it.
+//
+// Updates come from the same Firebase Hosting site the web build already
+// deploys to (firebase.json, target "apostello"), so there is no release
+// server. Hosting rewrites unknown paths to index.html with a 200, which is
+// exactly why every file carries a sha256 and the manifest carries a
+// signature — "it downloaded fine" proves nothing here.
+
+const BASE_URL = process.env.APOSTELLO_UPDATE_URL || "https://apostello.web.app";
+
+// Ed25519 SPKI, base64 — the public half of the release key. Its private half
+// lives only on the machine that cuts releases, in APOSTELLO_UPDATE_KEY.
+//
+// This, not TLS, is the trust boundary: anyone who can write to the Hosting
+// site can serve a bundle, and the renderer runs it with the preload bridge in
+// reach. Verifying the manifest against this key means a compromised Hosting
+// account still cannot push code. Replacing the key needs a new installer, so
+// losing the private half costs a release — leaking it costs everything.
+const PUBLIC_KEY = "MCowBQYDK2VwAyEA5mkuZnX32H6JOEexX6YPdewQw0x+GJOmP7QXlfu2qCE=";
+
+// A bundle that cannot mount React never calls update:ready. Twenty seconds is
+// well past a cold start on the kind of machine this runs on, and the cost of
+// guessing low is one needless rollback — against bricking an install the
+// morning of a service.
+const WATCHDOG_MS = 20000;
+
+let cachedRoot;
+let watchdog = null;
+
+function bundlesRoot() {
+  if (!cachedRoot) {
+    cachedRoot =
+      process.env.APOSTELLO_BUNDLE_ROOT ||
+      path.join(app.getPath("userData"), "bundles");
+  }
+  return cachedRoot;
+}
+
+const statePath = () => path.join(bundlesRoot(), "state.json");
+
+async function readState() {
+  try {
+    return JSON.parse(await readFile(statePath(), "utf8"));
+  } catch {
+    // Missing or unreadable state means "no bundle installed", which falls
+    // back to the one inside app.asar — always a valid answer.
+    return {};
+  }
+}
+
+async function writeState(state) {
+  await mkdir(bundlesRoot(), { recursive: true });
+  await writeFile(statePath(), JSON.stringify(state));
+}
+
+async function isFile(target) {
+  try {
+    return (await stat(target)).isFile();
+  } catch {
+    return false;
+  }
+}
+
+/** Numeric compare of dotted versions. -1, 0 or 1. */
+function compareVersions(a, b) {
+  const left = String(a || "0").split(".").map(Number);
+  const right = String(b || "0").split(".").map(Number);
+  for (let i = 0; i < Math.max(left.length, right.length); i += 1) {
+    const l = left[i] || 0;
+    const r = right[i] || 0;
+    if (l !== r) return l < r ? -1 : 1;
+  }
+  return 0;
+}
+
+/**
+ * Ed25519 over the raw manifest bytes. Verified before the JSON is parsed:
+ * Hosting answers a missing path with index.html and a 200, so an unsigned
+ * body is the normal failure here, not an exotic one.
+ */
+function verifyManifest(bytes, signatureB64, publicKeyB64 = PUBLIC_KEY) {
+  if (!publicKeyB64) return false;
+  try {
+    return verify(
+      null,
+      bytes,
+      createPublicKey({
+        key: Buffer.from(publicKeyB64, "base64"),
+        format: "der",
+        type: "spki",
+      }),
+      Buffer.from(signatureB64, "base64")
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The folder electron/server.js should serve, and whether it is still
+ * unproven. `fallbackDir` is the bundle shipped inside app.asar.
+ */
+async function activeBundle(fallbackDir) {
+  const state = await readState();
+  if (!state.version) return { dir: fallbackDir, pending: false };
+
+  const dir = path.join(bundlesRoot(), state.version);
+  if (!(await isFile(path.join(dir, "index.html")))) {
+    // Deleted by hand, or lost to a disk repair. Serving the empty folder
+    // would answer every route with nothing at all.
+    await writeState({});
+    return { dir: fallbackDir, pending: false };
+  }
+  return { dir, pending: state.pending === true };
+}
+
+/** Starts the rollback timer for a bundle booting for the first time. */
+function armRollback() {
+  watchdog = setTimeout(() => {
+    console.warn("New bundle never signalled ready; rolling back.");
+    rollback().catch((err) => console.error("Rollback failed", err));
+  }, WATCHDOG_MS);
+}
+
+/** Called over IPC once the renderer has actually mounted. */
+async function confirmHealthy() {
+  if (watchdog) {
+    clearTimeout(watchdog);
+    watchdog = null;
+  }
+  const state = await readState();
+  if (!state.pending) return;
+  delete state.pending;
+  await writeState(state);
+  await prune(state);
+}
+
+async function rollback() {
+  const state = await readState();
+  const broken = state.version;
+  await writeState(state.previous ? { version: state.previous } : {});
+  if (broken) {
+    await rm(path.join(bundlesRoot(), broken), { recursive: true, force: true });
+  }
+  app.relaunch();
+  app.quit();
+}
+
+/** Keeps the live bundle and the one to roll back to; drops the rest. */
+async function prune(state) {
+  const keep = new Set([state.version, state.previous].filter(Boolean));
+  const entries = await readdir(bundlesRoot(), { withFileTypes: true }).catch(
+    () => []
+  );
+  for (const entry of entries) {
+    if (!entry.isDirectory() || keep.has(entry.name)) continue;
+    await rm(path.join(bundlesRoot(), entry.name), {
+      recursive: true,
+      force: true,
+    }).catch(() => {});
+  }
+}
+
+/**
+ * Returns the bytes of a file already on disk in `fromDir` whose contents hash
+ * to `expected`, or null.
+ *
+ * Vite fingerprints its output, so the chunks that did not change keep their
+ * names and hashes. The vendor chunks here are ~20 MB against ~1.7 MB of app
+ * code: without this, every typo fix is a 20 MB download over church wifi.
+ */
+async function reuseLocal(fromDir, rel, expected) {
+  if (!fromDir) return null;
+  const candidate = resolveWithin(fromDir, `/${rel}`);
+  if (!candidate) return null;
+  const body = await readFile(candidate).catch(() => null);
+  if (!body) return null;
+  const digest = createHash("sha256").update(body).digest("hex");
+  return digest === expected ? body : null;
+}
+
+/**
+ * Builds the new bundle in a temp folder and only swaps it into place once
+ * every file matches the manifest — a half-applied bundle is unbootable.
+ */
+async function install(manifest, previousDir) {
+  const root = bundlesRoot();
+  const tmp = path.join(root, `.tmp-${manifest.version}`);
+  const target = path.join(root, manifest.version);
+
+  await rm(tmp, { recursive: true, force: true });
+  try {
+    for (const [rel, expected] of Object.entries(manifest.files)) {
+      const file = resolveWithin(tmp, `/${rel}`);
+      if (!file) throw new Error(`Manifest path escapes the bundle: ${rel}`);
+
+      let body = await reuseLocal(previousDir, rel, expected);
+      if (!body) {
+        const res = await fetch(`${BASE_URL}/${rel}`, { cache: "no-store" });
+        if (!res.ok) throw new Error(`${rel}: HTTP ${res.status}`);
+
+        body = Buffer.from(await res.arrayBuffer());
+        const digest = createHash("sha256").update(body).digest("hex");
+        // Hosting rewrites an unknown path to index.html with a 200, so this
+        // is how a file that was never deployed actually shows up.
+        if (digest !== expected) throw new Error(`${rel}: hash mismatch`);
+      }
+
+      await mkdir(path.dirname(file), { recursive: true });
+      await writeFile(file, body);
+    }
+
+    await rm(target, { recursive: true, force: true });
+    await rename(tmp, target);
+  } catch (err) {
+    await rm(tmp, { recursive: true, force: true }).catch(() => {});
+    throw err;
+  }
+}
+
+/**
+ * Fetches the published manifest and installs it if it is newer. Applied on
+ * the next launch: swapping the folder under a running window would only take
+ * effect on reload anyway, and mid-service is the wrong moment for either.
+ *
+ * `servingDir` is the bundle currently on screen; its unchanged files are
+ * reused instead of re-downloaded.
+ *
+ * Returns the version staged, or null when there was nothing to do.
+ */
+async function checkForUpdate(servingDir) {
+  if (!PUBLIC_KEY) {
+    console.warn(
+      "Updates are off: PUBLIC_KEY is unset in electron/update.js " +
+        "(see scripts/build-manifest.mjs --keygen)."
+    );
+    return null;
+  }
+
+  const [manifestRes, signatureRes] = await Promise.all([
+    fetch(`${BASE_URL}/manifest.json`, { cache: "no-store" }),
+    fetch(`${BASE_URL}/manifest.sig`, { cache: "no-store" }),
+  ]);
+  if (!manifestRes.ok || !signatureRes.ok) return null;
+
+  const bytes = Buffer.from(await manifestRes.arrayBuffer());
+  const signature = (await signatureRes.text()).trim();
+  if (!verifyManifest(bytes, signature)) {
+    throw new Error("Update manifest failed signature verification; ignored.");
+  }
+
+  const manifest = JSON.parse(bytes.toString("utf8"));
+  const state = await readState();
+  const installed = state.version || app.getVersion();
+
+  if (compareVersions(manifest.version, installed) <= 0) return null;
+  if (compareVersions(manifest.minShell, app.getVersion()) > 0) {
+    console.warn(
+      `Bundle ${manifest.version} needs app ${manifest.minShell} or newer; ` +
+        `this is ${app.getVersion()}. Install the new build to get it.`
+    );
+    return null;
+  }
+
+  await install(manifest, servingDir);
+  await writeState({
+    version: manifest.version,
+    previous: state.version || null,
+    pending: true,
+  });
+  return manifest.version;
+}
+
+module.exports = {
+  activeBundle,
+  armRollback,
+  checkForUpdate,
+  compareVersions,
+  confirmHealthy,
+  verifyManifest,
+  bundlesRoot,
+};

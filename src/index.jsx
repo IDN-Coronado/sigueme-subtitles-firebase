@@ -67,3 +67,8 @@ root.render(
   </React.StrictMode>
 );
 
+// Tells the desktop shell this bundle boots. A freshly downloaded bundle that
+// never gets here is rolled back and the app relaunches on the previous one,
+// so this call must survive any refactor of this file.
+window.desktop?.ready?.();
+

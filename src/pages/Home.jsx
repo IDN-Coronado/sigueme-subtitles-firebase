@@ -227,12 +227,6 @@ function Home() {
             <span className="text-[#e0e3e5] font-bold text-lg sm:text-xl tracking-tight truncate">
               Apostello
             </span>
-            <span
-              className="hidden sm:inline text-[#6b7280] text-[10px] tracking-[0.12em] uppercase"
-              style={MONO}
-            >
-              {t("home.tagline")}
-            </span>
           </div>
           <div className="flex items-center gap-3 shrink-0 min-w-0">
             {activeProgram && (

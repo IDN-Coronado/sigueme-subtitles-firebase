@@ -150,7 +150,15 @@ async function confirmHealthy() {
 async function rollback() {
   const state = await readState();
   const broken = state.version;
-  await writeState(state.previous ? { version: state.previous } : {});
+  // `failed` is what stops the loop: without it the next launch sees the same
+  // published version, finds it newer than the one we rolled back to, and
+  // downloads the same broken bundle again, forever. Carried until a
+  // different version installs, which replaces this state wholesale.
+  await writeState(
+    state.previous
+      ? { version: state.previous, failed: broken }
+      : { failed: broken }
+  );
   if (broken) {
     await rm(path.join(bundlesRoot(), broken), { recursive: true, force: true });
   }
@@ -231,6 +239,20 @@ async function install(manifest, previousDir) {
 }
 
 /**
+ * Why a published manifest should be left alone, or null to install it. Kept
+ * pure and separate from checkForUpdate because the decision is the part with
+ * the edge cases, and testing it there would mean a network round trip and
+ * the real signing key.
+ */
+function installBlockedBecause(manifest, state, shellVersion) {
+  if (manifest.version === state.failed) return "failed";
+  const installed = state.version || shellVersion;
+  if (compareVersions(manifest.version, installed) <= 0) return "old";
+  if (compareVersions(manifest.minShell, shellVersion) > 0) return "shell";
+  return null;
+}
+
+/**
  * Fetches the published manifest and installs it if it is newer. Applied on
  * the next launch: swapping the folder under a running window would only take
  * effect on reload anyway, and mid-service is the wrong moment for either.
@@ -263,16 +285,23 @@ async function checkForUpdate(servingDir) {
 
   const manifest = JSON.parse(bytes.toString("utf8"));
   const state = await readState();
-  const installed = state.version || app.getVersion();
 
-  if (compareVersions(manifest.version, installed) <= 0) return null;
-  if (compareVersions(manifest.minShell, app.getVersion()) > 0) {
+  const blocked = installBlockedBecause(manifest, state, app.getVersion());
+  if (blocked === "failed") {
+    console.warn(
+      `Bundle ${manifest.version} failed to boot here and was rolled back; ` +
+        "skipping it until a different version is published."
+    );
+    return null;
+  }
+  if (blocked === "shell") {
     console.warn(
       `Bundle ${manifest.version} needs app ${manifest.minShell} or newer; ` +
         `this is ${app.getVersion()}. Install the new build to get it.`
     );
     return null;
   }
+  if (blocked) return null;
 
   await install(manifest, servingDir);
   await writeState({
@@ -289,6 +318,7 @@ module.exports = {
   checkForUpdate,
   compareVersions,
   confirmHealthy,
+  installBlockedBecause,
   verifyManifest,
   bundlesRoot,
 };

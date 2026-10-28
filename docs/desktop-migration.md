@@ -637,6 +637,12 @@ A new bundle is `pending` until the renderer calls `window.desktop.ready()`
 signal within 20s and the app deletes the bundle, reverts to the previous one
 and relaunches itself.
 
+The rolled-back version is recorded as `failed` in `state.json` and skipped on
+every later check. Without it the app would be caught in a loop: reverting to
+the previous bundle leaves the broken one still looking newer, so the next
+launch downloads it, fails, rolls back and starts over. Publishing any other
+version clears the record, because a successful install rewrites the state.
+
 > This means **a bundle that drops that `ready()` call rolls itself back**.
 > That is the safe direction, but it is a real tripwire if `src/index.jsx` gets
 > refactored.

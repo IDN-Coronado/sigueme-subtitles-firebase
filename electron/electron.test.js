@@ -236,3 +236,28 @@ test("pkce challenge is the S256 digest of its verifier", () => {
   );
   assert.match(verifier, /^[\w-]{43}$/);
 });
+
+test("update: a bundle that failed to boot is not downloaded again", () => {
+  const blocked = (manifest, state, shell = "3.0.1") =>
+    update.installBlockedBecause(manifest, state, shell);
+  const m = (version, minShell = "3.0.0") => ({ version, minShell });
+
+  // The loop this exists to stop: rollback leaves the app on 3.0.2, so 3.0.3
+  // still looks newer and would be fetched, booted and rolled back forever.
+  assert.equal(
+    blocked(m("3.0.3"), { version: "3.0.2", failed: "3.0.3" }),
+    "failed"
+  );
+  // Rollback with nothing to fall back to: the shell version is the floor,
+  // and the broken bundle is still newer than it.
+  assert.equal(blocked(m("3.0.3"), { failed: "3.0.3" }), "failed");
+
+  // Publishing a fix gets through — the block is per version, not a latch.
+  assert.equal(blocked(m("3.0.4"), { version: "3.0.2", failed: "3.0.3" }), null);
+
+  // The other two reasons still work, and a clean state still installs.
+  assert.equal(blocked(m("3.0.2"), { version: "3.0.2" }), "old");
+  assert.equal(blocked(m("3.0.1"), {}), "old", "not newer than the shell");
+  assert.equal(blocked(m("4.0.0", "4.0.0"), {}), "shell");
+  assert.equal(blocked(m("3.0.2"), {}), null);
+});

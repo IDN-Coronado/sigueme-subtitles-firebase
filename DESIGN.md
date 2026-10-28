@@ -27,17 +27,20 @@ Its squarish terminals also sit comfortably beside the mono face.
 hint and count. This is the interface's main typographic gesture: sans for
 prose, mono for anything the operator scans rather than reads.
 
-It is applied through a `MONO` constant rather than a class:
+It is applied through a `MONO` constant exported by
+[`src/fonts.js`](src/fonts.js), imported by all 28 consumers:
 
 ```js
-const MONO = { fontFamily: "JetBrains Mono, monospace" };
+import { MONO } from "../fonts";
 ```
 
-> That constant is re-declared in fifteen files, and `FirstRunImport.jsx`
-> and `LocalDataGate.jsx` use a bare `"monospace"` instead, so they render in
-> the system mono rather than JetBrains Mono. One shared export would fix
-> both. The canonical copy to import from is
-> [`src/components/Program/constants.js`](src/components/Program/constants.js).
+Import it rather than re-declaring the object. `font-mono` is also available
+as a class now and is preferable in new markup; the inline style remains
+because that is what the existing components use.
+
+Families are declared once, in
+[`tailwind.config.js`](tailwind.config.js). Preflight sets `html` from
+`theme.fontFamily.sans`, so there is no `font-family` on `body`.
 
 Both faces load over the network. `display=swap` means text still appears if
 that fails, in the fallback face — acceptable, but self-hosting the two woff2
@@ -60,7 +63,13 @@ Mono labels are nearly always uppercase with wide tracking
 
 ## Colour
 
-Canonical tokens live in `:root` in [src/index.css](src/index.css):
+Canonical tokens live in `:root` in [src/index.css](src/index.css) and are
+mirrored as Tailwind theme colours in
+[tailwind.config.js](tailwind.config.js), so a class can name one
+(`bg-surface`, `text-fg-muted`, `border-hairline`) instead of repeating a
+hex. The two lists are duplicated rather than wired through `var()`, because
+Tailwind needs literals to generate opacity modifiers like `bg-surface/60`;
+change both or neither.
 
 | Token | Value | Role |
 | --- | --- | --- |
@@ -106,10 +115,10 @@ the legacy palette, convert that file rather than adding to it. Do not
 convert files you are not otherwise editing: a sweeping colour change is hard
 to review and easy to get wrong in a surface nobody can test mid-service.
 
-Note that Tailwind's config carries no theme extension, so every colour in a
-class is an arbitrary value (`text-[#F8FAFC]`). Mapping the tokens into
-`tailwind.config.js` would let classes name them, and would make the
-remaining migration mechanical.
+Existing markup still writes arbitrary values (`text-[#F8FAFC]`) everywhere;
+the named tokens are declared but not yet used. Converting the values that
+already match a token is a mechanical, pixel-identical change and the
+sensible first step, since it leaves only genuinely legacy colours behind.
 
 ## Shape and spacing
 

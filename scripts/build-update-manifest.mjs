@@ -1,13 +1,13 @@
 /**
- * Writes dist/manifest.json + dist/manifest.sig after a build.
+ * Writes dist/update.json + dist/update.sig after a build.
  *
  * The desktop app serves its renderer from a folder (electron/server.js), so a
  * new bundle can be dropped in without reinstalling. The manifest is what makes
  * that safe: it pins a sha256 per file, and the signature pins the manifest.
  *
  * Usage:
- *   node scripts/build-manifest.mjs            # after `vite build`
- *   node scripts/build-manifest.mjs --keygen   # one time, prints a key pair
+ *   node scripts/build-update-manifest.mjs            # after `vite build`
+ *   node scripts/build-update-manifest.mjs --keygen   # one time, prints a key pair
  *
  * APOSTELLO_UPDATE_KEY holds the base64 PKCS8 private key. It never belongs in
  * the repo or in the installer — only on the machine that cuts releases.
@@ -18,7 +18,11 @@ import path from "node:path";
 
 const DIST = path.join(import.meta.dirname, "..", "dist");
 // Written by this script, so never listed inside the manifest itself.
-const EXCLUDE = new Set(["manifest.json", "manifest.sig"]);
+//
+// Deliberately not manifest.json: public/manifest.json is the PWA manifest
+// that index.html links, and writing over it would both break the web build
+// and drop it from the file list, so no bundle would ever restore it.
+const EXCLUDE = new Set(["update.json", "update.sig"]);
 
 if (process.argv.includes("--keygen")) {
   const { publicKey, privateKey } = generateKeyPairSync("ed25519");
@@ -36,7 +40,7 @@ if (!keyB64) {
   // Failing here is the point: an unsigned manifest would be rejected by every
   // installed app anyway, and shipping one silently breaks the update channel.
   throw new Error(
-    "APOSTELLO_UPDATE_KEY is not set — run `node scripts/build-manifest.mjs --keygen` once, " +
+    "APOSTELLO_UPDATE_KEY is not set — run `node scripts/build-update-manifest.mjs --keygen` once, " +
       "then keep the private key on the release machine."
   );
 }
@@ -85,10 +89,10 @@ const signature = sign(
   })
 );
 
-await writeFile(path.join(DIST, "manifest.json"), bytes);
-await writeFile(path.join(DIST, "manifest.sig"), signature.toString("base64"));
+await writeFile(path.join(DIST, "update.json"), bytes);
+await writeFile(path.join(DIST, "update.sig"), signature.toString("base64"));
 
 console.log(
-  `manifest.json: v${pkg.version} (minShell ${JSON.parse(manifest).minShell}), ` +
+  `update.json: v${pkg.version} (minShell ${JSON.parse(manifest).minShell}), ` +
     `${Object.keys(files).length} files, signed.`
 );

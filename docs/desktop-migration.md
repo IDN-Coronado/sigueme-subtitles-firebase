@@ -604,7 +604,7 @@ until a change actually needs the main process.
 | `src/**`, `index.html`, CSS, assets in `public/` | over the air |
 | `electron/**`, the Electron binary, `.env` | installer, as before |
 
-`manifest.minShell` (from `apostello.minShell` in
+`update.json`’s `minShell` (from `apostello.minShell` in
 [package.json](../package.json)) is the guard between the two: **bump it
 whenever the renderer starts depending on a preload method or IPC channel an
 older installed shell does not have**, or an old install will download a bundle
@@ -615,7 +615,11 @@ that calls into nothing.
 Replacing the bundle is arbitrary code execution on an operator's machine, so
 "it downloaded over HTTPS" is not the boundary:
 
-- `manifest.json` carries a **sha256 per file**; `manifest.sig` is an
+The update manifest is `update.json`, **not** `manifest.json` — that name is
+already taken by the PWA manifest in `public/`, which `index.html` links and
+which has to stay in the file list so bundles keep shipping it.
+
+- `update.json` carries a **sha256 per file**; `update.sig` is an
   **Ed25519 signature over the manifest bytes**, verified *before* the JSON is
   parsed. The public key is a constant in [update.js](../electron/update.js);
   with it unset the updater stays off rather than trusting what it fetches.

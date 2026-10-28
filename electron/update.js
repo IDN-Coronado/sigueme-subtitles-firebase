@@ -244,14 +244,14 @@ async function checkForUpdate(servingDir) {
   if (!PUBLIC_KEY) {
     console.warn(
       "Updates are off: PUBLIC_KEY is unset in electron/update.js " +
-        "(see scripts/build-manifest.mjs --keygen)."
+        "(see scripts/build-update-manifest.mjs --keygen)."
     );
     return null;
   }
 
   const [manifestRes, signatureRes] = await Promise.all([
-    fetch(`${BASE_URL}/manifest.json`, { cache: "no-store" }),
-    fetch(`${BASE_URL}/manifest.sig`, { cache: "no-store" }),
+    fetch(`${BASE_URL}/update.json`, { cache: "no-store" }),
+    fetch(`${BASE_URL}/update.sig`, { cache: "no-store" }),
   ]);
   if (!manifestRes.ok || !signatureRes.ok) return null;
 

@@ -71,6 +71,21 @@ async function start() {
   const bundle = await update.activeBundle(path.join(ROOT, "dist"));
   await startAppServer(bundle.dir, PORT, media.mediaRoot());
   ipcMain.handle("update:ready", () => update.confirmHealthy());
+  // Dev serves the renderer from vite, so there is no bundle to replace and
+  // staging one would only confuse the next packaged launch.
+  ipcMain.handle("update:check", () =>
+    isDev ? { status: "dev" } : update.checkForUpdateOnce(bundle.dir)
+  );
+  ipcMain.handle("update:version", () => ({
+    shell: app.getVersion(),
+    bundle: bundle.version,
+  }));
+  // Separate from the check so the operator decides when to interrupt the
+  // service — a staged bundle is only served after a restart.
+  ipcMain.handle("update:restart", () => {
+    app.relaunch();
+    app.quit();
+  });
   ipcMain.handle("liveView:open", () => live.open(appUrl, consoleWindow));
   ipcMain.handle("liveView:close", () => live.close());
   ipcMain.handle("liveView:isOpen", () => live.isOpen());
@@ -100,9 +115,11 @@ async function start() {
   // logged and dropped — the app keeps running on the bundle it already has.
   if (!isDev) {
     update
-      .checkForUpdate(bundle.dir)
-      .then((version) => {
-        if (version) console.log(`Staged bundle ${version}; applies on restart.`);
+      .checkForUpdateOnce(bundle.dir)
+      .then((result) => {
+        if (result.status === "staged") {
+          console.log(`Staged bundle ${result.version}; applies on restart.`);
+        }
       })
       .catch((err) => console.error("Update check failed", err));
   }

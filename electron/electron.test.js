@@ -200,6 +200,7 @@ test("update: a staged bundle missing its index falls back to the shipped one", 
   assert.deepEqual(await update.activeBundle(shipped), {
     dir: shipped,
     pending: false,
+    version: null,
   });
 
   // State pointing at a folder that is no longer there: serving it would
@@ -212,6 +213,7 @@ test("update: a staged bundle missing its index falls back to the shipped one", 
   assert.deepEqual(await update.activeBundle(shipped), {
     dir: shipped,
     pending: false,
+    version: null,
   });
   assert.deepEqual(
     JSON.parse(await fs.readFile(path.join(root, "state.json"), "utf8")),
@@ -229,6 +231,7 @@ test("update: a staged bundle missing its index falls back to the shipped one", 
   assert.deepEqual(await update.activeBundle(shipped), {
     dir: path.join(root, "3.0.2"),
     pending: true,
+    version: "3.0.2",
   });
 });
 
@@ -275,4 +278,31 @@ test("update: a bundle that failed to boot is not downloaded again", () => {
   assert.equal(blocked(m("3.0.1"), {}), "old", "not newer than the shell");
   assert.equal(blocked(m("4.0.0", "4.0.0"), {}), "shell");
   assert.equal(blocked(m("3.0.2"), {}), null);
+});
+
+test("update: overlapping checks share one run", async () => {
+  // The boot check fires seconds after launch, which is exactly when someone
+  // opens Settings and clicks. Two installs would race on .tmp-<version> and
+  // one could rm the target while the other renames onto it.
+  const realFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls++;
+    await new Promise((r) => setTimeout(r, 20));
+    return { ok: false };
+  };
+  try {
+    const [a, b] = await Promise.all([
+      update.checkForUpdateOnce("ignored"),
+      update.checkForUpdateOnce("ignored"),
+    ]);
+    assert.equal(a, b, "both callers get the same promise result");
+    assert.equal(calls, 2, "one run fetches the manifest and signature, not four");
+
+    // Once settled the guard clears, so a later click checks again.
+    await update.checkForUpdateOnce("ignored");
+    assert.equal(calls, 4, "a later check is not swallowed by the finished one");
+  } finally {
+    globalThis.fetch = realFetch;
+  }
 });

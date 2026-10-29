@@ -4,9 +4,9 @@ import {
   NOT_APPROVED,
   describeFirebaseError,
 } from "../utils/firebaseError";
+import { MONO } from "../fonts";
 import { t } from "../i18n";
 
-const MONO = { fontFamily: "JetBrains Mono, monospace" };
 
 /**
  * A failed action, said in terms of the fix.

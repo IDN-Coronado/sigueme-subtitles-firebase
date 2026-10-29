@@ -1,6 +1,6 @@
 {
   "name": "apostello",
-  "version": "3.0.2",
+  "version": "3.1.0",
   "private": true,
   "description": "Presentation console for church services — programs, songs, themes and live captions.",
   "author": "IDN Coronado",
@@ -41,7 +41,7 @@
     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop"
   },
   "apostello": {
-    "minShell": "3.0.0"
+    "minShell": "3.1.0"
   },
   "build": {
     "appId": "app.siguemesubtitles.apostello",

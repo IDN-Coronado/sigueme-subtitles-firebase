@@ -114,16 +114,18 @@ function verifyManifest(bytes, signatureB64, publicKeyB64 = PUBLIC_KEY) {
  */
 async function activeBundle(fallbackDir) {
   const state = await readState();
-  if (!state.version) return { dir: fallbackDir, pending: false };
+  // `version: null` means the bundle inside app.asar, whose version is the
+  // shell's own — Settings shows the shell version in that case.
+  if (!state.version) return { dir: fallbackDir, pending: false, version: null };
 
   const dir = path.join(bundlesRoot(), state.version);
   if (!(await isFile(path.join(dir, "index.html")))) {
     // Deleted by hand, or lost to a disk repair. Serving the empty folder
     // would answer every route with nothing at all.
     await writeState({});
-    return { dir: fallbackDir, pending: false };
+    return { dir: fallbackDir, pending: false, version: null };
   }
-  return { dir, pending: state.pending === true };
+  return { dir, pending: state.pending === true, version: state.version };
 }
 
 /** Starts the rollback timer for a bundle booting for the first time. */
@@ -260,7 +262,17 @@ function installBlockedBecause(manifest, state, shellVersion) {
  * `servingDir` is the bundle currently on screen; its unchanged files are
  * reused instead of re-downloaded.
  *
- * Returns the version staged, or null when there was nothing to do.
+ * Resolves to { status, version?, minShell? }. The boot check only cares
+ * whether something was staged, but the Settings button reports the outcome
+ * to an operator, and "nothing happened" has four different meanings:
+ *
+ *   staged      a new bundle is downloaded and applies on restart
+ *   current     the published bundle is not newer than what is installed
+ *   failed      it was staged before, did not boot, and is deliberately
+ *               skipped until a different version is published
+ *   shell       the bundle needs a newer Electron shell than this installer
+ *   offline     the manifest could not be fetched
+ *   disabled    no signing key compiled in
  */
 async function checkForUpdate(servingDir) {
   if (!PUBLIC_KEY) {
@@ -268,14 +280,14 @@ async function checkForUpdate(servingDir) {
       "Updates are off: PUBLIC_KEY is unset in electron/update.js " +
         "(see scripts/build-update-manifest.mjs --keygen)."
     );
-    return null;
+    return { status: "disabled" };
   }
 
   const [manifestRes, signatureRes] = await Promise.all([
     fetch(`${BASE_URL}/update.json`, { cache: "no-store" }),
     fetch(`${BASE_URL}/update.sig`, { cache: "no-store" }),
   ]);
-  if (!manifestRes.ok || !signatureRes.ok) return null;
+  if (!manifestRes.ok || !signatureRes.ok) return { status: "offline" };
 
   const bytes = Buffer.from(await manifestRes.arrayBuffer());
   const signature = (await signatureRes.text()).trim();
@@ -292,16 +304,20 @@ async function checkForUpdate(servingDir) {
       `Bundle ${manifest.version} failed to boot here and was rolled back; ` +
         "skipping it until a different version is published."
     );
-    return null;
+    return { status: "failed", version: manifest.version };
   }
   if (blocked === "shell") {
     console.warn(
       `Bundle ${manifest.version} needs app ${manifest.minShell} or newer; ` +
         `this is ${app.getVersion()}. Install the new build to get it.`
     );
-    return null;
+    return {
+      status: "shell",
+      version: manifest.version,
+      minShell: manifest.minShell,
+    };
   }
-  if (blocked) return null;
+  if (blocked) return { status: "current", version: manifest.version };
 
   await install(manifest, servingDir);
   await writeState({
@@ -309,13 +325,30 @@ async function checkForUpdate(servingDir) {
     previous: state.version || null,
     pending: true,
   });
-  return manifest.version;
+  return { status: "staged", version: manifest.version };
+}
+
+// The boot check and the Settings button can overlap — the first fires seconds
+// after launch, which is exactly when someone opens Settings and clicks. Both
+// would install into the same .tmp-<version>, and one could rm the target
+// while the other renames onto it. Same approach as store.js: a second caller
+// joins the running check instead of starting a download of its own.
+let inFlight = null;
+
+function checkForUpdateOnce(servingDir) {
+  if (!inFlight) {
+    inFlight = checkForUpdate(servingDir).finally(() => {
+      inFlight = null;
+    });
+  }
+  return inFlight;
 }
 
 module.exports = {
   activeBundle,
   armRollback,
   checkForUpdate,
+  checkForUpdateOnce,
   compareVersions,
   confirmHealthy,
   installBlockedBecause,

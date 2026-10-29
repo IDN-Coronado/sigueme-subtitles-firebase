@@ -594,7 +594,32 @@ which has to stay in the file list so bundles keep shipping it.
 - Files are written to a temp folder and renamed into place only once all of
   them verify — a half-applied bundle is unbootable.
 
-### 6.4 Rollback
+### 6.4 Checking on demand
+
+The startup check is invisible and only runs at launch, so a console left open
+between services never looks again. **Settings → Updates** adds a manual
+check, the running version, and a restart button when something is staged.
+
+Staging still never swaps the bundle under a running window, which is why
+applying one is a restart the operator triggers deliberately — and why this
+lives in Settings rather than the console header.
+
+Two things fall out of it:
+
+- `checkForUpdate` returns `{ status, version?, minShell? }` instead of a
+  version or `null`. A background check only needs "did anything stage", but a
+  button reports to a person, and `null` meant four different things —
+  up to date, blocked after a failed boot, needs a newer shell, or offline.
+- Callers go through `checkForUpdateOnce`, which serialises. The boot check
+  fires seconds after launch, exactly when someone opens Settings and clicks,
+  and two installs would race on the same `.tmp-<version>`.
+
+The renderer calls this through `window.desktop.update`, which only exists
+from the shell that introduced it — so `minShell` moves with it. An older
+shell refuses the bundle rather than serving a Settings page whose button
+cannot work.
+
+### 6.5 Rollback
 
 A new bundle is `pending` until the renderer calls `window.desktop.ready()`
 ([index.jsx](../src/index.jsx)) — which proves React actually mounted, where
@@ -620,7 +645,7 @@ in `npm start`, so it is a release-testing problem rather than an update-channel
 one; tightening it would mean gating the signal on a paint, and a signal that
 can mis-fire would roll back working installs.
 
-### 6.5 Bandwidth
+### 6.6 Bandwidth
 
 Vite fingerprints its output, so unchanged chunks keep their hashes and are
 copied from the bundle already on disk instead of re-downloaded. This matters
@@ -628,7 +653,7 @@ more than it sounds: the vendor chunks (pptxviewjs, pdf.js) are ~20 MB against
 ~1.7 MB of app code, so a typo fix is a ~1.7 MB download, not a 24 MB one.
 Verified at 3 requests for a one-file change.
 
-### 6.6 Release flow
+### 6.7 Release flow
 
 One time, on the release machine:
 
@@ -651,7 +676,7 @@ npm run release:bundle       # vite build + sign + deploy hosting:apostello
 Installed apps check at launch, stage in the background, and apply on the next
 restart — never mid-service.
 
-### 6.7 Done when
+### 6.8 Done when
 
 `npm run test:electron` covers version comparison, signature rejection and the
 dangling-bundle fallback; an end-to-end run against a local server reproducing

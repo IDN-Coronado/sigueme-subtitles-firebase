@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { ChromePicker } from "react-color";
 import useAuthUser from "../hooks/useAuthUser";
 import MediaImportSection from "./MediaImportSection";
+import UpdateSection from "./UpdateSection";
 import {
   canStoreCredentials,
   clearCredentials,
@@ -441,6 +442,11 @@ function GlobalSettingsModal({ isOpen, onClose }) {
               )}
             </section>
           )}
+
+          {/* Outside the account block on purpose: updating the console has
+              nothing to do with being an approved operator, and a machine
+              that cannot sign in is exactly one that may need a fix. */}
+          {Boolean(window.desktop?.update) && <UpdateSection />}
         </div>
 
         <div className="flex justify-end px-5 sm:px-6 py-4 border-t border-[rgba(255,255,255,0.06)]">

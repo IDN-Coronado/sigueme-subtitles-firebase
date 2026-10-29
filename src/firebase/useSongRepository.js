@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { collection, doc, getDocs, orderBy, query, setDoc } from "firebase/firestore";
 
 import db from "./firebase";
 import useDataStore, { byTitle } from "../local/data";
@@ -41,9 +41,26 @@ export async function importRepositorySongs(items) {
 }
 
 /**
- * The Firestore songs collection as a shared read-only catalog. getDocs rather
- * than onSnapshot: a catalog you open, browse and close does not need a live
- * subscription.
+ * Publishes one local song to the shared repository.
+ *
+ * Keeps the local id as the document id, which makes this the exact inverse of
+ * importRepositorySongs — a song survives a round trip without gaining a
+ * duplicate, and programs referencing its songId still resolve.
+ *
+ * One song per call on purpose: unlike importing, this writes to a collection
+ * every other church reads, so it stays a deliberate per-song act rather than
+ * a bulk push.
+ */
+export async function uploadSongToRepository(song) {
+  const payload = toSongWritePayload(song.title, song.sections);
+  await setDoc(doc(db, COLLECTION_NAME, song.id), payload);
+  return { id: song.id, ...payload };
+}
+
+/**
+ * The Firestore songs collection as a shared catalog: browse and import from
+ * it, publish local songs into it. getDocs rather than onSnapshot — a catalog
+ * you open, browse and close does not need a live subscription.
  */
 export default function useSongRepository() {
   const songs = useDataStore((s) => s.data.songs);
@@ -66,13 +83,26 @@ export default function useSongRepository() {
   }, []);
 
   const localIds = new Set(songs.map((s) => s.id));
+  const remoteIds = new Set(remote.map((s) => s.id));
+
+  // Reflect the new document locally rather than re-fetching the collection:
+  // the upload already knows exactly what it wrote.
+  const uploadSong = useCallback(async (song) => {
+    const published = await uploadSongToRepository(song);
+    setRemote((current) =>
+      [...current.filter((s) => s.id !== published.id), published].sort(byTitle)
+    );
+  }, []);
 
   return {
+    songs,
     remote,
     loading,
     error,
     load,
     importSongs: importRepositorySongs,
+    uploadSong,
     isImported: (id) => localIds.has(id),
+    isPublished: (id) => remoteIds.has(id),
   };
 }

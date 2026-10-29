@@ -33,7 +33,7 @@ function mergeMediaLists(files, youtubeItems) {
 
 /**
  * Display shape for a YouTube entry, stored as-is in the local store so reads
- * need no mapping. Also used by the Firebase import (src/local/migrate.js).
+ * need no mapping.
  */
 export function buildYouTubeMedia({ id, url, title }) {
   const youtubeId = parseYouTubeId(url);

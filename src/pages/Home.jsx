@@ -12,7 +12,6 @@ import SongRepositoryModal from "../components/Song/SongRepositoryModal";
 import SlideUploadModal from "../components/SlideUploadModal";
 import NewThemeModal from "../components/Theme/NewThemeModal";
 import GlobalSettingsModal from "../components/GlobalSettingsModal";
-import MediaImportModal from "../components/MediaImportModal";
 import { t, formatProgramDate } from "../i18n";
 import { MONO } from "../fonts";
 
@@ -59,13 +58,6 @@ const MENU_ITEMS = [
     descriptionKey: "home.menu.uploadThemeDesc",
     iconBg: "rgba(245,158,11,0.2)",
     iconColor: "#FCD34D",
-  },
-  {
-    id: "media-import",
-    labelKey: "home.menu.mediaImport",
-    descriptionKey: "home.menu.mediaImportDesc",
-    iconBg: "rgba(56,189,248,0.2)",
-    iconColor: "#38BDF8",
   },
   {
     id: "settings",
@@ -122,14 +114,6 @@ function MenuIcon({ id, color }) {
       </svg>
     );
   }
-  if (id === "media-import") {
-    return (
-      <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden>
-        <path d="M11 3v9m0 0l-3.2-3.2M11 12l3.2-3.2" stroke={stroke} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M4 14v3a1 1 0 001 1h12a1 1 0 001-1v-3" stroke={stroke} strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-    );
-  }
   if (id === "upload-theme") {
     return (
       <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden>
@@ -172,8 +156,8 @@ function Home() {
   const handleDeleteProgram = async (program) => {
     try {
       await removeProgram(program.id);
-    } catch {
-      alert(t("errors.deleteResource"));
+    } catch (err) {
+      showError(t("errors.deleteResource"), err);
     }
   };
 
@@ -185,16 +169,16 @@ function Home() {
     try {
       await uploadMedia({ file, title });
       closeModal();
-    } catch {
-      alert(t("errors.uploadFile"));
+    } catch (err) {
+      showError(t("errors.uploadFile"), err);
     }
   };
 
   const handleCreateTheme = async ({ title, storagePath, file }) => {
     try {
       await addTheme({ title, storagePath, file });
-    } catch {
-      alert(t("errors.uploadTheme"));
+    } catch (err) {
+      showError(t("errors.uploadTheme"), err);
     }
   };
 
@@ -403,10 +387,6 @@ function Home() {
         isVisible={modal === "upload-theme"}
         onClose={closeModal}
         onSubmit={handleCreateTheme}
-      />
-      <MediaImportModal
-        isOpen={modal === "media-import"}
-        onClose={closeModal}
       />
       <GlobalSettingsModal
         isOpen={modal === "settings"}

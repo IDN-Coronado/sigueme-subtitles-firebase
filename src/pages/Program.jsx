@@ -30,6 +30,7 @@ import { IconChevron } from "../components/Icons";
 import { t } from "../i18n";
 import { flattenSongLines } from "../utils/songSections";
 import { getBibleVerses } from "../utils/programSchedule";
+import { showError, clearNotice } from "../utils/notice";
 
 const LAYOUT_STORAGE = {
   vertical: "sigueme.program.layout.vertical",
@@ -55,7 +56,11 @@ const DELETE_MESSAGE_KEYS = {
   schedule: "confirm.removeFromSchedule",
 };
 
-async function setCaption(caption) {
+// Private on purpose: every caller goes through publishCaption below, so a
+// failure can never be silent. This is the one Firebase write left in the
+// console, and it is the one that matters live — an unapproved machine would
+// otherwise show the operator a caption that no /caption viewer ever receives.
+async function writeCaption(caption) {
   await setDoc(
     doc(db, CAPTION_COLLECTION, CAPTION_DOC),
     { caption },
@@ -74,6 +79,22 @@ function Program() {
   const [editingYouTube, setEditingYouTube] = useState(null);
   const [pendingDelete, setPendingDelete] = useState(null);
   const [pdfPageCount, setPdfPageCount] = useState(0);
+
+  /**
+   * Publishes a caption, surfacing a failure instead of throwing. Callers are
+   * mid-service actions (activate, clear, show logo) whose local half should
+   * still happen even when the broadcast is refused, so this swallows the
+   * error into state rather than aborting them.
+   */
+  const publishCaption = async (caption) => {
+    try {
+      await writeCaption(caption);
+      clearNotice();
+    } catch (err) {
+      console.error("Caption publish failed", err);
+      showError(t("caption.publishFailed"), err);
+    }
+  };
 
   const { songs, addSong, updateSong, removeSong } = useSongs();
   const { themes, addTheme, removeTheme } = useThemes();
@@ -128,7 +149,7 @@ function Program() {
         await addSong(title, sections);
       }
     } catch (err) {
-      alert(t("errors.saveSong"));
+      showError(t("errors.saveSong"), err);
       throw err;
     }
   };
@@ -137,8 +158,8 @@ function Program() {
     try {
       await uploadMedia({ file, title });
       closeCreateModal();
-    } catch {
-      alert(t("errors.uploadFile"));
+    } catch (err) {
+      showError(t("errors.uploadFile"), err);
     }
   };
 
@@ -150,8 +171,8 @@ function Program() {
         await addYouTubeMedia({ url, title });
       }
       closeCreateModal();
-    } catch {
-      alert(t("errors.addYouTube"));
+    } catch (err) {
+      showError(t("errors.addYouTube"), err);
     }
   };
 
@@ -159,8 +180,8 @@ function Program() {
     try {
       await addTheme({ title, storagePath, file });
       closeCreateModal();
-    } catch {
-      alert(t("errors.uploadTheme"));
+    } catch (err) {
+      showError(t("errors.uploadTheme"), err);
     }
   };
 
@@ -172,8 +193,8 @@ function Program() {
       else if (type === "media") await removeMedia(item);
       else if (type === "theme") await removeTheme(item);
       else if (type === "schedule") await removeItem(item.id);
-    } catch {
-      alert(t("errors.deleteResource"));
+    } catch (err) {
+      showError(t("errors.deleteResource"), err);
     } finally {
       setPendingDelete(null);
     }
@@ -200,12 +221,12 @@ function Program() {
       });
 
       if (resource.type === "song") {
-        await setCaption(resource.song?.line || "");
+        await publishCaption(resource.song?.line || "");
       } else if (previousType === "song") {
-        await setCaption("");
+        await publishCaption("");
       }
-    } catch {
-      alert(t("errors.updatePreview"));
+    } catch (err) {
+      showError(t("errors.updatePreview"), err);
     }
   };
 
@@ -221,8 +242,8 @@ function Program() {
           themeType: theme.type,
         },
       });
-    } catch {
-      alert(t("errors.addTheme"));
+    } catch (err) {
+      showError(t("errors.addTheme"), err);
     }
   };
 
@@ -266,13 +287,13 @@ function Program() {
       : preview?.theme || null;
 
     try {
-      await setCaption("");
+      await publishCaption("");
       if (theme) {
         await setPreview({ programId, theme });
       }
       await clearPreviewResource();
-    } catch {
-      alert(t("errors.clearConsole"));
+    } catch (err) {
+      showError(t("errors.clearConsole"), err);
     }
   };
 
@@ -292,7 +313,7 @@ function Program() {
         : preview?.theme || null;
 
     try {
-      await setCaption("");
+      await publishCaption("");
       await setPreview({
         programId,
         theme,
@@ -308,8 +329,8 @@ function Program() {
           },
         },
       });
-    } catch {
-      alert(t("errors.showLogo"));
+    } catch (err) {
+      showError(t("errors.showLogo"), err);
     }
   };
 
@@ -325,8 +346,8 @@ function Program() {
           mediaType: item.type || "image",
         },
       });
-    } catch {
-      alert(t("program.logoUpdateError"));
+    } catch (err) {
+      showError(t("program.logoUpdateError"), err);
     }
   };
 
@@ -369,10 +390,10 @@ function Program() {
 
   const handleBlackScreen = async () => {
     try {
-      await setCaption("");
+      await publishCaption("");
       await setPreview({ programId, theme: null, resource: null });
-    } catch {
-      alert(t("errors.clearConsole"));
+    } catch (err) {
+      showError(t("errors.clearConsole"), err);
     }
   };
 

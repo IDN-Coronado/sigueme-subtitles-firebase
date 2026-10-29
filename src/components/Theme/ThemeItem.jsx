@@ -3,7 +3,7 @@ import { t } from "../../i18n";
 
 function ThemeItem({ theme, onDelete }) {
   return (
-    <div className="relative bg-[rgba(29,32,34,0.6)] border border-[rgba(255,255,255,0.05)] rounded-lg overflow-hidden aspect-video group hover:border-[rgba(123,208,255,0.2)] transition-colors">
+    <div className="relative bg-[rgba(29,32,34,0.6)] border border-[rgba(255,255,255,0.05)] rounded-lg overflow-hidden aspect-video group hover:border-primary/20 transition-colors">
 
       {/* Media fill */}
       {theme.type === "video" ? (
@@ -19,9 +19,9 @@ function ThemeItem({ theme, onDelete }) {
           className="absolute inset-0 w-full h-full object-cover"
         />
       ) : (
-        <div className="absolute inset-0 bg-[#1d2022] flex items-center justify-center">
+        <div className="absolute inset-0 bg-card flex items-center justify-center">
           <span
-            className="text-[#45464d] text-xs tracking-[0.1em] uppercase"
+            className="text-fg-muted text-xs tracking-[0.1em] uppercase"
             style={{ fontFamily: "JetBrains Mono, monospace" }}
           >
             {t("common.noPreview")}
@@ -32,7 +32,7 @@ function ThemeItem({ theme, onDelete }) {
       {/* TEMA badge */}
       <div className="absolute top-3 left-3">
         <span
-          className="bg-[rgba(0,166,224,0.2)] text-[#7bd0ff] text-xs font-medium tracking-[0.05em] px-2 py-0.5 rounded-sm uppercase backdrop-blur-sm"
+          className="bg-[rgba(0,166,224,0.2)] text-primary-fg text-xs font-medium tracking-[0.05em] px-2 py-0.5 rounded-sm uppercase backdrop-blur-sm"
           style={{ fontFamily: "JetBrains Mono, monospace" }}
         >
           {t("types.theme").toUpperCase()}
@@ -41,7 +41,7 @@ function ThemeItem({ theme, onDelete }) {
 
       {/* Delete button */}
       <button
-        className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center bg-[rgba(16,20,21,0.6)] rounded text-[#6b7280] hover:text-red-400 transition-colors backdrop-blur-sm"
+        className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center bg-[rgba(16,20,21,0.6)] rounded text-fg-muted hover:text-red-400 transition-colors backdrop-blur-sm"
         title={t("themeItem.deleteTooltip")}
         onClick={() => onDelete(theme)}
       >
@@ -53,7 +53,7 @@ function ThemeItem({ theme, onDelete }) {
         className="absolute bottom-0 left-0 right-0 px-4 py-3"
         style={{ background: "linear-gradient(to top, rgba(16,20,21,0.9) 0%, transparent 100%)" }}
       >
-        <p className="text-[#e0e3e5] font-bold text-sm leading-5 truncate">{theme.title}</p>
+        <p className="text-fg font-bold text-sm leading-5 truncate">{theme.title}</p>
       </div>
     </div>
   );

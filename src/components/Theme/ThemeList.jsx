@@ -40,17 +40,17 @@ function ThemeList({ themes, onCreateTheme }) {
     <>
       {/* Action Bar */}
       <div className="flex items-center justify-between gap-3 min-h-12 sm:h-14">
-        <span className="text-[#c6c6cd] font-semibold text-sm sm:text-base leading-6">
+        <span className="text-fg-muted font-semibold text-sm sm:text-base leading-6">
           {t("themeList.resourceCount", { count: themes.length })}
         </span>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-[rgba(123,208,255,0.08)] border border-[rgba(123,208,255,0.2)] text-[#e0e3e5] font-bold text-sm sm:text-base px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg hover:bg-[rgba(123,208,255,0.15)] transition-colors shrink-0"
+          className="flex items-center gap-2 bg-primary/[0.08] border border-primary/20 text-fg font-bold text-sm sm:text-base px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg hover:bg-primary/15 transition-colors shrink-0"
         >
           <IconPlus color="#e0e3e5" />
           {t("common.add")}
           <span
-            className="bg-[rgba(69,70,77,0.4)] text-[#c6c6cd] text-xs px-2 py-0.5 rounded-sm leading-[15px]"
+            className="bg-[rgba(69,70,77,0.4)] text-fg-muted text-xs px-2 py-0.5 rounded-sm leading-[15px]"
             style={{ fontFamily: "JetBrains Mono, monospace" }}
           >
             {themes.length}
@@ -62,13 +62,13 @@ function ThemeList({ themes, onCreateTheme }) {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
         {/* Add new card */}
         <div
-          className="border-2 border-dashed border-[rgba(69,70,77,0.3)] rounded-lg flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-[rgba(123,208,255,0.3)] hover:bg-[rgba(123,208,255,0.05)] transition-colors aspect-video"
+          className="border-2 border-dashed border-[rgba(69,70,77,0.3)] rounded-lg flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-primary/30 hover:bg-primary/5 transition-colors aspect-video"
           onClick={() => setShowModal(true)}
         >
-          <div className="text-[#c6c6cd]">
+          <div className="text-fg-muted">
             <IconPlus color="#c6c6cd" />
           </div>
-          <p className="text-[#c6c6cd] font-bold text-base leading-6">{t("themeList.newTheme")}</p>
+          <p className="text-fg-muted font-bold text-base leading-6">{t("themeList.newTheme")}</p>
           <p
             className="text-[rgba(198,198,205,0.6)] text-xs font-medium tracking-[0.05em] text-center leading-4"
             style={{ fontFamily: "JetBrains Mono, monospace" }}

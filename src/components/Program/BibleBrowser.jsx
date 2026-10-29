@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { t } from "../../i18n";
-import { MONO } from "./constants";
+import { MONO } from "../../fonts";
 
 const BIBLE_VERSIONS = [
   {
@@ -124,12 +124,12 @@ function BookAutocomplete({ books, bookIndex, onSelect }) {
             pick(filtered[0].index);
           }
         }}
-        className="w-full bg-[#0b0f10] text-[#e0e3e5] placeholder-[#6b7280] border border-[rgba(69,70,77,0.3)] rounded-sm px-3 py-2 text-sm outline-none focus:border-[#7bd0ff] transition-colors"
+        className="w-full bg-base text-fg placeholder-fg-muted border border-[rgba(69,70,77,0.3)] rounded-sm px-3 py-2 text-sm outline-none focus:border-primary transition-colors"
       />
       {open && (
-        <ul className="absolute z-20 left-0 right-0 mt-1 max-h-56 overflow-auto rounded-sm border border-[rgba(69,70,77,0.4)] bg-[#1d2022] shadow-[0_12px_32px_rgba(0,0,0,0.45)]">
+        <ul className="absolute z-20 left-0 right-0 mt-1 max-h-56 overflow-auto rounded-sm border border-[rgba(69,70,77,0.4)] bg-card shadow-[0_12px_32px_rgba(0,0,0,0.45)]">
           {filtered.length === 0 && (
-            <li className="px-3 py-2 text-[#6b7280] text-sm">
+            <li className="px-3 py-2 text-fg-muted text-sm">
               {t("common.noResults")}
             </li>
           )}
@@ -140,8 +140,8 @@ function BookAutocomplete({ books, bookIndex, onSelect }) {
                 onClick={() => pick(index)}
                 className={`w-full text-left px-3 py-2 text-sm transition-colors ${
                   index === bookIndex
-                    ? "bg-[rgba(123,208,255,0.12)] text-[#7bd0ff]"
-                    : "text-[#e0e3e5] hover:bg-[rgba(123,208,255,0.08)]"
+                    ? "bg-primary/[0.12] text-primary-fg"
+                    : "text-fg hover:bg-primary/[0.08]"
                 }`}
               >
                 {book.name}
@@ -266,7 +266,7 @@ function BibleBrowser({ onAdd }) {
 
   if (loading || !bible) {
     return (
-      <p className="text-[#6b7280] text-sm">
+      <p className="text-fg-muted text-sm">
         {t("bible.loading", { version: versionLabel })}
       </p>
     );
@@ -283,8 +283,8 @@ function BibleBrowser({ onAdd }) {
               onClick={() => changeVersion(v.id)}
               className={`px-3 py-1.5 text-xs font-medium tracking-[0.06em] transition-colors ${
                 versionId === v.id
-                  ? "bg-[#323537] text-[#7bd0ff]"
-                  : "bg-[rgba(16,20,21,0.5)] text-[#c6c6cd] hover:text-[#e0e3e5]"
+                  ? "bg-[#323537] text-primary-fg"
+                  : "bg-[rgba(16,20,21,0.5)] text-fg-muted hover:text-fg"
               }`}
               style={MONO}
             >
@@ -304,7 +304,7 @@ function BibleBrowser({ onAdd }) {
         />
 
         <select
-          className="bg-[#0b0f10] text-[#e0e3e5] border border-[rgba(69,70,77,0.3)] rounded-sm px-3 py-2 text-sm outline-none focus:border-[#7bd0ff]"
+          className="bg-base text-fg border border-[rgba(69,70,77,0.3)] rounded-sm px-3 py-2 text-sm outline-none focus:border-primary"
           value={chapterIdx}
           onChange={(e) => {
             setChapterIdx(Number(e.target.value));
@@ -331,21 +331,21 @@ function BibleBrowser({ onAdd }) {
               onClick={() => toggleVerse(v)}
               className={`text-left rounded-sm border px-2 py-1.5 transition-colors ${
                 isSelected
-                  ? "border-[rgba(123,208,255,0.45)] bg-[rgba(123,208,255,0.12)]"
-                  : "border-[rgba(69,70,77,0.25)] bg-[rgba(16,20,21,0.4)] hover:border-[rgba(123,208,255,0.3)]"
+                  ? "border-primary/45 bg-primary/[0.12]"
+                  : "border-[rgba(69,70,77,0.25)] bg-[rgba(16,20,21,0.4)] hover:border-primary/30"
               }`}
             >
               <div className="flex items-start gap-1.5">
                 <span
                   className={`text-[10px] leading-4 shrink-0 tabular-nums ${
-                    isSelected ? "text-[#7bd0ff]" : "text-[#7bd0ff]/80"
+                    isSelected ? "text-primary-fg" : "text-primary-fg/80"
                   }`}
                   style={MONO}
                 >
                   {num}
                   {isSelected ? " ✓" : ""}
                 </span>
-                <p className="text-[#c6c6cd] text-xs leading-4 line-clamp-2 min-w-0">
+                <p className="text-fg-muted text-xs leading-4 line-clamp-2 min-w-0">
                   {text}
                 </p>
               </div>
@@ -355,7 +355,7 @@ function BibleBrowser({ onAdd }) {
       </div>
 
       <div className="shrink-0 flex items-center justify-between gap-3 border-t border-[rgba(69,70,77,0.25)] pt-3">
-        <p className="text-[#6b7280] text-xs" style={MONO}>
+        <p className="text-fg-muted text-xs" style={MONO}>
           {selectedCount === 0
             ? t("bible.selectHint")
             : t("bible.selectedCount", { count: selectedCount })}
@@ -365,7 +365,7 @@ function BibleBrowser({ onAdd }) {
             <button
               type="button"
               onClick={() => setSelected({})}
-              className="px-3 py-2 text-sm text-[#c6c6cd] border border-[rgba(69,70,77,0.4)] rounded-sm hover:border-[#7bd0ff] hover:text-[#7bd0ff] transition-colors"
+              className="px-3 py-2 text-sm text-fg-muted border border-[rgba(69,70,77,0.4)] rounded-sm hover:border-primary hover:text-primary-fg transition-colors"
             >
               {t("common.clear")}
             </button>
@@ -374,7 +374,7 @@ function BibleBrowser({ onAdd }) {
             type="button"
             disabled={selectedCount === 0}
             onClick={handleAddSelected}
-            className="px-4 py-2 bg-[#7bd0ff] text-[#00354a] text-sm font-bold rounded-sm hover:bg-[#5bc0ef] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-primary text-primary text-sm font-bold rounded-sm hover:bg-primary-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {t("bible.addToSchedule")}
           </button>

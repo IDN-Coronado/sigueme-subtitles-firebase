@@ -7,7 +7,7 @@ import {
   snapshotMediaState,
   subscribeMediaSync,
 } from "../../utils/mediaSync";
-import { MONO } from "./constants";
+import { MONO } from "../../fonts";
 
 function formatTime(seconds) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -97,24 +97,14 @@ function MediaConsoleControls({ mediaRef, mediaKey }) {
     };
   }, [mediaRef, mediaKey]);
 
-  // Keep Live View aligned while playing (drift correction).
-  useEffect(() => {
-    if (!playing || !mediaKey) return undefined;
-
-    const id = window.setInterval(() => {
-      const el = mediaRef?.current;
-      if (!el || el.paused) return;
-      publishMediaSync({
-        type: "seek",
-        mediaKey,
-        currentTime: el.currentTime || 0,
-        playing: true,
-        loop: !!el.loop,
-      });
-    }, 2000);
-
-    return () => window.clearInterval(id);
-  }, [playing, mediaKey, mediaRef]);
+  // No periodic drift correction here. This used to re-publish the preview's
+  // currentTime every 2s and the Live View hard-seeked whenever it was more
+  // than 0.35s off. Two decoders always drift, and a seek flushes the decoder
+  // -- a visible freeze plus an audio gap -- which itself costs enough time to
+  // put the follower straight back out of tolerance: a cut every 2 seconds.
+  // Live catches up once on open via "request-state", and play/pause/stop/loop
+  // still publish commands. A muted preview nobody watches is not worth
+  // interrupting the only video the audience actually sees.
 
   const playPause = () => {
     const el = mediaRef?.current;
@@ -164,7 +154,7 @@ function MediaConsoleControls({ mediaRef, mediaKey }) {
     <div className="flex items-center gap-2 sm:gap-3 min-w-0 max-w-full">
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <span
-          className="text-[#6b7280] text-[10px] tabular-nums shrink-0"
+          className="text-fg-muted text-[10px] tabular-nums shrink-0"
           style={MONO}
         >
           {formatTime(currentTime)}
@@ -178,12 +168,12 @@ function MediaConsoleControls({ mediaRef, mediaKey }) {
           aria-label={t("media.progressAria")}
         >
           <div
-            className="absolute inset-y-0 left-0 bg-[#7bd0ff] rounded-full transition-[width] duration-100 ease-linear"
+            className="absolute inset-y-0 left-0 bg-primary rounded-full transition-[width] duration-100 ease-linear"
             style={{ width: `${progress}%` }}
           />
         </div>
         <span
-          className="text-[#6b7280] text-[10px] tabular-nums shrink-0"
+          className="text-fg-muted text-[10px] tabular-nums shrink-0"
           style={MONO}
         >
           {formatTime(duration)}
@@ -196,8 +186,8 @@ function MediaConsoleControls({ mediaRef, mediaKey }) {
           onClick={playPause}
           className={`${btnBase} ${
             playing
-              ? "border-[rgba(123,208,255,0.45)] text-[#7bd0ff] bg-[rgba(123,208,255,0.1)]"
-              : "border-[rgba(69,70,77,0.4)] text-[#c6c6cd] hover:border-[#7bd0ff] hover:text-[#7bd0ff]"
+              ? "border-primary/45 text-primary-fg bg-primary/10"
+              : "border-[rgba(69,70,77,0.4)] text-fg-muted hover:border-primary hover:text-primary-fg"
           }`}
           title={playing ? t("media.pause") : t("media.play")}
           aria-label={playing ? t("media.pause") : t("media.play")}
@@ -207,7 +197,7 @@ function MediaConsoleControls({ mediaRef, mediaKey }) {
         <button
           type="button"
           onClick={stop}
-          className={`${btnBase} border-[rgba(69,70,77,0.4)] text-[#c6c6cd] hover:border-[#ffb4ab] hover:text-[#ffb4ab]`}
+          className={`${btnBase} border-[rgba(69,70,77,0.4)] text-fg-muted hover:border-danger-fg hover:text-danger-fg`}
           title={t("media.stop")}
           aria-label={t("media.stop")}
         >
@@ -218,8 +208,8 @@ function MediaConsoleControls({ mediaRef, mediaKey }) {
           onClick={toggleLoop}
           className={`${btnBase} ${
             loop
-              ? "border-[rgba(123,208,255,0.45)] text-[#7bd0ff] bg-[rgba(123,208,255,0.1)]"
-              : "border-[rgba(69,70,77,0.4)] text-[#c6c6cd] hover:border-[#7bd0ff] hover:text-[#7bd0ff]"
+              ? "border-primary/45 text-primary-fg bg-primary/10"
+              : "border-[rgba(69,70,77,0.4)] text-fg-muted hover:border-primary hover:text-primary-fg"
           }`}
           title={t("media.loop")}
           aria-label={t("media.loop")}

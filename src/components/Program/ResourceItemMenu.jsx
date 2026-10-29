@@ -35,7 +35,7 @@ function ResourceItemMenu({ options }) {
         aria-label={t("resourceMenu.options")}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="inline-flex items-center justify-center p-0.5 text-[#c6c6cd] hover:text-[#7bd0ff] transition-colors"
+        className="inline-flex items-center justify-center p-0.5 text-fg-muted hover:text-primary-fg transition-colors"
         onClick={(e) => {
           e.stopPropagation();
           setOpen((v) => !v);
@@ -46,7 +46,7 @@ function ResourceItemMenu({ options }) {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full mt-1 z-30 min-w-[10.5rem] py-1 rounded-sm border border-[rgba(69,70,77,0.45)] bg-[#1d2022] shadow-[0_12px_32px_rgba(0,0,0,0.45)]"
+          className="absolute right-0 top-full mt-1 z-30 min-w-[10.5rem] py-1 rounded-sm border border-[rgba(69,70,77,0.45)] bg-card shadow-[0_12px_32px_rgba(0,0,0,0.45)]"
         >
           {options.map((opt) => (
             <button
@@ -55,8 +55,8 @@ function ResourceItemMenu({ options }) {
               role="menuitem"
               className={`w-full text-left px-3 py-2 text-xs sm:text-sm transition-colors ${
                 opt.danger
-                  ? "text-[#ffb4ab] hover:bg-[rgba(147,0,10,0.2)]"
-                  : "text-[#e0e3e5] hover:bg-[rgba(123,208,255,0.1)] hover:text-[#7bd0ff]"
+                  ? "text-danger-fg hover:bg-[rgba(147,0,10,0.2)]"
+                  : "text-fg hover:bg-primary/10 hover:text-primary-fg"
               }`}
               onClick={(e) => {
                 e.stopPropagation();

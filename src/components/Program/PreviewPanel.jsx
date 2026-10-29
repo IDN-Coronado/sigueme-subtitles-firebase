@@ -1,5 +1,5 @@
 import { t } from "../../i18n";
-import { MONO } from "./constants";
+import { MONO } from "../../fonts";
 import PdfThumbnail from "./PdfThumbnail";
 import { getBibleVerses } from "../../utils/programSchedule";
 import { normalizeSong } from "../../utils/songSections";
@@ -35,7 +35,7 @@ function isActiveResource(preview, type, matcher) {
 function PreviewPanel({ item, songs, preview, onSelect }) {
   if (!item) {
     return (
-      <div className="h-full min-h-0 flex items-center justify-center text-[#6b7280] text-sm px-2 text-center">
+      <div className="h-full min-h-0 flex items-center justify-center text-fg-muted text-sm px-2 text-center">
         {t("preview.selectItem")}
       </div>
     );
@@ -48,7 +48,7 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
 
     if (!hasLines) {
       return (
-        <div className="h-full flex items-center justify-center text-[#6b7280] text-sm">
+        <div className="h-full flex items-center justify-center text-fg-muted text-sm">
           {t("preview.noLyrics")}
         </div>
       );
@@ -67,7 +67,7 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
     return (
       <div className="h-full min-h-0 flex flex-col gap-1 overflow-auto">
         <p
-          className="text-[#7bd0ff] text-[10px] tracking-[0.1em] uppercase shrink-0 px-1 mb-1"
+          className="text-primary-hover text-[10px] tracking-[0.1em] uppercase shrink-0 px-1 mb-1"
           style={MONO}
         >
           {item.title || song?.title || t("types.song")}
@@ -109,8 +109,8 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
                   }
                   className={`w-full text-left rounded-sm px-3 py-2.5 text-sm transition-colors ${
                     active
-                      ? "bg-[rgba(123,208,255,0.12)] border border-[rgba(123,208,255,0.4)] text-[#7bd0ff]"
-                      : "border border-transparent text-[#e0e3e5] hover:bg-[rgba(123,208,255,0.08)]"
+                      ? "bg-primary/[0.12] border border-primary/40 text-primary-hover"
+                      : "border border-transparent text-fg hover:bg-primary/[0.08]"
                   }`}
                 >
                   {line}
@@ -129,7 +129,7 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
 
     if (verses.length === 0) {
       return (
-        <div className="h-full flex items-center justify-center text-[#6b7280] text-sm">
+        <div className="h-full flex items-center justify-center text-fg-muted text-sm">
           {t("preview.noVerses")}
         </div>
       );
@@ -138,7 +138,7 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
     return (
       <div className="h-full min-h-0 flex flex-col gap-1 overflow-auto">
         <p
-          className="text-[#7bd0ff] text-[10px] tracking-[0.1em] uppercase shrink-0 px-1 mb-1"
+          className="text-primary-hover text-[10px] tracking-[0.1em] uppercase shrink-0 px-1 mb-1"
           style={MONO}
         >
           {item.title || item.reference || t("types.bible")}
@@ -172,13 +172,13 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
               }
               className={`w-full text-left rounded-sm px-3 py-2.5 transition-colors ${
                 active
-                  ? "bg-[rgba(123,208,255,0.12)] border border-[rgba(123,208,255,0.4)]"
-                  : "border border-transparent hover:bg-[rgba(123,208,255,0.08)]"
+                  ? "bg-primary/[0.12] border border-primary/40"
+                  : "border border-transparent hover:bg-primary/[0.08]"
               }`}
             >
               <span
                 className={`text-[10px] tracking-[0.05em] block mb-1 ${
-                  active ? "text-[#7bd0ff]" : "text-[#7bd0ff]/80"
+                  active ? "text-primary-hover" : "text-primary-hover/80"
                 }`}
                 style={MONO}
               >
@@ -186,7 +186,7 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
               </span>
               <p
                 className={`text-sm leading-6 ${
-                  active ? "text-[#7bd0ff]" : "text-[#e0e3e5]"
+                  active ? "text-primary-hover" : "text-fg"
                 }`}
               >
                 {v.text}
@@ -237,10 +237,10 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
             },
           });
         }}
-        className={`w-full h-full min-h-0 rounded-lg border overflow-hidden transition-colors flex items-center justify-center bg-[#0b0f10] ${
+        className={`w-full h-full min-h-0 rounded-lg border overflow-hidden transition-colors flex items-center justify-center bg-base ${
           active
-            ? "border-[rgba(123,208,255,0.45)]"
-            : "border-[rgba(69,70,77,0.3)] hover:border-[rgba(123,208,255,0.3)]"
+            ? "border-primary/50"
+            : "border-hairline hover:border-primary/35"
         }`}
       >
         {item.mediaType === "youtube" ? (
@@ -258,12 +258,14 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
           <video
             src={item.url}
             className="w-full h-full object-contain pointer-events-none"
+            // Still first frame. A looping clip here competes with the live
+            // output for attention, and for a decoder.
+            preload="metadata"
             muted
             playsInline
-            preload="metadata"
           />
         ) : item.mediaType === "audio" ? (
-          <span className="text-[#45464d] text-xs tracking-[0.1em]" style={MONO}>
+          <span className="text-fg-muted text-xs tracking-[0.1em]" style={MONO}>
             {t("media.audioBadge")} · {item.title}
           </span>
         ) : item.mediaType === "pdf" ? (
@@ -276,7 +278,7 @@ function PreviewPanel({ item, songs, preview, onSelect }) {
         ) : (
           <img
             src={item.url}
-            alt={item.title}
+                       alt={item.title}
             className="w-full h-full object-contain pointer-events-none"
           />
         )}

@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg: #090B12;
+  --surface: #111521;
+  --card: #171C2B;
+  --hover: #1E2540;
+  --primary: #6366F1;
+  --primary-hover: #7C83FF;
+  --accent: #00D4FF;
+  --text: #F8FAFC;
+  --text-2: #9AA3B2;
+  --border: rgba(255,255,255,0.08);
+}
+
 html,
 body,
 #root {
@@ -9,17 +22,17 @@ body,
   margin: 0;
 }
 
+/* No font-family here: Tailwind's preflight sets it on html from
+   theme.fontFamily.sans, so tailwind.config.js is the single source. */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg);
+  color: var(--text);
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  @apply font-mono;
 }
 
 /* Scrollbars: hidden by default, visible while scrolling */
@@ -48,4 +61,13 @@ code {
 
 *.is-scrolling::-webkit-scrollbar-thumb {
   background-color: rgba(198, 198, 205, 0.4);
+}
+
+/* Selección de item en el schedule */
+@keyframes item-select {
+  0%   { box-shadow: 0 0 0 2px rgba(99,102,241,0.55), inset 0 0 12px rgba(99,102,241,0.18); }
+  100% { box-shadow: none; }
+}
+.schedule-item-active {
+  animation: item-select 0.35s ease-out forwards;
 }

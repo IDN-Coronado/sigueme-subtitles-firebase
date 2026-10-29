@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { MONO } from "./constants";
+import { MONO } from "../../fonts";
 import ResourceToolbar from "./ResourceToolbar";
 import ResourceItemMenu from "./ResourceItemMenu";
 import BibleBrowser from "./BibleBrowser";
@@ -73,7 +73,7 @@ function SongsBrowser({
         onCreate={onCreate}
       />
       <div className="flex items-center justify-between gap-2 px-0.5 shrink-0">
-        <p className="text-[#6b7280] text-[10px] tracking-[0.06em]" style={MONO}>
+        <p className="text-fg-muted text-[10px] tracking-[0.06em]" style={MONO}>
           {list.length === 0
             ? t("common.noResults")
             : list.length === 1
@@ -83,7 +83,7 @@ function SongsBrowser({
       </div>
       <div className="overflow-auto min-h-0 flex-1">
         {list.length === 0 && (
-          <p className="text-[#6b7280] text-sm px-1">{t("resource.noSongs")}</p>
+          <p className="text-fg-muted text-sm px-1">{t("resource.noSongs")}</p>
         )}
         {list.length > 0 && (
           <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 content-start">
@@ -95,8 +95,8 @@ function SongsBrowser({
                   <div
                     className={`relative h-full rounded-lg border transition-colors ${
                       isSelected
-                        ? "border-[rgba(123,208,255,0.45)] bg-[rgba(123,208,255,0.12)]"
-                        : "border-[rgba(69,70,77,0.3)] bg-[rgba(16,20,21,0.5)] hover:border-[rgba(123,208,255,0.35)] hover:bg-[rgba(123,208,255,0.08)]"
+                        ? "border-primary/50 bg-primary/[0.12]"
+                        : "border-hairline bg-card hover:border-primary/35 hover:bg-primary/[0.08]"
                     }`}
                   >
                     <button
@@ -105,14 +105,14 @@ function SongsBrowser({
                       title={song.title}
                       className="w-full h-full text-left px-3 py-2.5 pr-9"
                     >
-                      <span className="flex items-center gap-1.5 text-[#e0e3e5] text-xs sm:text-sm font-medium leading-snug">
+                      <span className="flex items-center gap-1.5 text-fg text-xs sm:text-sm font-medium leading-snug">
                         <span className="line-clamp-2">{song.title}</span>
                         {isSelected && (
-                          <span className="shrink-0 text-[#7bd0ff]">✓</span>
+                          <span className="shrink-0 text-primary-fg">✓</span>
                         )}
                       </span>
                       {preview.length > 0 && (
-                        <span className="mt-1.5 block text-[#6b7280] text-[10px] sm:text-[11px] leading-snug">
+                        <span className="mt-1.5 block text-fg-muted text-[10px] sm:text-[11px] leading-snug">
                           {preview.map((line, i) => (
                             <span key={i} className="block truncate">
                               {line}
@@ -151,7 +151,7 @@ function SongsBrowser({
         )}
       </div>
       <div className="shrink-0 flex items-center justify-between gap-3 border-t border-[rgba(69,70,77,0.25)] pt-3">
-        <p className="text-[#6b7280] text-xs" style={MONO}>
+        <p className="text-fg-muted text-xs" style={MONO}>
           {selectedCount === 0
             ? t("resource.selectHint")
             : t("resource.selectedCount", { count: selectedCount })}
@@ -161,7 +161,7 @@ function SongsBrowser({
             <button
               type="button"
               onClick={() => setSelected({})}
-              className="px-3 py-2 text-sm text-[#c6c6cd] border border-[rgba(69,70,77,0.4)] rounded-sm hover:border-[#7bd0ff] hover:text-[#7bd0ff] transition-colors"
+              className="px-3 py-2 text-sm text-fg-muted border border-[rgba(255,255,255,0.1)] rounded-lg hover:border-primary/40 hover:text-primary-hover transition-colors"
             >
               {t("common.clear")}
             </button>
@@ -170,7 +170,7 @@ function SongsBrowser({
             type="button"
             disabled={selectedCount === 0}
             onClick={handleAddSelected}
-            className="px-4 py-2 bg-[#7bd0ff] text-[#00354a] text-sm font-bold rounded-sm hover:bg-[#5bc0ef] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {t("resourceMenu.addToSchedule")}
           </button>
@@ -265,8 +265,8 @@ function MediaBrowser({
               key={item.id}
               className={`relative text-left rounded-sm border transition-colors ${
                 isSelected
-                  ? "border-[rgba(123,208,255,0.45)] bg-[rgba(123,208,255,0.12)]"
-                  : "border-[rgba(69,70,77,0.3)] bg-[rgba(16,20,21,0.5)] hover:border-[rgba(123,208,255,0.3)]"
+                  ? "border-primary/50 bg-primary/[0.12]"
+                  : "border-hairline bg-card hover:border-primary/30"
               }`}
             >
               <button
@@ -274,7 +274,7 @@ function MediaBrowser({
                 onClick={() => toggleItem(item)}
                 className="w-full text-left"
               >
-                <div className="relative aspect-[4/3] bg-[#1d2022] overflow-hidden rounded-t-sm">
+                <div className="relative aspect-[4/3] bg-card overflow-hidden rounded-t-sm">
                   {item.type === "youtube" ? (
                     <img
                       src={item.thumbnailUrl || item.url}
@@ -286,10 +286,13 @@ function MediaBrowser({
                       src={item.url}
                       className="w-full h-full object-cover"
                       muted
+                      playsInline
+                      preload="metadata"
+                      onLoadedMetadata={(e) => { e.currentTarget.currentTime = 0.001; }}
                     />
                   ) : item.type === "audio" ? (
                     <div
-                      className="w-full h-full flex items-center justify-center text-[#45464d] text-[8px]"
+                      className="w-full h-full flex items-center justify-center text-fg-muted text-[8px]"
                       style={MONO}
                     >
                       {t("media.audioBadge")}
@@ -315,7 +318,7 @@ function MediaBrowser({
                   />
                   {item.type === "youtube" && (
                     <span
-                      className="pointer-events-none absolute bottom-1 left-1 text-[8px] tracking-[0.06em] text-[#ffb4ab] bg-[rgba(16,20,21,0.75)] px-1 py-0.5 rounded-sm"
+                      className="pointer-events-none absolute bottom-1 left-1 text-[9px] font-semibold tracking-[0.06em] text-danger-fg bg-[rgba(0,0,0,0.82)] px-1.5 py-0.5 rounded-sm"
                       style={MONO}
                     >
                       {t("media.youtubeBadge")}
@@ -323,19 +326,43 @@ function MediaBrowser({
                   )}
                   {item.type === "pdf" && (
                     <span
-                      className="pointer-events-none absolute bottom-1 left-1 text-[8px] tracking-[0.06em] text-[#7bd0ff] bg-[rgba(16,20,21,0.75)] px-1 py-0.5 rounded-sm"
+                      className="pointer-events-none absolute bottom-1 left-1 text-[9px] font-semibold tracking-[0.06em] text-primary-fg bg-[rgba(0,0,0,0.82)] px-1.5 py-0.5 rounded-sm"
                       style={MONO}
                     >
                       {t("media.pdfBadge")}
                     </span>
                   )}
+                  {item.type === "video" && (
+                    <span
+                      className="pointer-events-none absolute bottom-1 left-1 text-[9px] font-semibold tracking-[0.06em] text-[#D1D5DB] bg-[rgba(0,0,0,0.82)] px-1.5 py-0.5 rounded-sm"
+                      style={MONO}
+                    >
+                      {t("media.videoBadge")}
+                    </span>
+                  )}
+                  {item.type === "audio" && (
+                    <span
+                      className="pointer-events-none absolute bottom-1 left-1 text-[9px] font-semibold tracking-[0.06em] text-[#D1D5DB] bg-[rgba(0,0,0,0.82)] px-1.5 py-0.5 rounded-sm"
+                      style={MONO}
+                    >
+                      {t("media.audioBadge")}
+                    </span>
+                  )}
+                  {item.type === "image" && (
+                    <span
+                      className="pointer-events-none absolute bottom-1 left-1 text-[9px] font-semibold tracking-[0.06em] text-[#D1D5DB] bg-[rgba(0,0,0,0.82)] px-1.5 py-0.5 rounded-sm"
+                      style={MONO}
+                    >
+                      {t("media.imageBadge")}
+                    </span>
+                  )}
                   {isSelected && (
-                    <span className="pointer-events-none absolute top-1 left-1 w-4 h-4 rounded-full bg-[#7bd0ff] text-[#00354a] text-[10px] font-bold flex items-center justify-center">
+                    <span className="pointer-events-none absolute top-1 left-1 w-4 h-4 rounded-full bg-primary text-primary text-[10px] font-bold flex items-center justify-center">
                       ✓
                     </span>
                   )}
                 </div>
-                <p className="text-[#e0e3e5] text-[9px] sm:text-[10px] font-medium px-1 py-0.5 truncate pr-6">
+                <p className="text-fg text-[9px] sm:text-[10px] font-medium px-1 py-0.5 truncate pr-6">
                   {mediaDisplayTitle(item)}
                 </p>
               </button>
@@ -347,7 +374,7 @@ function MediaBrowser({
         })}
       </div>
       <div className="shrink-0 flex items-center justify-between gap-3 border-t border-[rgba(69,70,77,0.25)] pt-3">
-        <p className="text-[#6b7280] text-xs" style={MONO}>
+        <p className="text-fg-muted text-xs" style={MONO}>
           {selectedCount === 0
             ? t("resource.selectHint")
             : t("resource.selectedCount", { count: selectedCount })}
@@ -357,7 +384,7 @@ function MediaBrowser({
             <button
               type="button"
               onClick={() => setSelected({})}
-              className="px-3 py-2 text-sm text-[#c6c6cd] border border-[rgba(69,70,77,0.4)] rounded-sm hover:border-[#7bd0ff] hover:text-[#7bd0ff] transition-colors"
+              className="px-3 py-2 text-sm text-fg-muted border border-[rgba(255,255,255,0.1)] rounded-lg hover:border-primary/40 hover:text-primary-hover transition-colors"
             >
               {t("common.clear")}
             </button>
@@ -366,7 +393,7 @@ function MediaBrowser({
             type="button"
             disabled={selectedCount === 0}
             onClick={handleAddSelected}
-            className="px-4 py-2 bg-[#7bd0ff] text-[#00354a] text-sm font-bold rounded-sm hover:bg-[#5bc0ef] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {t("resourceMenu.addToSchedule")}
           </button>
@@ -402,20 +429,23 @@ function ThemesBrowser({
         {list.map((theme) => (
           <div
             key={theme.id}
-            className="relative text-left rounded-sm border border-[rgba(69,70,77,0.3)] bg-[rgba(16,20,21,0.5)] hover:border-[rgba(123,208,255,0.3)] transition-colors"
+            className="relative text-left rounded-sm border border-hairline bg-card hover:border-primary/30 transition-colors"
           >
             <button
               type="button"
               onClick={() => onAdd(theme)}
               className="w-full text-left"
             >
-              <div className="relative aspect-[4/3] bg-[#1d2022] overflow-hidden rounded-t-sm">
+              <div className="relative aspect-[4/3] bg-card overflow-hidden rounded-t-sm">
                 {theme.backgroundUrl ? (
                   theme.type === "video" ? (
                     <video
                       src={theme.backgroundUrl}
                       className="w-full h-full object-cover"
                       muted
+                      playsInline
+                      preload="metadata"
+                      onLoadedMetadata={(e) => { e.currentTarget.currentTime = 0.001; }}
                     />
                   ) : (
                     <img
@@ -433,7 +463,7 @@ function ThemesBrowser({
                   }}
                 />
               </div>
-              <p className="text-[#e0e3e5] text-[9px] sm:text-[10px] font-medium px-1 py-0.5 truncate pr-6">
+              <p className="text-fg text-[9px] sm:text-[10px] font-medium px-1 py-0.5 truncate pr-6">
                 {theme.title}
               </p>
             </button>

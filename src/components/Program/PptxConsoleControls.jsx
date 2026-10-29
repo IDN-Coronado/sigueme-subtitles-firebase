@@ -5,12 +5,12 @@ import {
   IconSlideNext,
   IconSlidePrev,
 } from "../Icons";
-import { MONO } from "./constants";
+import { MONO } from "../../fonts";
 
 const btnBase =
   "w-8 h-8 inline-flex items-center justify-center rounded-sm border transition-colors shrink-0";
 const btnIdle =
-  "border-[rgba(69,70,77,0.4)] text-[#c6c6cd] hover:border-[#7bd0ff] hover:text-[#7bd0ff] disabled:opacity-35 disabled:pointer-events-none disabled:hover:border-[rgba(69,70,77,0.4)] disabled:hover:text-[#c6c6cd]";
+  "border-[rgba(69,70,77,0.4)] text-fg-muted hover:border-primary hover:text-primary-fg disabled:opacity-35 disabled:pointer-events-none disabled:hover:border-[rgba(69,70,77,0.4)] disabled:hover:text-fg-muted";
 
 function PptxConsoleControls({ preview, setPreview, slideCount: slideCountProp }) {
   const media = preview?.resource?.media;
@@ -71,7 +71,7 @@ function PptxConsoleControls({ preview, setPreview, slideCount: slideCountProp }
       </button>
 
       <span
-        className="text-[#c6c6cd] text-[11px] tabular-nums shrink-0 px-1 min-w-[4.5rem] text-center"
+        className="text-fg-muted text-[11px] tabular-nums shrink-0 px-1 min-w-[4.5rem] text-center"
         style={MONO}
         aria-live="polite"
         aria-label={t("media.pptxCounterAria", {

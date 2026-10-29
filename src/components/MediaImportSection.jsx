@@ -38,31 +38,31 @@ function MediaImportSection() {
   return (
     <section className="flex flex-col gap-3">
       <h3
-        className="text-[#c6c6cd] text-[10px] tracking-[0.1em] uppercase"
+        className="text-fg-muted text-[10px] tracking-[0.1em] uppercase"
         style={MONO}
       >
         {t("mediaImport.title")}
       </h3>
-      <p className="text-[#c6c6cd] text-xs">{t("mediaImport.body")}</p>
+      <p className="text-fg-muted text-xs">{t("mediaImport.body")}</p>
 
       <button
         type="button"
         disabled={status === "running"}
         onClick={run}
-        className="h-9 px-3 inline-flex items-center justify-center rounded-sm border border-[rgba(123,208,255,0.45)] text-[#7bd0ff] text-xs hover:bg-[rgba(123,208,255,0.1)] disabled:opacity-40 transition-colors"
+        className="h-9 px-3 inline-flex items-center justify-center rounded-sm border border-primary/45 text-primary-fg text-xs hover:bg-primary/10 disabled:opacity-40 transition-colors"
       >
         {status === "running" ? t("mediaImport.running") : t("mediaImport.action")}
       </button>
 
       {status === "running" && (
-        <p className="text-[#c6c6cd] text-xs" style={MONO}>
+        <p className="text-fg-muted text-xs" style={MONO}>
           {progress.done} / {progress.total}
         </p>
       )}
 
       {status === "done" && result && (
         <>
-          <p className="text-[#7bd0ff] text-xs">
+          <p className="text-primary-fg text-xs">
             {t("mediaImport.done", {
               copied: result.copied,
               skipped: result.skipped,
@@ -70,13 +70,13 @@ function MediaImportSection() {
           </p>
           {result.failed.length > 0 && (
             <div className="flex flex-col gap-1">
-              <p className="text-[#ffb4ab] text-xs">
+              <p className="text-danger-fg text-xs">
                 {t("mediaImport.failed", { count: result.failed.length })}
               </p>
               {result.failed.slice(0, 5).map((f) => (
                 <p
                   key={f.storagePath}
-                  className="text-[#6b7280] text-[11px] truncate"
+                  className="text-fg-muted text-[11px] truncate"
                   style={MONO}
                   title={f.storagePath}
                 >

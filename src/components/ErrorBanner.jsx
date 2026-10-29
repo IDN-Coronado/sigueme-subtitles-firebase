@@ -17,13 +17,13 @@ function ErrorBanner() {
 
   return (
     <div className="fixed bottom-4 right-4 z-50 max-w-sm">
-      <div className="bg-[#1d2022] rounded-sm shadow-[0_16px_48px_rgba(0,0,0,0.5)]">
+      <div className="bg-card rounded-sm shadow-[0_16px_48px_rgba(0,0,0,0.5)]">
         <ErrorNotice error={notice.error} title={notice.title} />
         <div className="flex justify-end px-3 pb-3">
           <button
             type="button"
             onClick={clearNotice}
-            className="h-7 px-3 inline-flex items-center rounded-sm border border-[rgba(69,70,77,0.4)] text-[#c6c6cd] text-xs hover:border-[#7bd0ff] hover:text-[#7bd0ff] transition-colors"
+            className="h-7 px-3 inline-flex items-center rounded-sm border border-[rgba(69,70,77,0.4)] text-fg-muted text-xs hover:border-primary hover:text-primary-fg transition-colors"
           >
             {t("common.close")}
           </button>

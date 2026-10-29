@@ -32,15 +32,15 @@ function ErrorNotice({ error, title }) {
 
   return (
     <div className="flex flex-col gap-2 border border-[rgba(255,180,171,0.35)] bg-[rgba(255,180,171,0.06)] rounded-sm px-3 py-3 text-left">
-      <p className="text-[#ffb4ab] text-xs font-bold">
+      <p className="text-danger-fg text-xs font-bold">
         {title || t(`errors.${kind}Title`)}
       </p>
 
-      {body && <p className="text-[#c6c6cd] text-xs">{body}</p>}
+      {body && <p className="text-fg-muted text-xs">{body}</p>}
 
       {kind === NOT_APPROVED && user && (
         <p
-          className="text-[#c6c6cd] text-[11px] break-all"
+          className="text-fg-muted text-[11px] break-all"
           style={MONO}
           title={user.uid}
         >
@@ -49,7 +49,7 @@ function ErrorNotice({ error, title }) {
       )}
 
       {kind === GENERIC && error?.message && (
-        <p className="text-[#6b7280] text-[11px] break-all" style={MONO}>
+        <p className="text-fg-muted text-[11px] break-all" style={MONO}>
           {String(error.message)}
         </p>
       )}

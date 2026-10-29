@@ -112,11 +112,30 @@ function verifyManifest(bytes, signatureB64, publicKeyB64 = PUBLIC_KEY) {
  * The folder electron/server.js should serve, and whether it is still
  * unproven. `fallbackDir` is the bundle shipped inside app.asar.
  */
-async function activeBundle(fallbackDir) {
+async function activeBundle(fallbackDir, shellVersion) {
   const state = await readState();
   // `version: null` means the bundle inside app.asar, whose version is the
   // shell's own — Settings shows the shell version in that case.
   if (!state.version) return { dir: fallbackDir, pending: false, version: null };
+
+  // A bundle staged before an installer upgrade can be older than the one
+  // that installer shipped, and nothing else would ever notice: the update
+  // check compares the published version against this stale state, finds it
+  // not newer, and reports "up to date" forever. Installing is a deliberate
+  // act by an operator, so the shipped bundle wins. It is never a downgrade —
+  // the shipped bundle is the shell's own version by definition.
+  if (compareVersions(state.version, shellVersion) <= 0) {
+    console.log(
+      `Discarding staged bundle ${state.version}; this app ships ` +
+        `${shellVersion}.`
+    );
+    // `failed` outlives the discard: it names a version that did not boot
+    // here, and re-downloading it on the next check would just repeat that.
+    const kept = state.failed ? { failed: state.failed } : {};
+    await writeState(kept);
+    await prune(kept);
+    return { dir: fallbackDir, pending: false, version: null };
+  }
 
   const dir = path.join(bundlesRoot(), state.version);
   if (!(await isFile(path.join(dir, "index.html")))) {

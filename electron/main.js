@@ -68,7 +68,10 @@ async function start() {
   // in both modes.
   // The bundle inside app.asar is only the floor: once an over-the-air bundle
   // has been staged, that folder is served instead (see update.js).
-  const bundle = await update.activeBundle(path.join(ROOT, "dist"));
+  const bundle = await update.activeBundle(
+    path.join(ROOT, "dist"),
+    app.getVersion()
+  );
   await startAppServer(bundle.dir, PORT, media.mediaRoot());
   ipcMain.handle("update:ready", () => update.confirmHealthy());
   // Dev serves the renderer from vite, so there is no bundle to replace and

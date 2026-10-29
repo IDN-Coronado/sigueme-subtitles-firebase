@@ -197,7 +197,7 @@ test("update: a staged bundle missing its index falls back to the shipped one", 
   t.after(() => fs.rm(root, { recursive: true, force: true }));
 
   await fs.rm(root, { recursive: true, force: true });
-  assert.deepEqual(await update.activeBundle(shipped), {
+  assert.deepEqual(await update.activeBundle(shipped, "3.0.1"), {
     dir: shipped,
     pending: false,
     version: null,
@@ -210,7 +210,7 @@ test("update: a staged bundle missing its index falls back to the shipped one", 
     path.join(root, "state.json"),
     JSON.stringify({ version: "3.0.1", pending: true })
   );
-  assert.deepEqual(await update.activeBundle(shipped), {
+  assert.deepEqual(await update.activeBundle(shipped, "3.0.1"), {
     dir: shipped,
     pending: false,
     version: null,
@@ -228,7 +228,7 @@ test("update: a staged bundle missing its index falls back to the shipped one", 
     path.join(root, "state.json"),
     JSON.stringify({ version: "3.0.2", pending: true })
   );
-  assert.deepEqual(await update.activeBundle(shipped), {
+  assert.deepEqual(await update.activeBundle(shipped, "3.0.1"), {
     dir: path.join(root, "3.0.2"),
     pending: true,
     version: "3.0.2",
@@ -305,4 +305,76 @@ test("update: overlapping checks share one run", async () => {
   } finally {
     globalThis.fetch = realFetch;
   }
+});
+
+test("update: an installer upgrade discards a bundle staged before it", async (t) => {
+  const root = process.env.APOSTELLO_BUNDLE_ROOT;
+  const shipped = path.join(__dirname, "..", "dist");
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  await fs.rm(root, { recursive: true, force: true });
+
+  // Exactly what an OTA test leaves behind: 3.0.2 staged and healthy.
+  const staged = path.join(root, "3.0.2");
+  await fs.mkdir(staged, { recursive: true });
+  await fs.writeFile(path.join(staged, "index.html"), "<!doctype html>");
+  await fs.writeFile(
+    path.join(root, "state.json"),
+    JSON.stringify({ version: "3.0.2", previous: null })
+  );
+
+  // The shell it was staged on: newer than the shipped bundle, so served.
+  assert.deepEqual(await update.activeBundle(shipped, "3.0.1"), {
+    dir: staged,
+    pending: false,
+    version: "3.0.2",
+  });
+
+  // Now a 3.1.0 installer. Without this the shell would keep serving the
+  // older renderer forever: the update check compares the published version
+  // against this state, finds it not newer, and says "up to date".
+  assert.deepEqual(await update.activeBundle(shipped, "3.1.0"), {
+    dir: shipped,
+    pending: false,
+    version: null,
+  });
+  assert.deepEqual(
+    JSON.parse(await fs.readFile(path.join(root, "state.json"), "utf8")),
+    {},
+    "state is cleared, so the next check compares against the shell"
+  );
+  assert.equal(
+    await fs.access(staged).then(() => true, () => false),
+    false,
+    "and the superseded folder is not left on disk"
+  );
+});
+
+test("update: discarding a stale bundle keeps the failed marker", async (t) => {
+  const root = process.env.APOSTELLO_BUNDLE_ROOT;
+  const shipped = path.join(__dirname, "..", "dist");
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  await fs.rm(root, { recursive: true, force: true });
+
+  await fs.mkdir(path.join(root, "3.0.2"), { recursive: true });
+  await fs.writeFile(path.join(root, "3.0.2", "index.html"), "<!doctype html>");
+  await fs.writeFile(
+    path.join(root, "state.json"),
+    JSON.stringify({ version: "3.0.2", failed: "3.2.0" })
+  );
+
+  await update.activeBundle(shipped, "3.1.0");
+  assert.deepEqual(
+    JSON.parse(await fs.readFile(path.join(root, "state.json"), "utf8")),
+    { failed: "3.2.0" },
+    "a version known not to boot here is not re-downloaded after an upgrade"
+  );
+});
+
+test("update: a bundle matching the shell version is discarded too", () => {
+  // Nothing can legitimately stage a bundle equal to the shell — install
+  // requires strictly newer — so equality means a republished version, like
+  // two different 3.0.2 builds. The shipped one is the one that was chosen.
+  assert.equal(update.compareVersions("3.0.2", "3.0.2") <= 0, true);
+  assert.equal(update.compareVersions("3.0.2", "3.1.0") <= 0, true);
+  assert.equal(update.compareVersions("3.1.1", "3.1.0") <= 0, false);
 });

@@ -1,0 +1,141 @@
+name: Release
+
+# A tag, not a merge. Publishing reaches every operator machine, so it is a
+# deliberate act — and the tag becomes the record of what shipped, which the
+# minShell guard in build-update-manifest.mjs reads via `git describe --tags`.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # The tag is what operators will see; package.json is what the manifest
+      # and the installer carry. A mismatch ships a build whose version does
+      # not match its own release.
+      - name: Tag must match package.json
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG="$(node -p "require('./package.json').version")"
+          echo "tag=$TAG package.json=$PKG"
+          test "$TAG" = "$PKG" || {
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json $PKG"
+            exit 1
+          }
+
+      # npm ci, not `rm -f package-lock.json && npm install` as the hosting
+      # workflows do: a release has to be the tree the lockfile describes.
+      - run: npm ci
+
+      - run: npm run test:electron
+
+  installer:
+    name: Installer
+    needs: verify
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # Vite inlines these at build time. The installer no longer ships .env —
+      # nothing reads it at runtime since Google OAuth was removed — but the
+      # renderer still needs them baked in.
+      - name: Write .env
+        shell: bash
+        run: |
+          {
+            echo "VITE_API_KEY=${{ secrets.API_KEY }}"
+            echo "VITE_AUTH_DOMAIN=${{ secrets.AUTH_DOMAIN }}"
+            echo "VITE_PROJECT_ID=${{ secrets.PROJECT_ID }}"
+            echo "VITE_STORAGE_BUCKET=${{ secrets.STORAGE_BUCKET }}"
+            echo "VITE_MESSAGING_SENDER_ID=${{ secrets.MESSAGING_SENDER_ID }}"
+            echo "VITE_APP_ID=${{ secrets.APP_ID }}"
+            echo "VITE_MEASUREMENT_ID=${{ secrets.MEASUREMENT_ID }}"
+          } > .env
+
+      - run: npm ci
+
+      - run: npm run package
+
+      # release/ is gitignored, so without this the only copy of a build lives
+      # on whoever ran it.
+      - name: Attach the installer to the release
+        uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda # v2.0.8
+        with:
+          files: |
+            release/Apostello Setup *.exe
+            release/Apostello Setup *.exe.blockmap
+          generate_release_notes: true
+
+  publish-bundle:
+    name: Publish update bundle
+    needs: verify
+    runs-on: ubuntu-latest
+    # Gated. The signing key is the root of trust for code that runs on every
+    # operator machine, so this job waits for a human on the environment's
+    # reviewer list before it can read the secret.
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The minShell guard compares against the previous tag, so it needs
+          # history, not a shallow clone.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Write .env
+        run: |
+          {
+            echo "VITE_API_KEY=${{ secrets.API_KEY }}"
+            echo "VITE_AUTH_DOMAIN=${{ secrets.AUTH_DOMAIN }}"
+            echo "VITE_PROJECT_ID=${{ secrets.PROJECT_ID }}"
+            echo "VITE_STORAGE_BUCKET=${{ secrets.STORAGE_BUCKET }}"
+            echo "VITE_MESSAGING_SENDER_ID=${{ secrets.MESSAGING_SENDER_ID }}"
+            echo "VITE_APP_ID=${{ secrets.APP_ID }}"
+            echo "VITE_MEASUREMENT_ID=${{ secrets.MEASUREMENT_ID }}"
+          } > .env
+
+      - run: npm ci
+
+      - name: Build and sign the manifest
+        env:
+          APOSTELLO_UPDATE_KEY: ${{ secrets.APOSTELLO_UPDATE_KEY }}
+        run: |
+          npx vite build
+          node scripts/build-update-manifest.mjs
+
+      # Deploys only the `updates` target. The website lives on `apostello`
+      # and a Hosting deploy replaces a whole site, so naming the target is
+      # what keeps the two from overwriting each other.
+      - name: Deploy to apostello-updates
+        run: |
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_SIGUEMESUBTITLES }}' > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx firebase-tools@13 deploy --only hosting:updates --project siguemesubtitles --non-interactive
+          rm -f "$RUNNER_TEMP/sa.json"
+
+      # Fetching what was just published proves the channel actually works,
+      # rather than that the deploy command exited zero.
+      - name: Verify what went live
+        run: node scripts/verify-published.mjs

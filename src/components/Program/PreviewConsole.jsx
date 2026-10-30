@@ -200,10 +200,8 @@ function PreviewConsole({
       el.volume = 0;
       el.loop = isLogo;
       el.currentTime = initialTime;
-      // Sending media to preview arms it, it does not start it -- the operator
-      // presses play. The logo is the exception: it is the idle holding screen,
-      // so it loops on its own and nobody cues it.
-      if (!isLogo) return;
+      // Sending media to preview starts it -- the operator's click is the cue.
+      // The logo additionally loops, being the idle holding screen.
 
       const broadcastPlay = () => {
         publishMediaSync({

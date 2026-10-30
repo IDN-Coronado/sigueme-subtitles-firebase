@@ -71,9 +71,10 @@ this matters in step 2).
 > the PWA is unaffected. An admin approves a machine in the Firebase console,
 > and revokes one machine without touching the others.
 >
-> **Loose end:** the `Apostello Desktop` OAuth client still exists in Google
-> Cloud Console. Deleting the `.env` lines does not revoke it — delete the
-> client itself to close the app-impersonation path.
+> **Closed.** The `Apostello Desktop` OAuth client was deleted from Google
+> Cloud Console, which is how this surfaced: a 3.0.x build still carrying the
+> Google flow failed with `Error 401: deleted_client`. Nothing reads it now,
+> so the app-impersonation path is gone with it.
 
 ### 1.3 Smaller items
 
@@ -686,19 +687,30 @@ Then per release:
 
 ```bash
 npm version patch            # bundle version = package version
-npm run release:bundle       # vite build + sign + deploy hosting:apostello
+npm run release:bundle       # vite build + sign + deploy hosting:updates
 ```
 
+`hosting:updates` is the `apostello-updates` site, not the website's
+`apostello`. They shared a target once and each deploy replaced the other;
+see §6.5. The full procedure, including the CI path and its approval gate,
+is in [releasing.md](releasing.md).
+
 Installed apps check at launch, stage in the background, and apply on the next
-restart — never mid-service.
+restart — never mid-service. They can also be asked on demand from Settings
+(§6.4).
 
 ### 6.9 Done when
 
-`npm run test:electron` covers version comparison, signature rejection and the
-dangling-bundle fallback; an end-to-end run against a local server reproducing
-Hosting's SPA rewrite covers install, reuse, tamper rejection and cleanup.
-**Not yet verified end to end against the real Hosting target** — that needs
-one real `npm run release:bundle` and an installed app to pick it up.
+`npm run test:electron` covers version comparison, signature rejection, the
+dangling-bundle fallback, the retry guard after a failed boot, the discard of
+a bundle staged before an installer upgrade, and that overlapping checks share
+one run. An end-to-end run against a local server reproducing Hosting's SPA
+rewrite covers install, reuse, tamper rejection and cleanup.
+
+**Verified against the real thing.** A 3.0.1 install fetched, staged and
+applied a published 3.0.2 bundle; a deliberately broken bundle was rolled back
+and the app relaunched on the previous one. `scripts/verify-published.mjs`
+re-checks a published bundle the way an installed app would.
 
 ---
 
@@ -706,8 +718,8 @@ one real `npm run release:bundle` and an installed app to pick it up.
 
 | Question | Notes |
 |---|---|
-| Desktop OAuth client | Needs a Cloud Console entry before step 1 can finish. Do this first. |
-| Does web hosting still serve anything besides `/caption`? | If not, hosting config and the deployed console can shrink a lot. |
+| ~~Desktop OAuth client~~ | Settled: Google sign-in is gone. Each machine signs in as its own Firebase email/password user, stored with `safeStorage`, approved in `operators/{uid}` as before. |
+| ~~Does web hosting still serve anything besides `/caption`?~~ | Settled: `apostello` is the website, `apostello-updates` carries the bundle, and the two are separate sites. |
 | Is the Storage bucket decommissioned or kept as a backup mirror? | Affects whether `storage.rules` survives step 4. |
 | Where do backups of `data.json` go? | Currently manual. Fine to start there. |
 

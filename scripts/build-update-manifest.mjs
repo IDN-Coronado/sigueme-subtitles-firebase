@@ -13,6 +13,7 @@
  * the repo or in the installer — only on the machine that cuts releases.
  */
 import { createHash, createPrivateKey, generateKeyPairSync, sign } from "node:crypto";
+import { execSync } from "node:child_process";
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -35,6 +36,110 @@ if (process.argv.includes("--keygen")) {
   process.exit(0);
 }
 
+const BASE_URL = process.env.APOSTELLO_UPDATE_URL || "https://apostello.web.app";
+
+// Same semantics as compareVersions in electron/update.js, duplicated rather
+// than imported: that module is CJS and requires("electron") at load, so it
+// cannot be pulled into a plain node script. Keep the two in step.
+function isNewer(a, b) {
+  const x = String(a).split(".").map(Number);
+  const y = String(b).split(".").map(Number);
+  for (let i = 0; i < Math.max(x.length, y.length); i++) {
+    const d = (x[i] || 0) - (y[i] || 0);
+    if (d) return d > 0;
+  }
+  return false;
+}
+
+/**
+ * Publishing a version that is not newer than the live one is silent: every
+ * installed app compares the manifest against what it already has, decides
+ * nothing is newer, and reports "up to date" forever. The bundle is live but
+ * unreachable. This is the check that would have caught shipping two
+ * different 3.0.2 bundles.
+ */
+async function refuseIfNotNewer(version) {
+  const res = await fetch(`${BASE_URL}/update.json`, { cache: "no-store" }).catch(
+    () => null
+  );
+  // No manifest yet (first publish) or the site is unreachable — the deploy
+  // that follows will fail on its own if the latter.
+  if (!res?.ok) return;
+
+  let live;
+  try {
+    live = JSON.parse(await res.text());
+  } catch {
+    return; // Not JSON: the SPA rewrite answering for a missing file.
+  }
+  if (!live?.version || isNewer(version, live.version)) return;
+
+  if (process.env.APOSTELLO_ALLOW_REPUBLISH === "1") {
+    console.warn(
+      `! Republishing ${version} over the live ${live.version}; installed ` +
+        "apps will not fetch it (APOSTELLO_ALLOW_REPUBLISH=1)."
+    );
+    return;
+  }
+  throw new Error(
+    `Refusing to publish ${version}: ${BASE_URL} already serves ${live.version}, ` +
+      "so no installed app would fetch this bundle. Run `npm version patch` first.\n" +
+      "Set APOSTELLO_ALLOW_REPUBLISH=1 only if you mean to overwrite the files " +
+      "without anyone picking them up."
+  );
+}
+
+/**
+ * The renderer reaches the shell only through preload, so a bundle that calls
+ * a method added there needs minShell raised to the shell that introduced it.
+ * Warn rather than fail: most shell changes are internal and need no bump,
+ * and failing on all of them would train you to ignore it.
+ */
+function warnIfMinShellLooksStale(pkgJson) {
+  let lastTag;
+  try {
+    lastTag = execSync("git describe --tags --abbrev=0", {
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .toString()
+      .trim();
+  } catch {
+    return; // No tags yet.
+  }
+
+  let changed = "";
+  try {
+    changed = execSync(`git diff --name-only ${lastTag}..HEAD -- electron/preload.js`, {
+      stdio: ["ignore", "pipe", "ignore"],
+    }).toString();
+  } catch {
+    return;
+  }
+  if (!changed.trim()) return;
+
+  let taggedMinShell;
+  try {
+    const at = JSON.parse(
+      execSync(`git show ${lastTag}:package.json`, {
+        stdio: ["ignore", "pipe", "ignore"],
+      }).toString()
+    );
+    taggedMinShell = at.apostello?.minShell;
+  } catch {
+    return;
+  }
+
+  const now = pkgJson.apostello?.minShell;
+  if (now && taggedMinShell && now !== taggedMinShell) return;
+
+  console.warn(
+    `! electron/preload.js changed since ${lastTag} but minShell is still ${now}.\n` +
+      "  If this bundle calls anything new on window.desktop, raise minShell to\n" +
+      "  the shell version that added it — an older shell would otherwise accept\n" +
+      "  the bundle and fail at the call. Ignore this if the change was internal."
+  );
+}
+
 const keyB64 = process.env.APOSTELLO_UPDATE_KEY;
 if (!keyB64) {
   // Failing here is the point: an unsigned manifest would be rejected by every
@@ -48,6 +153,9 @@ if (!keyB64) {
 const pkg = JSON.parse(
   await readFile(path.join(import.meta.dirname, "..", "package.json"), "utf8")
 );
+
+await refuseIfNotNewer(pkg.version);
+warnIfMinShellLooksStale(pkg);
 
 const entries = await readdir(DIST, { recursive: true, withFileTypes: true });
 const files = {};

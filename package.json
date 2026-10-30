@@ -32,7 +32,7 @@
     "preview": "vite preview",
     "desktop": "vite build && electron .",
     "desktop:dev": "electron . --dev",
-    "package": "vite build && electron-builder",
+    "package": "vite build && electron-builder --publish never",
     "update:manifest": "node scripts/build-update-manifest.mjs",
     "update:keygen": "node scripts/build-update-manifest.mjs --keygen",
     "release:bundle": "vite build && node scripts/build-update-manifest.mjs && firebase deploy --only hosting:updates",

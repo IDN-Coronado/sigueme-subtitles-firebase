@@ -2,10 +2,11 @@
 # https://github.com/firebase/firebase-tools
 
 name: Deploy to Firebase Hosting on PR
+# The website only, matching the merge job — a PR into main is desktop work
+# and has no website preview to build.
 on:
   pull_request:
     branches:
-      - main
       - apostello
 permissions:
   contents: read
@@ -49,4 +50,4 @@ jobs:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SIGUEMESUBTITLES }}
           projectId: siguemesubtitles
-          target: ${{ github.event.pull_request.base.ref == 'apostello' && 'apostello' || 'main' }}
+          target: apostello

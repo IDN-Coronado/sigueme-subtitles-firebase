@@ -2,10 +2,13 @@
 # https://github.com/firebase/firebase-tools
 
 name: Deploy to Firebase Hosting on merge
+# The website only. `main` is deliberately absent: once the desktop app lives
+# there, this job would deploy its renderer with no update.json and silence
+# the update channel. Publishing a bundle needs the signing key and stays a
+# deliberate `npm run release:bundle`, never a side effect of a merge.
 on:
   push:
     branches:
-      - main
       - apostello
 jobs:
   build_and_deploy:
@@ -44,4 +47,4 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SIGUEMESUBTITLES }}
           channelId: live
           projectId: siguemesubtitles
-          target: ${{ github.ref_name == 'apostello' && 'apostello' || 'main' }}
+          target: apostello

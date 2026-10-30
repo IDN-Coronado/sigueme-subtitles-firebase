@@ -5,11 +5,11 @@
   "targets": {
     "siguemesubtitles": {
       "hosting": {
-        "main": [
-          "siguemesubtitles"
-        ],
         "apostello": [
           "apostello"
+        ],
+        "updates": [
+          "apostello-updates"
         ]
       }
     }

@@ -1,11 +1,11 @@
 {
   "name": "apostello",
-  "version": "3.1.1",
+  "version": "3.1.2",
   "private": true,
   "description": "Presentation console for church services — programs, songs, themes and live captions.",
   "author": "IDN Coronado",
   "main": "electron/main.js",
-  "homepage": "https://siguemesubtitles.web.app/",
+  "homepage": "https://apostello.web.app/",
   "engines": {
     "node": "26.5.0",
     "npm": "11.17.0"
@@ -35,7 +35,7 @@
     "package": "vite build && electron-builder",
     "update:manifest": "node scripts/build-update-manifest.mjs",
     "update:keygen": "node scripts/build-update-manifest.mjs --keygen",
-    "release:bundle": "vite build && node scripts/build-update-manifest.mjs && firebase deploy --only hosting:apostello",
+    "release:bundle": "vite build && node scripts/build-update-manifest.mjs && firebase deploy --only hosting:updates",
     "test:electron": "node --test electron/electron.test.js",
     "lhci:mobile": "lhci autorun",
     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop"

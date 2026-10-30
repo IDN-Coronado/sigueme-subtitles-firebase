@@ -17,8 +17,16 @@ const { resolveWithin } = require("./server");
 // server. Hosting rewrites unknown paths to index.html with a 200, which is
 // exactly why every file carries a sha256 and the manifest carries a
 // signature — "it downloaded fine" proves nothing here.
-
-const BASE_URL = process.env.APOSTELLO_UPDATE_URL || "https://apostello.web.app";
+//
+// Its own Hosting site, not the website's: a Hosting deploy replaces a whole
+// site, so while these shared apostello.web.app each publish wiped the other.
+// That site also has no SPA rewrite, so a file that was never deployed now
+// answers a real 404 instead of 200 with index.html.
+//
+// Compiled in, so changing it needs a new installer — an old shell keeps
+// asking the old host.
+const BASE_URL =
+  process.env.APOSTELLO_UPDATE_URL || "https://apostello-updates.web.app";
 
 // Ed25519 SPKI, base64 — the public half of the release key. Its private half
 // lives only on the machine that cuts releases, in APOSTELLO_UPDATE_KEY.

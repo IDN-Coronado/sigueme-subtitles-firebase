@@ -36,7 +36,10 @@ if (process.argv.includes("--keygen")) {
   process.exit(0);
 }
 
-const BASE_URL = process.env.APOSTELLO_UPDATE_URL || "https://apostello.web.app";
+// Must match BASE_URL in electron/update.js — this is the host the guard
+// below reads the live manifest from, and installed apps read the same one.
+const BASE_URL =
+  process.env.APOSTELLO_UPDATE_URL || "https://apostello-updates.web.app";
 
 // Same semantics as compareVersions in electron/update.js, duplicated rather
 // than imported: that module is CJS and requires("electron") at load, so it

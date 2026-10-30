@@ -1,3 +1,15 @@
+# Apostello
+
+This branch is the **website** at https://apostello.web.app/ — it is deployed
+by `.github/workflows/firebase-hosting-merge.yml` on every push here.
+
+The desktop app lives on `apostello-desktop` and is a separate product. It
+publishes its over-the-air renderer bundle to the **same Hosting target**, so
+whichever deploys last replaces the other. Until those are split onto separate
+Firebase sites, a deploy from either side takes the other down.
+
+---
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

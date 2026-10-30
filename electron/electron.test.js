@@ -59,6 +59,12 @@ test("live view never lands on the display the console is on", () => {
   assert.deepEqual(pickDisplay([{ id: 1 }, { id: 2 }], 2), { id: 1 });
 });
 
+// Windows-only, like the app: resolveWithin leans on path.isAbsolute, and a
+// drive-letter path is absolute under win32 but an ordinary relative segment
+// under posix. Running this on Linux fails on "/C:/Windows/system.ini" — a
+// case the app never meets, since it only ships as an NSIS installer. The
+// release workflow runs the suite on windows-latest for this reason; if a
+// macOS or Linux build ever happens, resolveWithin needs hardening first.
 test("media paths cannot escape the media root", () => {
   const root = path.join(os.tmpdir(), "apostello-media");
 

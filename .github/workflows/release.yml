@@ -14,7 +14,12 @@ permissions:
 jobs:
   verify:
     name: Verify
-    runs-on: ubuntu-latest
+    # Windows, because that is the only platform this ships on and the path
+    # guards are platform-specific. electron/server.js rejects
+    # "/C:/Windows/system.ini" under win32 and accepts it as a relative
+    # segment under posix, so running these on Linux fails on a case the app
+    # never encounters.
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -27,6 +32,9 @@ jobs:
       # and the installer carry. A mismatch ships a build whose version does
       # not match its own release.
       - name: Tag must match package.json
+        # Explicit: this job runs on Windows, where the default shell is
+        # PowerShell and none of this parses.
+        shell: bash
         run: |
           TAG="${GITHUB_REF_NAME#v}"
           PKG="$(node -p "require('./package.json').version")"

@@ -80,6 +80,9 @@ jobs:
 
       - run: npm ci
 
+      # `--publish never` lives in the script: electron-builder publishes to
+      # GitHub Releases by itself when it sees CI and a tag, and would want a
+      # GH_TOKEN for it. The step below is the one publisher here.
       - run: npm run package
 
       # release/ is gitignored, so without this the only copy of a build lives
